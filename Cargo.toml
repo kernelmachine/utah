@@ -1,0 +1,7 @@
+[package]
+name = "dataframe"
+version = "0.1.0"
+authors = ["pegasos1 <sgrangan01@gmail.com>"]
+
+[dependencies]
+ndarray = "*"
