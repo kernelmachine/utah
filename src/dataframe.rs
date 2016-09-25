@@ -79,7 +79,7 @@ impl<'b> DataFrame<'b> {
                          &data.iter()
                              .map(|x| x.view().into_shape((1, x.dim())).unwrap())
                              .collect::<Vec<MatrixView<'b>>>()[..]);
-        DataFrame::from_array(data.unwrap(), &names)
+        DataFrame::from_array(&data.unwrap(), &names)
         // if data.len() != names.len() {
         //     return Err("mismatched dimensions");
         // }
