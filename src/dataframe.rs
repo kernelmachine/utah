@@ -1,5 +1,5 @@
 
-use ndarray::{Array, Ix, Axis, ArrayView};
+use ndarray::{Array, Ix, Axis, ArrayView, stack, ShapeError};
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 
@@ -91,7 +91,7 @@ impl<'b> DataFrame<'b> {
         self.data_map.get_mut(&name)
     }
 
-    fn join(self, other: DataFrame<'b>, on: &'b str) -> Vec<ColumnView<'b>> {
+    pub fn inner_join(self, other: DataFrame<'b>, on: &'b str) -> Result<DataFrame<'b>, &'b str> {
         let h: HashMap<Value, usize> = self.data_map
             .get(on)
             .unwrap()
@@ -111,13 +111,30 @@ impl<'b> DataFrame<'b> {
             match j.get(row_key) {
                 None => continue,
                 Some(v) => {
-                    vs.push(other.data.row(*v))
-                    // vs.push(stack!(Axis(1),
-                    //    &[self.data.row(*h.get(row_key).unwrap()), other.data.row(*v)]))
+                    let p = self.data
+                        .row(*h.get(row_key).unwrap())
+                        .as_slice()
+                        .unwrap()
+                        .to_vec();
+                    let o = other.data.row(*v).as_slice().unwrap().to_vec();
+                    let chain = p.iter()
+                        .chain(o.iter())
+                        .collect::<Vec<&f64>>();
+                    let array_chain = Array::from_shape_vec((1, chain.len()),
+                                                            chain.iter().map(|x| **x).collect())
+                        .unwrap();
+                    vs.push(array_chain);
+
                 }
             };
         }
-        vs
+        let views = vs.iter().map(|x| x.view()).collect::<Vec<MatrixView<'b>>>();
+        let mut name_chain =
+            self.names.iter().chain(other.names).map(|x| *x).collect::<Vec<&'b str>>();
+        name_chain.sort();
+        name_chain.dedup();
+        let joined_matrix = &stack(Axis(0), &views[..]).unwrap();
+        DataFrame::from_array(joined_matrix, &name_chain)
     }
 }
 

@@ -1,5 +1,5 @@
 
-#[macro_use(stack)]
+#![feature(test)]
 extern crate ndarray;
 extern crate test;
 extern crate rand;
@@ -10,9 +10,15 @@ use rand::distributions::Range;
 use ndarray_rand::RandomExt;
 
 use ndarray::arr2;
-mod lib;
+mod dataframe;
 fn main() {
-    let a = arr2(&[[2., 3.], [3., 4.]]);
+    let a = arr2(&[[2., 3.], [3., 4.], [4., 34.]]);
     let names = vec!["a", "b"];
-    let df = lib::DataFrame::from_array(&a, &names);
+    let names1 = vec!["a", "c"];
+
+    let b = arr2(&[[2., 3.], [7., 8.]]);
+    let df = dataframe::DataFrame::from_array(&a, &names).unwrap();
+    let df1 = dataframe::DataFrame::from_array(&b, &names1).unwrap();
+
+    println!("{:?}", df.inner_join(df1, "a"))
 }

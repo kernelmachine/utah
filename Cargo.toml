@@ -5,13 +5,12 @@ authors = ["pegasos1 <sgrangan01@gmail.com>"]
 
 [dependencies]
 ndarray = "*"
-serde = "*"
 ndarray-rand="*"
 rand="*"
 
-# [[bin]]
-# name="dataframe"
-# path='src/main.rs'
+[[bin]]
+name="dataframe"
+path='src/main.rs'
 
 [lib]
 path='src/lib.rs'
