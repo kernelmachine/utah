@@ -30,7 +30,7 @@ pub type MatrixView<'a> = ArrayView<'a, f64, (Ix, Ix)>;
 
 #[derive(Debug, PartialEq)]
 pub struct DataFrame<'b> {
-    data_map: HashMap<&'b str, Column>,
+    data_map: HashMap<&'b str, ColumnView<'b>>,
 }
 
 
@@ -59,7 +59,7 @@ impl Value {
 }
 
 impl<'b> DataFrame<'b> {
-    pub fn new(data_map: HashMap<&'b str, Column>) -> DataFrame<'b> {
+    pub fn new(data_map: HashMap<&'b str, ColumnView<'b>>) -> DataFrame<'b> {
         DataFrame { data_map: data_map }
 
     }
@@ -68,25 +68,20 @@ impl<'b> DataFrame<'b> {
         if data.cols() != names.len() {
             return Err("mismatched dimensions");
         }
-        let data_map: HashMap<&'b str, Column> =
-            names.iter().zip(data.axis_iter(Axis(1))).map(|(x, y)| (*x, y.to_owned())).collect();
+        let data_map: HashMap<&'b str, ColumnView<'b>> =
+            names.iter().zip(data.axis_iter(Axis(1))).map(|(x, y)| (*x, y)).collect();
 
         Ok(DataFrame::new(data_map))
     }
 
-    pub fn from_vec(data: &'b Vec<Row>, names: Vec<&'b str>) -> Result<DataFrame<'b>, &'b str> {
-        let data = stack(Axis(0),
-                         &data.iter()
-                             .map(|x| x.view().into_shape((1, x.dim())).unwrap())
-                             .collect::<Vec<MatrixView<'b>>>()[..]);
-        DataFrame::from_array(&data.unwrap(), &names)
-        // if data.len() != names.len() {
-        //     return Err("mismatched dimensions");
-        // }
-        // let data_map: HashMap<&'b str, Column> =
-        //     names.iter().zip(data).map(|(x, y)| (*x, y.to_owned())).collect();
-        //
-        // Ok(DataFrame::new(data_map))
+    pub fn from_vec(data: Vec<Column>, names: Vec<&'b str>) -> Result<DataFrame<'b>, &'b str> {
+        if data.len() != names.len() {
+            return Err("mismatched dimensions");
+        }
+        let data_map: HashMap<&'b str, Column> =
+            names.iter().zip(data).map(|(x, y)| (*x, y.view())).collect();
+
+        Ok(DataFrame::new(data_map))
         // let data = stack(Axis(0),
         //                  &data.iter()
         //                      .map(|x| x.view().into_shape((1, x.dim())).unwrap())
@@ -101,7 +96,7 @@ impl<'b> DataFrame<'b> {
         // Ok(DataFrame::new(data_map))
     }
 
-    pub fn get(&self, name: &'b str) -> Option<&Column> {
+    pub fn get(&self, name: &'b str) -> Option<&ColumnView<'b>> {
         self.data_map.get(&name)
     }
 
@@ -109,7 +104,7 @@ impl<'b> DataFrame<'b> {
     //     self.data_map.get_mut(&name)
     // }
 
-    pub fn inner_join(&self, other: &DataFrame<'b>, on: &'b str) -> Result<DataFrame<'b>, &'b str> {
+    pub fn inner_join(self, other: DataFrame<'b>, on: &'b str) -> Result<DataFrame<'b>, &'b str> {
         let h: HashMap<Value, usize> = self.get(on)
             .unwrap()
             .iter()
@@ -122,39 +117,34 @@ impl<'b> DataFrame<'b> {
             .enumerate()
             .map(|(x, y)| (Value::new(*y), x))
             .collect();
+        let mut idxs = vec![];
         let mut vs = vec![];
         for row_key in h.keys() {
             match j.get(row_key) {
                 None => continue,
                 Some(v) => {
                     let idx = *h.get(row_key).unwrap();
-                    let p = self.data_map
-                        .values()
-                        .map(|x| x.get(idx).unwrap())
-                        .map(|x| *x);
-
-                    let o = other.data_map
-                        .iter()
-                        .filter(|&(x, _)| *x != on)
-                        .map(|(_, y)| y.get(*v).unwrap())
-                        .map(|x| *x);
-
-                    let chain = p.chain(o);
-
-                    vs.push(chain.collect());
-
+                    idxs.push(idx);
+                    vs.push(*v);
                 }
             };
         }
-        if vs.len() == 0 {
-            return Err("No matching values in join column.");
-        }
+        let p = self.data_map
+            .iter()
+            .map(|(_, y)| y.select(Axis(0), &idxs[..]));
+        let o = other.data_map
+            .iter()
+            .filter(|&(x, _)| *x != on)
+            .map(|(_, y)| y.select(Axis(0), &vs[..]));
+
+        let data_zip: Vec<(Column, Column)> = p.zip(o).collect();
+        let data_chain = data_zip.iter()
+            .map(|&(ref x, ref y)| stack![Axis(0), *x, *y]);
         let name_chain = self.data_map
             .keys()
             .chain(other.data_map.keys().filter(|&x| *x != on))
-            .map(|x| *x)
-            .collect::<Vec<&'b str>>();
-        DataFrame::from_vec(&vs, name_chain)
+            .map(|x| *x);
+        DataFrame::from_vec(data_chain.collect(), name_chain.collect())
     }
 }
 
