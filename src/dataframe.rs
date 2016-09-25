@@ -1,32 +1,42 @@
 
-use ndarray::{Array, Ix, Axis, ArrayView, stack, ShapeError};
+use ndarray::{Array, Ix, Axis, ArrayView, stack};
 use std::collections::HashMap;
-use std::collections::hash_map::Entry;
+use std::mem;
 
 
 pub type Column = Array<f64, Ix>;
+pub type Row = Array<f64, Ix>;
+
 pub type Matrix = Array<f64, (Ix, Ix)>;
 pub type ColumnView<'a> = ArrayView<'a, f64, Ix>;
 pub type MatrixView<'a> = ArrayView<'a, f64, (Ix, Ix)>;
 
-macro_rules! dataframe {
-    ($name : ident,($($field: expr),*), ($($value: expr),*)) => {
-        #[derive(Debug, PartialEq)]
-        struct $name { $($field: ndarray::Array<f64, Ix>),* };
-        impl Default for $name {
-            fn default() -> $name {
-                $name {
-                $($field : $value),*
-                }
-            }
-        }
+// macro_rules! dataframe {
+//     ($name : ident,($($field: expr),*), ($($value: expr),*)) => {
+//         #[derive(Debug, PartialEq)]
+//         struct $name { $($field: ndarray::Array<f64, Ix>),* };
+//         impl Default for $name {
+//             fn default() -> $name {
+//                 $name {
+//                 $($field : $value),*
+//                 }
+//             }
+//         }
+//
+//
+//
+//     };
+// }
 
-
-
-    };
+#[derive(Debug, PartialEq)]
+pub struct DataFrame<'b> {
+    data_map: HashMap<&'b str, Column>,
 }
 
-use std::mem;
+
+#[derive(Hash, Eq, PartialEq)]
+struct Value((u64, i16, i8));
+
 
 pub fn integer_decode(val: f64) -> (u64, i16, i8) {
     let bits: u64 = unsafe { mem::transmute(val) };
@@ -42,33 +52,15 @@ pub fn integer_decode(val: f64) -> (u64, i16, i8) {
     (mantissa, exponent, sign)
 }
 
-#[derive(Debug, PartialEq)]
-pub struct DataFrame<'b> {
-    data: &'b Matrix,
-    names: &'b Vec<&'b str>,
-    data_map: HashMap<&'b str, ColumnView<'b>>,
-}
-
-
-#[derive(Hash, Eq, PartialEq)]
-struct Value((u64, i16, i8));
-
-
 impl Value {
     fn new(val: f64) -> Value {
         Value(integer_decode(val))
     }
 }
+
 impl<'b> DataFrame<'b> {
-    pub fn new(data: &'b Matrix,
-               names: &'b Vec<&'b str>,
-               data_map: HashMap<&'b str, ColumnView<'b>>)
-               -> DataFrame<'b> {
-        DataFrame {
-            data: data,
-            names: names,
-            data_map: data_map,
-        }
+    pub fn new(data_map: HashMap<&'b str, Column>) -> DataFrame<'b> {
+        DataFrame { data_map: data_map }
 
     }
 
@@ -76,31 +68,55 @@ impl<'b> DataFrame<'b> {
         if data.cols() != names.len() {
             return Err("mismatched dimensions");
         }
-        let data_map: HashMap<&'b str, ColumnView<'b>> =
-            // names.iter().enumerate().map(|(x, y)| (*y, data.column(x))).collect();
-            names.iter().zip(data.axis_iter(Axis(1))).map(|(x, y)| (*x, y)).collect();
+        let data_map: HashMap<&'b str, Column> =
+            names.iter().zip(data.axis_iter(Axis(1))).map(|(x, y)| (*x, y.to_owned())).collect();
 
-        Ok(DataFrame::new(data, names, data_map))
+        Ok(DataFrame::new(data_map))
     }
 
-    fn get(&self, name: &'b str) -> Option<&ColumnView<'b>> {
+    pub fn from_vec(data: &'b Vec<Row>, names: Vec<&'b str>) -> Result<DataFrame<'b>, &'b str> {
+        let data = stack(Axis(0),
+                         &data.iter()
+                             .map(|x| x.view().into_shape((1, x.dim())).unwrap())
+                             .collect::<Vec<MatrixView<'b>>>()[..]);
+        DataFrame::from_array(data.unwrap(), &names)
+        // if data.len() != names.len() {
+        //     return Err("mismatched dimensions");
+        // }
+        // let data_map: HashMap<&'b str, Column> =
+        //     names.iter().zip(data).map(|(x, y)| (*x, y.to_owned())).collect();
+        //
+        // Ok(DataFrame::new(data_map))
+        // let data = stack(Axis(0),
+        //                  &data.iter()
+        //                      .map(|x| x.view().into_shape((1, x.dim())).unwrap())
+        //                      .collect::<Vec<MatrixView<'b>>>()[..])
+        //     .unwrap();
+        // if data.cols() != names.len() {
+        //     return Err("mismatched dimensions");
+        // }
+        // let data_map: HashMap<&'b str, Column> =
+        //     names.iter().zip(data.axis_iter(Axis(1))).map(|(x, y)| (*x, y.to_owned())).collect();
+        //
+        // Ok(DataFrame::new(data_map))
+    }
+
+    pub fn get(&self, name: &'b str) -> Option<&Column> {
         self.data_map.get(&name)
     }
 
-    fn get_mut(&mut self, name: &'b str) -> Option<&mut ColumnView<'b>> {
-        self.data_map.get_mut(&name)
-    }
+    // fn get_mut(&mut self, name: &'b str) -> Option<&mut Column> {
+    //     self.data_map.get_mut(&name)
+    // }
 
-    pub fn inner_join(self, other: DataFrame<'b>, on: &'b str) -> Result<DataFrame<'b>, &'b str> {
-        let h: HashMap<Value, usize> = self.data_map
-            .get(on)
+    pub fn inner_join(&self, other: &DataFrame<'b>, on: &'b str) -> Result<DataFrame<'b>, &'b str> {
+        let h: HashMap<Value, usize> = self.get(on)
             .unwrap()
             .iter()
             .enumerate()
             .map(|(x, y)| (Value::new(*y), x))
             .collect();
-        let j: HashMap<Value, usize> = other.data_map
-            .get(on)
+        let j: HashMap<Value, usize> = other.get(on)
             .unwrap()
             .iter()
             .enumerate()
@@ -111,30 +127,34 @@ impl<'b> DataFrame<'b> {
             match j.get(row_key) {
                 None => continue,
                 Some(v) => {
-                    let p = self.data
-                        .row(*h.get(row_key).unwrap())
-                        .as_slice()
-                        .unwrap()
-                        .to_vec();
-                    let o = other.data.row(*v).as_slice().unwrap().to_vec();
-                    let chain = p.iter()
-                        .chain(o.iter())
-                        .collect::<Vec<&f64>>();
-                    let array_chain = Array::from_shape_vec((1, chain.len()),
-                                                            chain.iter().map(|x| **x).collect())
-                        .unwrap();
-                    vs.push(array_chain);
+                    let idx = *h.get(row_key).unwrap();
+                    let p = self.data_map
+                        .values()
+                        .map(|x| x.get(idx).unwrap())
+                        .map(|x| *x);
+
+                    let o = other.data_map
+                        .iter()
+                        .filter(|&(x, _)| *x != on)
+                        .map(|(_, y)| y.get(*v).unwrap())
+                        .map(|x| *x);
+
+                    let chain = p.chain(o);
+
+                    vs.push(chain.collect());
 
                 }
             };
         }
-        let views = vs.iter().map(|x| x.view()).collect::<Vec<MatrixView<'b>>>();
-        let mut name_chain =
-            self.names.iter().chain(other.names).map(|x| *x).collect::<Vec<&'b str>>();
-        name_chain.sort();
-        name_chain.dedup();
-        let joined_matrix = &stack(Axis(0), &views[..]).unwrap();
-        DataFrame::from_array(joined_matrix, &name_chain)
+        if vs.len() == 0 {
+            return Err("No matching values in join column.");
+        }
+        let name_chain = self.data_map
+            .keys()
+            .chain(other.data_map.keys().filter(|&x| *x != on))
+            .map(|x| *x)
+            .collect::<Vec<&'b str>>();
+        DataFrame::from_vec(&vs, name_chain)
     }
 }
 
