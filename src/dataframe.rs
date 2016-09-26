@@ -28,23 +28,23 @@ pub type MatrixView<'a> = ArrayView<'a, f64, (Ix, Ix)>;
 // }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct DataFrame<'b> {
-    data_map: HashMap<&'b str, Column>,
+pub struct DataFrame {
+    data_map: HashMap<String, Column>,
 }
 
 
 #[derive(Hash, Eq,  Clone,PartialEq)]
 struct Value((u64, i16, i8));
 
-pub fn merge<'b>(first_context: HashMap<&'b str, Column>,
-                 second_context: HashMap<&'b str, Column>)
-                 -> HashMap<&'b str, Column> {
+pub fn merge(first_context: HashMap<String, Column>,
+             second_context: HashMap<String, Column>)
+             -> HashMap<String, Column> {
     let mut new_context = HashMap::new();
     for (key, value) in first_context.iter() {
-        new_context.insert(*key, value.to_owned());
+        new_context.insert(key.to_owned(), value.to_owned());
     }
     for (key, value) in second_context.iter() {
-        new_context.insert(*key, value.to_owned());
+        new_context.insert(key.to_owned(), value.to_owned());
     }
     new_context
 }
@@ -70,37 +70,39 @@ impl Value {
 }
 
 
-impl<'b> DataFrame<'b> {
-    pub fn new(data_map: HashMap<&'b str, Column>) -> DataFrame<'b> {
+impl DataFrame {
+    pub fn new(data_map: HashMap<String, Column>) -> DataFrame {
         DataFrame { data_map: data_map }
 
     }
 
-    pub fn from_array(data: &'b Matrix, names: &'b Vec<&'b str>) -> Result<DataFrame<'b>, &'b str> {
+    pub fn from_array(data: &Matrix, names: &Vec<String>) -> Result<DataFrame, &'static str> {
         if data.cols() != names.len() {
             return Err("mismatched dimensions");
         }
-        let data_map: HashMap<&'b str, Column> =
-            names.iter().zip(data.axis_iter(Axis(1))).map(|(x, y)| (*x, y.to_owned())).collect();
+        let data_map: HashMap<String, Column> = names.iter()
+            .zip(data.axis_iter(Axis(1)))
+            .map(|(x, y)| (x.to_owned(), y.to_owned()))
+            .collect();
 
         Ok(DataFrame::new(data_map))
     }
 
 
-    pub fn get(&self, name: &'b str) -> Option<&Column> {
+    pub fn get(&self, name: String) -> Option<&Column> {
         self.data_map.get(&name)
     }
 
 
 
-    pub fn inner_join(&self, other: &DataFrame<'b>, on: &'b str) -> Result<DataFrame<'b>, &'b str> {
-        let h: HashMap<Value, usize> = self.get(on)
+    pub fn inner_join(&self, other: &DataFrame, on: &str) -> Result<DataFrame, &'static str> {
+        let h: HashMap<Value, usize> = self.get(on.to_string())
             .unwrap()
             .iter()
             .enumerate()
             .map(|(x, y)| (Value::new(*y), x))
             .collect();
-        let j: HashMap<Value, usize> = other.get(on)
+        let j: HashMap<Value, usize> = other.get(on.to_string())
             .unwrap()
             .iter()
             .enumerate()
@@ -112,19 +114,23 @@ impl<'b> DataFrame<'b> {
             match j.get(row_key) {
                 None => continue,
                 Some(v) => {
-                    let idx = *h.get(row_key).unwrap();
-                    idxs.push(idx);
-                    vs.push(*v);
+                    match h.get(row_key) {
+                        None => return Err("omg!"),
+                        Some(idx) => {
+                            idxs.push(*idx);
+                            vs.push(*v);
+                        }
+                    }
                 }
             };
         }
         let p = self.data_map
             .iter()
-            .map(|(x, y)| (*x, y.select(Axis(0), &idxs[..])))
+            .map(|(x, y)| (x.to_owned(), y.select(Axis(0), &idxs[..])))
             .collect();
         let o = other.data_map
             .iter()
-            .map(|(x, y)| (*x, y.select(Axis(0), &vs[..])))
+            .map(|(x, y)| (x.to_owned(), y.select(Axis(0), &vs[..])))
             .collect();
         let res = merge(p, o);
 

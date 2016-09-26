@@ -13,11 +13,14 @@ use ndarray::arr2;
 mod dataframe;
 fn main() {
     let a = arr2(&[[2., 3.], [3., 4.], [7., 34.]]);
-    let names = vec!["a", "b"];
-    let names1 = vec!["a", "c"];
+    let names = vec!["a", "b"].iter().map(|x| x.to_string()).collect();
+    let names1 = vec!["a", "c"].iter().map(|x| x.to_string()).collect();
     let b = arr2(&[[2., 3.], [7., 8.]]);
-    let df = dataframe::DataFrame::from_array(&a, &names).unwrap();
-    let df1 = dataframe::DataFrame::from_array(&b, &names1).unwrap();
-    let j = df.inner_join(&df1, "a");
-    println!("{:?}", j);
+    if let Ok(df) = dataframe::DataFrame::from_array(&a, &names) {
+        if let Ok(df1) = dataframe::DataFrame::from_array(&b, &names1) {
+            let j = df.inner_join(&df1, "a");
+            println!("{:?}", j);
+        }
+    }
+
 }
