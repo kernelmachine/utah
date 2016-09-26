@@ -1,5 +1,4 @@
-
-use ndarray::{Array, Ix, Axis, ArrayView, stack};
+use ndarray::{Array, Ix, Axis, ArrayView};
 use std::collections::HashMap;
 use std::mem;
 
@@ -28,15 +27,27 @@ pub type MatrixView<'a> = ArrayView<'a, f64, (Ix, Ix)>;
 //     };
 // }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame<'b> {
-    data_map: HashMap<&'b str, ColumnView<'b>>,
+    data_map: HashMap<&'b str, Column>,
 }
 
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Hash, Eq,  Clone,PartialEq)]
 struct Value((u64, i16, i8));
 
+pub fn merge<'b>(first_context: HashMap<&'b str, Column>,
+                 second_context: HashMap<&'b str, Column>)
+                 -> HashMap<&'b str, Column> {
+    let mut new_context = HashMap::new();
+    for (key, value) in first_context.iter() {
+        new_context.insert(*key, value.to_owned());
+    }
+    for (key, value) in second_context.iter() {
+        new_context.insert(*key, value.to_owned());
+    }
+    new_context
+}
 
 pub fn integer_decode(val: f64) -> (u64, i16, i8) {
     let bits: u64 = unsafe { mem::transmute(val) };
@@ -58,8 +69,9 @@ impl Value {
     }
 }
 
+
 impl<'b> DataFrame<'b> {
-    pub fn new(data_map: HashMap<&'b str, ColumnView<'b>>) -> DataFrame<'b> {
+    pub fn new(data_map: HashMap<&'b str, Column>) -> DataFrame<'b> {
         DataFrame { data_map: data_map }
 
     }
@@ -68,43 +80,20 @@ impl<'b> DataFrame<'b> {
         if data.cols() != names.len() {
             return Err("mismatched dimensions");
         }
-        let data_map: HashMap<&'b str, ColumnView<'b>> =
-            names.iter().zip(data.axis_iter(Axis(1))).map(|(x, y)| (*x, y)).collect();
-
-        Ok(DataFrame::new(data_map))
-    }
-
-    pub fn from_vec(data: Vec<Column>, names: Vec<&'b str>) -> Result<DataFrame<'b>, &'b str> {
-        if data.len() != names.len() {
-            return Err("mismatched dimensions");
-        }
         let data_map: HashMap<&'b str, Column> =
-            names.iter().zip(data).map(|(x, y)| (*x, y.view())).collect();
+            names.iter().zip(data.axis_iter(Axis(1))).map(|(x, y)| (*x, y.to_owned())).collect();
 
         Ok(DataFrame::new(data_map))
-        // let data = stack(Axis(0),
-        //                  &data.iter()
-        //                      .map(|x| x.view().into_shape((1, x.dim())).unwrap())
-        //                      .collect::<Vec<MatrixView<'b>>>()[..])
-        //     .unwrap();
-        // if data.cols() != names.len() {
-        //     return Err("mismatched dimensions");
-        // }
-        // let data_map: HashMap<&'b str, Column> =
-        //     names.iter().zip(data.axis_iter(Axis(1))).map(|(x, y)| (*x, y.to_owned())).collect();
-        //
-        // Ok(DataFrame::new(data_map))
     }
 
-    pub fn get(&self, name: &'b str) -> Option<&ColumnView<'b>> {
+
+    pub fn get(&self, name: &'b str) -> Option<&Column> {
         self.data_map.get(&name)
     }
 
-    // fn get_mut(&mut self, name: &'b str) -> Option<&mut Column> {
-    //     self.data_map.get_mut(&name)
-    // }
 
-    pub fn inner_join(self, other: DataFrame<'b>, on: &'b str) -> Result<DataFrame<'b>, &'b str> {
+
+    pub fn inner_join(&self, other: &DataFrame<'b>, on: &'b str) -> Result<DataFrame<'b>, &'b str> {
         let h: HashMap<Value, usize> = self.get(on)
             .unwrap()
             .iter()
@@ -131,20 +120,15 @@ impl<'b> DataFrame<'b> {
         }
         let p = self.data_map
             .iter()
-            .map(|(_, y)| y.select(Axis(0), &idxs[..]));
+            .map(|(x, y)| (*x, y.select(Axis(0), &idxs[..])))
+            .collect();
         let o = other.data_map
             .iter()
-            .filter(|&(x, _)| *x != on)
-            .map(|(_, y)| y.select(Axis(0), &vs[..]));
+            .map(|(x, y)| (*x, y.select(Axis(0), &vs[..])))
+            .collect();
+        let res = merge(p, o);
 
-        let data_zip: Vec<(Column, Column)> = p.zip(o).collect();
-        let data_chain = data_zip.iter()
-            .map(|&(ref x, ref y)| stack![Axis(0), *x, *y]);
-        let name_chain = self.data_map
-            .keys()
-            .chain(other.data_map.keys().filter(|&x| *x != on))
-            .map(|x| *x);
-        DataFrame::from_vec(data_chain.collect(), name_chain.collect())
+        Ok(DataFrame::new(res))
     }
 }
 
@@ -172,5 +156,8 @@ impl<'b> DataFrame<'b> {
 // sample rows
 // find/select
 // sort
+// statistics (mean, median, stdev)
+// print
+
 // statistics (mean, median, stdev)
 // print

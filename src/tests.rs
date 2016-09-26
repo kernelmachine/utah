@@ -39,17 +39,7 @@ mod tests {
         assert!(df.inner_join(&df1, "a").is_ok());
     }
 
-    #[test]
-    fn dataframe_join_fails() {
-        let a = arr2(&[[1., 3.], [3., 4.], [8., 34.]]);
-        let names = vec!["a", "b"];
-        let names1 = vec!["a", "c"];
 
-        let z = arr2(&[[2., 3.], [7., 8.]]);
-        let df = DataFrame::from_array(&a, &names).unwrap();
-        let df1 = DataFrame::from_array(&z, &names1).unwrap();
-        assert!(df.inner_join(&df1, "a").is_err());
-    }
     // #[test]
     // fn dataframe_insert() {
     //     let a = arr2(&[[2., 3.], [3., 4.]]);
