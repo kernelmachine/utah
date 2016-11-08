@@ -1,5 +1,6 @@
 #![feature(test)]
-#[macro_use(stack)]
+#[macro_use]
+
 extern crate ndarray;
 extern crate ndarray_rand;
 extern crate rand;
