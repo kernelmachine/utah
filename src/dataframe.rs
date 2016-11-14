@@ -84,7 +84,7 @@ impl<T: Float> DataFrame<T> {
             self.inner_matrix
                 .column(*h_idx)
                 .indexed_iter()
-                .map(|(x, y)| (Value::new(*y).unwrap(), x))
+                .map(|(x, y)| (Value::new(*y), x))
                 .collect()
         };
 
@@ -98,7 +98,7 @@ impl<T: Float> DataFrame<T> {
             other.inner_matrix
                 .column(*j_idx)
                 .indexed_iter()
-                .map(|(x, y)| (Value::new(*y).unwrap(), x))
+                .map(|(x, y)| (Value::new(*y), x))
                 .collect()
         };
 
@@ -111,8 +111,7 @@ impl<T: Float> DataFrame<T> {
 
         let new_matrix: Matrix<T> = {
             let i1: Vec<usize> = idxs.iter().map(|&(_, x, _)| x).collect();
-            let i2: Vec<usize> =
-                idxs.iter().filter(|&x| x.2.is_some()).map(|&(_, _, y)| y.unwrap()).collect();
+            let i2: Vec<usize> = idxs.iter().map(|&(_, _, y)| y.unwrap()).collect();
             let mat1 = self.inner_matrix.select(Axis(0), &i1[..]);
             let mat2 = other.inner_matrix.select(Axis(0), &i2[..]);
             match stack(Axis(1), &[mat1.view(), mat2.view()]) {
@@ -138,8 +137,8 @@ impl<T: Float> DataFrame<T> {
 struct Value((u64, i16, i8));
 
 impl Value {
-    fn new<T: Float>(val: T) -> Result<Value, &'static str> {
-        Ok(Value(val.integer_decode()))
+    fn new<T: Float>(val: T) -> Value {
+        Value(val.integer_decode())
     }
 }
 
