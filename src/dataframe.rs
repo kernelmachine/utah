@@ -1,6 +1,3 @@
-#[allow(dead_code)]
-
-
 use ndarray::{Array, Ix, Axis, ArrayView, stack};
 use std::collections::HashMap;
 use std::mem;
@@ -22,29 +19,14 @@ pub enum Data {
     Float(f64),
 }
 
-// impl Data {
-//     fn from_int(i: i64) -> Data {
-//         Data::Int(i)
-//     }
-//     fn from_float(f: f64) -> Data {
-//         Data::Float(f)
-//     }
-//     fn from_string(s: String) -> Data {
-//         Data::Str(s)
-//     }asdfasdf
-// }
-macro_rules! dataframe {
-    ($name : ident, {$($field : ident : $value : expr),*}) => {
-        #[derive(Debug, PartialEq, PartialOrd)]
-        struct $name {$($field: Vec<Data>),*};
-        impl Default for $name {
-            fn default() -> $name {
-                $name {$($field: $value),*}
-            }
-        }
-    };
+impl Data {
+    pub fn from_int(i: i64) -> Data {
+        Data::Int(i)
+    }
+    pub fn from_float(f: f64) -> Data {
+        Data::Float(f)
+    }
 }
-
 
 
 #[derive(Debug, Clone, PartialEq)]
@@ -61,9 +43,7 @@ impl DataFrame {
     pub fn datamap(&self) -> &HashMap<String, usize> {
         &self.data_map
     }
-}
 
-impl DataFrame {
     pub fn new(data: Matrix, names: Vec<String>) -> Result<DataFrame, &'static str> {
 
         if names.len() != data.shape()[1] {
@@ -84,12 +64,26 @@ impl DataFrame {
         Ok(dm)
     }
 
+    pub fn get(self, name: String) -> Result<Column, &'static str> {
+        match self.data_map.get(&name) {
+            Some(x) => Ok(self.inner_matrix.column(*x).to_owned()),
+            None => Err("no such column exists"),
+        }
+    }
 
+
+    pub fn insert(mut self, data: Matrix, name: String) -> Result<DataFrame, &'static str> {
+
+        let idx = {
+            self.data_map.len()
+        };
+        self.data_map.insert(name, idx);
+        self.inner_matrix = stack(Axis(1), &[self.inner_matrix.view(), data.view()]).unwrap();
+        Ok(self)
+
+    }
 
     pub fn inner_join(self, other: DataFrame, on: &str) -> Result<DataFrame, &'static str> {
-
-
-
 
         let h: HashMap<Value, usize> = {
             let h_idx: &usize = self.data_map
@@ -118,11 +112,10 @@ impl DataFrame {
         let idxs: Vec<(Value, usize, Option<usize>)> =
             Join::new(JoinType::InnerJoin, h.into_iter(), j).collect();
 
-
-
         if idxs.len() == 0 {
             return Err("no common values");
         }
+
         let new_matrix: Matrix = {
             let i1: Vec<usize> = idxs.iter().map(|&(_, x, _)| x).collect();
             let i2: Vec<usize> =
@@ -248,7 +241,7 @@ impl<L, K, LV, RV> Iterator for Join<L, K, RV>
     }
 }
 
-
+// To implement....?
 // // parallelized join
 // // parallelized concatenation
 // // parallelized frequency counts

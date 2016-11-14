@@ -9,8 +9,7 @@ extern crate ndarray_rand;
 
 
 
-use ndarray::arr2;
-mod dataframe;
+pub mod dataframe;
 fn main() {
     // dataframe!()
     // let a = arr2(&[[2., 3.], [3., 4.], [7., 34.]]);
