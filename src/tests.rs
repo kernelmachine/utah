@@ -141,4 +141,34 @@ pub mod tests {
 
         b.iter(|| c_df.clone().inner_join(e_df.clone(), "9"));
     }
+
+    #[bench]
+    fn bench_stack(b: &mut Bencher) {
+        let a = Array::random((2000, 10), Range::new(0., 10.));
+        let d = Array::random((2000, 10), Range::new(0., 10.));
+
+
+        b.iter(|| stack(Axis(1), &[a.view(), d.view()]));
+    }
+
+    #[bench]
+    fn bench_inner_join_bare(b: &mut Bencher) {
+        let mut left = HashMap::new();
+        for (i, j) in (1..2000).zip((1..2000).map(|x| x.to_string())) {
+            left.insert(i, j);
+        }
+
+        let mut right = HashMap::new();
+        for (i, j) in (1993..4000).zip((1993..4000).map(|x| x.to_string())) {
+            right.insert(i, j);
+        }
+
+        b.iter(|| {
+            let res: Vec<(i32, String, Option<String>)> =
+                Join::new(JoinType::InnerJoin, left.clone().into_iter(), right.clone()).collect();
+            res
+        });
+
+    }
+
 }
