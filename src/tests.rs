@@ -1,5 +1,4 @@
 mod tests {
-
     extern crate rand;
     extern crate test;
     use ndarray::{arr2, arr1, Axis, stack};
@@ -11,6 +10,38 @@ mod tests {
     use std::rc::Rc;
     use rand::{thread_rng, Rng};
     use std::collections::HashMap;
+    #[test]
+    fn outerleftjoin() {
+        let mut left = HashMap::new();
+        left.insert(1, "Alice");
+        left.insert(2, "Bob");
+
+        let mut right = HashMap::new();
+        right.insert(1, "Programmer");
+        let mut res: Vec<(usize, &str, Option<&str>)> =
+            Join::new(JoinType::OuterLeftJoin, left.into_iter(), right).collect();
+        res.sort_by_key(|x| x.1);
+        assert_eq!(res,
+                   vec![(1, "Alice", Some("Programmer")), (2, "Bob", None)])
+
+    }
+    #[test]
+    fn innerjoin() {
+        let mut left = HashMap::new();
+        left.insert(1, "Alice");
+        left.insert(2, "Bob");
+        left.insert(3, "Suchin");
+
+        let mut right = HashMap::new();
+        right.insert(1, "Programmer");
+        right.insert(3, "Data Scientist");
+        let mut res: Vec<(usize, &str, Option<&str>)> =
+            Join::new(JoinType::InnerJoin, left.into_iter(), right).collect();
+        res.sort_by_key(|x| x.1);
+        assert_eq!(res,
+                   vec![(1, "Alice", Some("Programmer")), (3, "Suchin", Some("Data Scientist"))])
+
+    }
 
     #[test]
     fn dataframe_creation() {
@@ -31,11 +62,12 @@ mod tests {
     fn dataframe_join() {
         let mut rng = thread_rng();
 
-        let a = Array::random((2, 2), Range::new(0., 10.));
-        let b = Array::random((2, 1), Range::new(0., 10.));
-        let d = Array::random((2, 2), Range::new(0., 10.));
+        let a = Array::random((3, 2), Range::new(0., 10.));
+        let b = arr2(&[[1.], [5.], [2.]]);
+        let f = arr2(&[[1.], [0.], [2.]]);
+        let d = Array::random((3, 2), Range::new(0., 10.));
         let c = stack(Axis(1), &[a.view(), b.view()]).unwrap();
-        let e = stack(Axis(1), &[d.view(), b.view()]).unwrap();
+        let e = stack(Axis(1), &[d.view(), f.view()]).unwrap();
 
         // let mut a_names: Vec<String> = (0..2).map(|x| x.to_string()).collect();
         // let mut b_names: Vec<String> = (1..3).map(|x| x.to_string()).collect();
@@ -63,13 +95,12 @@ mod tests {
         // let names1 = slice.to_vec();
         // let z = Array::random((2, 2), Range::new(0., 10.));
         //
-        // a.column
         // let df = DataFrame::new(a.mapv(Data::Float), names).unwrap();
         // let df1 = DataFrame::new(z.mapv(Data::Float), names1).unwrap();
         // println!("{:?}", df);
         // println!("{:?}", df1);
-
-
+        //
+        //
         // println!("{:?}", df.inner_join(df1, "0"));
 
         // assert!(df.inner_join(df1, "0").is_ok());
@@ -112,13 +143,13 @@ mod tests {
     //     let df = DataFrame::from_array(&a, &names).unwrap();
     //     b.iter(|| df.get("1".to_string()));
     // }
-    #[bench]
-    fn bench_join(b: &mut Bencher) {
+    #[test]
+    fn test_join() {
         let mut rng = thread_rng();
 
-        let a = Array::random((200, 10), Range::new(0., 10.));
-        let z = Array::random((200, 1), Range::new(0., 10.));
-        let d = Array::random((200, 10), Range::new(0., 10.));
+        let a = Array::random((2000000, 10), Range::new(0., 10.));
+        let z = Array::random((2000000, 1), Range::new(0., 10.));
+        let d = Array::random((2000000, 10), Range::new(0., 10.));
         let c = stack(Axis(1), &[a.view(), z.view()]).unwrap();
         let e = stack(Axis(1), &[d.view(), z.view()]).unwrap();
 
@@ -136,6 +167,7 @@ mod tests {
         // println!("e - {:?}", e_df);
         // // println!("c - {:?}", c_df);
         // println!("join - {:?}", c_df.inner_join(e_df, "3"));
-        b.iter(|| c_df.clone().inner_join(e_df.clone(), "9"));
+        c_df.clone().inner_join(e_df.clone(), "9");
+        // b.iter(|| c_df.clone().inner_join(e_df.clone(), "9"));
     }
 }
