@@ -47,7 +47,7 @@ pub mod tests {
 
     #[test]
     fn dataframe_creation() {
-        let a = arr2(&[[Data::Float(2.), Data::Float(3.)], [Data::Float(3.), Data::Float(4.)]]);
+        let a = arr2(&[[2., 3.], [3., 4.]]);
         let names = vec!["a", "b"].iter().map(|x| x.to_string()).collect();
         let df = DataFrame::new(a, names);
         assert!(df.is_ok())
@@ -55,13 +55,12 @@ pub mod tests {
 
     #[test]
     fn dataframe_index() {
-        let a = arr2(&[[2., 3.], [3., 4.]]).mapv(Data::Float);
+        let a = arr2(&[[2., 3.], [3., 4.]]);
         let names = vec!["a", "b"].iter().map(|x| x.to_string()).collect();
         let df = {
             DataFrame::new(a, names).unwrap()
         };
-        assert!(df.get("a".to_string()) ==
-                Ok(arr2(&[[2., 3.], [3., 4.]]).mapv(Data::Float).column(0).to_owned()))
+        assert!(df.get("a".to_string()) == Ok(arr2(&[[2., 3.], [3., 4.]]).column(0).to_owned()))
     }
 
     #[test]
@@ -78,8 +77,8 @@ pub mod tests {
         let e_names: Vec<String> = vec!["4", "5", "3"].iter().map(|x| x.to_string()).collect();
 
 
-        let c_df = DataFrame::new(c.mapv(Data::Float), c_names).unwrap();
-        let e_df = DataFrame::new(e.mapv(Data::Float), e_names).unwrap();
+        let c_df = DataFrame::new(c, c_names).unwrap();
+        let e_df = DataFrame::new(e, e_names).unwrap();
 
         println!("c - {:?}", c_df);
         println!("e - {:?}", e_df);
@@ -94,22 +93,21 @@ pub mod tests {
     fn dataframe_insert() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
         let names = vec!["a", "b"].iter().map(|x| x.to_string()).collect();
-        let df = DataFrame::new(a.mapv(Data::Float), names).unwrap();
+        let df = DataFrame::new(a, names).unwrap();
         let new_array = arr2(&[[5.], [6.]]);
 
-        let new_df = df.insert(new_array.mapv(Data::Float), "c".to_string());
+        let new_df = df.insert(new_array, "c".to_string());
         let new_names: Vec<String> = vec!["a", "b", "c"].iter().map(|x| x.to_string()).collect();
         let a_prime = arr2(&[[2., 3., 5.], [3., 4., 6.]]);
 
-        assert_eq!(DataFrame::new(a_prime.mapv(Data::Float), new_names).unwrap(),
-                   new_df.unwrap())
+        assert_eq!(DataFrame::new(a_prime, new_names).unwrap(), new_df.unwrap())
     }
 
     #[test]
     fn dataframe_creation_failure() {
         let a = Array::random((2, 5), Range::new(0., 10.));
         let names = vec!["1", "2"].iter().map(|x| x.to_string()).collect();
-        let df = DataFrame::new(a.mapv(Data::Float), names);
+        let df = DataFrame::new(a, names);
         assert!(df.is_err())
     }
 
@@ -120,7 +118,7 @@ pub mod tests {
         let a = Array::random((10, 5), Range::new(0., 10.));
         let names: Vec<String> =
             vec!["1", "2", "3", "4", "5"].iter().map(|x| x.to_string()).collect();
-        b.iter(|| DataFrame::new(a.mapv(Data::Float), names.clone()));
+        b.iter(|| DataFrame::new(a.clone(), names.clone()));
     }
 
 
@@ -138,8 +136,8 @@ pub mod tests {
         let e_names: Vec<String> = (0..11).map(|x| x.to_string()).collect();
 
 
-        let c_df = DataFrame::new(c.mapv(Data::Float), c_names).unwrap();
-        let e_df = DataFrame::new(e.mapv(Data::Float), e_names).unwrap();
+        let c_df = DataFrame::new(c, c_names).unwrap();
+        let e_df = DataFrame::new(e, e_names).unwrap();
 
         b.iter(|| c_df.clone().inner_join(e_df.clone(), "9"));
     }
