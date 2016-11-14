@@ -5,7 +5,6 @@ use std::fmt::Debug;
 use num::Float;
 
 pub type Column<T> = Array<T, Ix>;
-pub type Row<T> = Vec<T>;
 pub type Matrix<T> = Array<T, (Ix, Ix)>;
 pub type ColumnView<'a, T> = ArrayView<'a, T, Ix>;
 pub type MatrixView<'a, T> = ArrayView<'a, T, (Ix, Ix)>;
