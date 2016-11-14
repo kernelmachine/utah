@@ -7,7 +7,7 @@ authors = ["pegasos1 <sgrangan01@gmail.com>"]
 ndarray = "*"
 ndarray-rand="*"
 rand="*"
-
+rayon = "*"
 [[bin]]
 name="dataframe"
 path='src/main.rs'
