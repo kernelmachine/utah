@@ -51,7 +51,8 @@ pub mod tests {
         let mut names: BTreeMap<String, usize> = BTreeMap::new();
         names.insert("a".to_string(), 0);
         names.insert("b".to_string(), 1);
-        let df = DataFrame::new(a, names);
+
+        let df = DataFrame::new(a, names, None);
         assert!(df.is_ok())
     }
 
@@ -61,7 +62,12 @@ pub mod tests {
         let mut names: BTreeMap<String, usize> = BTreeMap::new();
         names.insert("a".to_string(), 0);
         names.insert("b".to_string(), 1);
-        let df = DataFrame::new(a, names).unwrap();
+
+        let mut index: BTreeMap<String, usize> = BTreeMap::new();
+        index.insert("a".to_string(), 0);
+        index.insert("b".to_string(), 1);
+
+        let df = DataFrame::new(a, names, None).unwrap();
         assert!(df.get("a".to_string()) == Ok(arr2(&[[2., 3.], [3., 4.]]).column(0).to_owned()))
     }
 
@@ -80,6 +86,7 @@ pub mod tests {
         c_names.insert("2".to_string(), 1);
         c_names.insert("3".to_string(), 2);
 
+
         let mut e_names: BTreeMap<String, usize> = BTreeMap::new();
         e_names.insert("4".to_string(), 0);
         e_names.insert("5".to_string(), 1);
@@ -87,8 +94,8 @@ pub mod tests {
 
 
 
-        let c_df = DataFrame::new(c.clone(), c_names).unwrap();
-        let e_df = DataFrame::new(e.clone(), e_names).unwrap();
+        let c_df = DataFrame::new(c.clone(), c_names, None).unwrap();
+        let e_df = DataFrame::new(e.clone(), e_names, None).unwrap();
 
 
 
@@ -99,13 +106,19 @@ pub mod tests {
         join_names.insert("4_x".to_string(), 3);
         join_names.insert("5_x".to_string(), 4);
         join_names.insert("3_x".to_string(), 5);
+
+        let mut join_index: BTreeMap<String, usize> = BTreeMap::new();
+        join_index.insert("0".to_string(), 0);
+        join_index.insert("1".to_string(), 1);
+        join_index.insert("2".to_string(), 2);
+
         let join_matrix = stack(Axis(1),
-                                &[c.select(Axis(0), &[0, 2]).view(),
-                                  e.select(Axis(0), &[0, 2]).view()])
+                                &[c.select(Axis(0), &[0, 1, 2]).view(),
+                                  e.select(Axis(0), &[0, 1, 2]).view()])
             .unwrap();
-        let join_df = DataFrame::new(join_matrix, join_names);
-        let test_df = c_df.inner_join(&e_df, "3");
-        println!("{:?}", test_df.clone().unwrap().data_map);
+
+        let join_df = DataFrame::new(join_matrix, join_names, Some(join_index));
+        let test_df = c_df.inner_join(&e_df);
         assert_eq!(join_df.unwrap(), test_df.clone().unwrap())
 
     }
@@ -117,17 +130,18 @@ pub mod tests {
         let mut names: BTreeMap<String, usize> = BTreeMap::new();
         names.insert("a".to_string(), 0);
         names.insert("b".to_string(), 1);
-        let df = DataFrame::new(a, names).unwrap();
+        let df = DataFrame::new(a, names, None).unwrap();
         let new_array = arr2(&[[5.], [6.]]);
 
-        let new_df = df.insert(new_array, "c".to_string());
+        let new_df = df.insert_column(new_array, "c".to_string());
         let mut new_names: BTreeMap<String, usize> = BTreeMap::new();
         new_names.insert("a".to_string(), 0);
         new_names.insert("b".to_string(), 1);
         new_names.insert("c".to_string(), 2);
         let a_prime = arr2(&[[2., 3., 5.], [3., 4., 6.]]);
 
-        assert_eq!(DataFrame::new(a_prime, new_names).unwrap(), new_df.unwrap())
+        assert_eq!(DataFrame::new(a_prime, new_names, None).unwrap(),
+                   new_df.unwrap())
     }
 
     #[test]
@@ -141,8 +155,8 @@ pub mod tests {
         let mut b_names: BTreeMap<String, usize> = BTreeMap::new();
         b_names.insert("c".to_string(), 0);
         b_names.insert("d".to_string(), 1);
-        let df = DataFrame::new(a, a_names).unwrap();
-        let df_1 = DataFrame::new(b, b_names).unwrap();
+        let df = DataFrame::new(a, a_names, None).unwrap();
+        let df_1 = DataFrame::new(b, b_names, None).unwrap();
 
         let row_concat = df.concat(Axis(0), &df_1);
         let col_concat = df.concat(Axis(1), &df_1);
@@ -151,6 +165,13 @@ pub mod tests {
         let mut a_prime_names: BTreeMap<String, usize> = BTreeMap::new();
         a_prime_names.insert("a".to_string(), 0);
         a_prime_names.insert("b".to_string(), 1);
+
+        let mut a_prime_index: BTreeMap<String, usize> = BTreeMap::new();
+        a_prime_index.insert("0".to_string(), 0);
+        a_prime_index.insert("1".to_string(), 1);
+        a_prime_index.insert("0_x".to_string(), 2);
+        a_prime_index.insert("1_x".to_string(), 3);
+
         let mut b_prime_names: BTreeMap<String, usize> = BTreeMap::new();
         b_prime_names.insert("a".to_string(), 0);
         b_prime_names.insert("b".to_string(), 1);
@@ -159,24 +180,25 @@ pub mod tests {
         let a_prime = arr2(&[[2., 3.], [3., 4.], [7., 1.], [7., 6.]]);
         let b_prime = arr2(&[[2., 3., 7., 1.], [3., 4., 7., 6.]]);
 
-        assert_eq!(DataFrame::new(a_prime, a_prime_names).unwrap(),
+        assert_eq!(DataFrame::new(a_prime, a_prime_names, Some(a_prime_index)).unwrap(),
                    row_concat.unwrap());
-        assert_eq!(DataFrame::new(b_prime, b_prime_names).unwrap(),
+        assert_eq!(DataFrame::new(b_prime, b_prime_names, None).unwrap(),
                    col_concat.unwrap())
     }
 
     #[test]
-    fn dataframe_drop() {
+    fn dataframe_drop_column() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
         let mut names: BTreeMap<String, usize> = BTreeMap::new();
         names.insert("a".to_string(), 0);
         names.insert("b".to_string(), 1);
-        let mut df = DataFrame::new(a, names).unwrap();
-        let new_df = df.drop(&["a".to_string()]);
+        let mut df = DataFrame::new(a, names, None).unwrap();
+        let new_df = df.drop_column(&["a".to_string()]);
         let mut new_names: BTreeMap<String, usize> = BTreeMap::new();
         new_names.insert("b".to_string(), 0);
         let a_prime = arr2(&[[3.], [4.]]);
-        assert_eq!(DataFrame::new(a_prime, new_names).unwrap(), new_df.unwrap())
+        assert_eq!(DataFrame::new(a_prime, new_names, None).unwrap(),
+                   new_df.unwrap())
     }
 
     #[test]
@@ -185,7 +207,7 @@ pub mod tests {
         let mut names: BTreeMap<String, usize> = BTreeMap::new();
         names.insert("1".to_string(), 0);
         names.insert("2".to_string(), 1);
-        let df = DataFrame::new(a, names);
+        let df = DataFrame::new(a, names, None);
         assert!(df.is_err())
     }
 
@@ -200,35 +222,41 @@ pub mod tests {
         names.insert("3".to_string(), 2);
         names.insert("4".to_string(), 3);
         names.insert("5".to_string(), 4);
-        b.iter(|| DataFrame::new(a.clone(), names.clone()));
+        b.iter(|| DataFrame::new(a.clone(), names.clone(), None));
     }
 
 
 
     #[bench]
     fn bench_inner_join(b: &mut Bencher) {
-        let a = Array::random((20000, 10), Range::new(0., 10.));
-        let z = Array::random((20000, 1), Range::new(0., 10.));
-        let d = Array::random((20000, 10), Range::new(0., 10.));
-        let c = stack(Axis(1), &[a.view(), z.view()]).unwrap();
-        let e = stack(Axis(1), &[d.view(), z.view()]).unwrap();
+        let c = Array::random((20000, 10), Range::new(0., 10.));
+        let e = Array::random((20000, 10), Range::new(0., 10.));
 
 
         let mut c_names: BTreeMap<String, usize> = BTreeMap::new();
-
-        for i in 0..11 {
+        for i in 0..10 {
             c_names.insert(i.to_string(), i);
         }
+
         let mut e_names: BTreeMap<String, usize> = BTreeMap::new();
-        for i in 0..11 {
+        for i in 0..10 {
             e_names.insert(i.to_string(), i);
         }
 
+        let mut c_index: BTreeMap<String, usize> = BTreeMap::new();
+        for i in 0..20000 {
+            c_index.insert(i.to_string(), i);
+        }
 
-        let c_df = DataFrame::new(c, c_names).unwrap();
-        let e_df = DataFrame::new(e, e_names).unwrap();
+        let mut e_index: BTreeMap<String, usize> = BTreeMap::new();
+        for i in 1999..21999 {
+            e_index.insert(i.to_string(), i - 1999);
+        }
 
-        b.iter(|| c_df.inner_join(&e_df, "9"));
+        let c_df = DataFrame::new(c, c_names, Some(c_index)).unwrap();
+        let e_df = DataFrame::new(e, e_names, Some(e_index)).unwrap();
+
+        b.iter(|| c_df.inner_join(&e_df));
     }
 
     #[bench]
