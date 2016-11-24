@@ -7,6 +7,7 @@ extern crate test;
 extern crate rand;
 extern crate ndarray_rand;
 extern crate num;
+extern crate chrono;
 
 
 pub mod dataframe;

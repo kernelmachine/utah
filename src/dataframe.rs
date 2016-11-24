@@ -1,33 +1,55 @@
 use ndarray::{Array, Ix, Axis, ArrayView, stack};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
-
 use std::hash::Hash;
 use std::fmt::Debug;
-use num::Float;
+use std::string::ToString;
+use chrono::*;
 
-pub type Column<T> = Array<T, Ix>;
-pub type Matrix<T> = Array<T, (Ix, Ix)>;
+pub type Column<InnerType> = Array<InnerType, Ix>;
+pub type Matrix<InnerType> = Array<InnerType, (Ix, Ix)>;
 pub type ColumnView<'a, T> = ArrayView<'a, T, Ix>;
 pub type MatrixView<'a, T> = ArrayView<'a, T, (Ix, Ix)>;
 
 
 
 
+#[derive(Hash, Eq ,PartialOrd, PartialEq, Ord , Clone, Debug)]
+pub enum ColumnType {
+    Str(String),
+    Date(DateTime<UTC>),
+}
 
+#[derive(Hash, PartialOrd, PartialEq, Eq , Ord , Clone,  Debug)]
+pub enum IndexType {
+    Str(String),
+    Date(DateTime<UTC>),
+}
+
+#[derive(PartialOrd, PartialEq,  Clone, Debug, Copy)]
+pub enum InnerType {
+    Float(f64),
+    Int(i64),
+}
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct DataFrame<T: Float> {
-    pub columns: BTreeMap<String, usize>,
-    pub inner_matrix: Matrix<T>,
-    pub index: BTreeMap<String, usize>,
+pub struct DataFrame {
+    pub columns: BTreeMap<ColumnType, usize>,
+    pub inner_matrix: Matrix<InnerType>,
+    pub index: BTreeMap<IndexType, usize>,
+}
+
+impl InnerType {
+    pub fn from_float(f: f64) -> InnerType {
+        InnerType::Float(f)
+    }
 }
 
 
-pub fn merge_maps(first_context: &BTreeMap<String, usize>,
-                  second_context: &BTreeMap<String, usize>)
-                  -> BTreeMap<String, usize> {
-    let mut new_context: BTreeMap<String, usize> = BTreeMap::new();
+pub fn merge_maps(first_context: &BTreeMap<IndexType, usize>,
+                  second_context: &BTreeMap<IndexType, usize>)
+                  -> BTreeMap<IndexType, usize> {
+    let mut new_context: BTreeMap<IndexType, usize> = BTreeMap::new();
     for (key, value) in first_context.iter() {
         new_context.insert(key.to_owned(), *value);
     }
@@ -37,19 +59,67 @@ pub fn merge_maps(first_context: &BTreeMap<String, usize>,
     new_context
 }
 
+pub fn concat_index_maps(first_context: &BTreeMap<IndexType, usize>,
+                         second_context: &BTreeMap<IndexType, usize>)
+                         -> BTreeMap<IndexType, usize> {
+    let mut new_context: BTreeMap<IndexType, usize> = BTreeMap::new();
+    for (key, value) in first_context.iter() {
+        new_context.insert(key.to_owned(), *value);
+    }
 
-impl<T: Float> DataFrame<T> {
-    pub fn inner_matrix(&self) -> &Matrix<T> {
+    for (key, value) in second_context.iter() {
+        let _ = match key.to_owned() {
+            IndexType::Str(z) => {
+                new_context.insert(IndexType::Str(z.to_string() + "_x"),
+                                   *value + first_context.len())
+            }
+            IndexType::Date(z) => {
+                new_context.insert(IndexType::Str(z.to_string() + "_x"),
+                                   *value + first_context.len())
+            }
+
+        };
+    }
+    new_context
+}
+
+pub fn concat_column_maps(first_context: &BTreeMap<ColumnType, usize>,
+                          second_context: &BTreeMap<ColumnType, usize>)
+                          -> BTreeMap<ColumnType, usize> {
+    let mut new_context: BTreeMap<ColumnType, usize> = BTreeMap::new();
+    for (key, value) in first_context.iter() {
+        new_context.insert(key.to_owned(), *value);
+    }
+
+    for (key, value) in second_context.iter() {
+        let _ = match key.to_owned() {
+            ColumnType::Str(z) => {
+                new_context.insert(ColumnType::Str(z.to_string() + "_x"),
+                                   *value + first_context.len())
+            }
+            ColumnType::Date(z) => {
+                new_context.insert(ColumnType::Str(z.to_string() + "_x"),
+                                   *value + first_context.len())
+            }
+        };
+    }
+    new_context
+}
+
+
+
+impl DataFrame {
+    pub fn inner_matrix(&self) -> &Matrix<InnerType> {
         &self.inner_matrix
     }
-    pub fn datamap(&self) -> &BTreeMap<String, usize> {
+    pub fn datamap(&self) -> &BTreeMap<ColumnType, usize> {
         &self.columns
     }
 
-    pub fn new(data: Matrix<T>,
-               datamap: BTreeMap<String, usize>,
-               index: Option<BTreeMap<String, usize>>)
-               -> Result<DataFrame<T>, &'static str> {
+    pub fn new(data: Matrix<InnerType>,
+               datamap: BTreeMap<ColumnType, usize>,
+               index: Option<BTreeMap<IndexType, usize>>)
+               -> Result<DataFrame, &'static str> {
 
         if datamap.len() != data.shape()[1] {
             return Err("column shape mismatch!");
@@ -64,8 +134,10 @@ impl<T: Float> DataFrame<T> {
                 z
             }
             None => {
-                let b: BTreeMap<String, usize> =
-                    (0..data.shape()[0]).enumerate().map(|(x, y)| (x.to_string(), y)).collect();
+                let b: BTreeMap<IndexType, usize> = (0..data.shape()[0])
+                    .enumerate()
+                    .map(|(x, y)| (IndexType::Str(x.to_string()), y))
+                    .collect();
                 b
             }
         };
@@ -79,7 +151,7 @@ impl<T: Float> DataFrame<T> {
         Ok(dm)
     }
 
-    pub fn get(self, name: String) -> Result<Column<T>, &'static str> {
+    pub fn get(self, name: ColumnType) -> Result<Column<InnerType>, &'static str> {
         match self.columns.get(&name) {
             Some(x) => Ok(self.inner_matrix.column(*x).to_owned()),
             None => Err("no such column exists"),
@@ -88,9 +160,9 @@ impl<T: Float> DataFrame<T> {
 
 
     pub fn insert_column(mut self,
-                         data: Matrix<T>,
-                         name: String)
-                         -> Result<DataFrame<T>, &'static str> {
+                         data: Matrix<InnerType>,
+                         name: ColumnType)
+                         -> Result<DataFrame, &'static str> {
 
         let datamap_idx = {
             self.columns.len()
@@ -108,10 +180,10 @@ impl<T: Float> DataFrame<T> {
         self.inner_matrix.dim()
     }
 
-    pub fn drop_row(&mut self, indexes: &[String]) -> Result<DataFrame<T>, &'static str> {
+    pub fn drop_row(&mut self, indexes: &[IndexType]) -> Result<DataFrame, &'static str> {
         let mut idxs = vec![];
 
-        let new_map: &mut BTreeMap<String, usize> = &mut self.index.clone();
+        let new_map: &mut BTreeMap<IndexType, usize> = &mut self.index.clone();
         for name in indexes.iter() {
             let idx = new_map.remove(name);
             idxs.push(idx.unwrap());
@@ -129,10 +201,10 @@ impl<T: Float> DataFrame<T> {
                        Some(new_map.to_owned()))
     }
 
-    pub fn drop_column(&mut self, names: &[String]) -> Result<DataFrame<T>, &'static str> {
+    pub fn drop_column(&mut self, names: &[ColumnType]) -> Result<DataFrame, &'static str> {
         let mut idxs = vec![];
 
-        let new_map: &mut BTreeMap<String, usize> = &mut self.columns.clone();
+        let new_map: &mut BTreeMap<ColumnType, usize> = &mut self.columns.clone();
         for name in names.iter() {
             let idx = new_map.remove(name);
             idxs.push(idx.unwrap());
@@ -150,24 +222,20 @@ impl<T: Float> DataFrame<T> {
                        Some(self.index.to_owned()))
     }
 
-    pub fn concat(&self, axis: Axis, other: &DataFrame<T>) -> Result<DataFrame<T>, &'static str> {
+    pub fn concat(&self, axis: Axis, other: &DataFrame) -> Result<DataFrame, &'static str> {
 
         match axis {
             Axis(0) => {
                 if self.shape().1 == other.shape().1 {
-                    let new_map: BTreeMap<String, usize> = self.columns
+                    let new_map: BTreeMap<ColumnType, usize> = self.columns
                         .iter()
-                        .map(|(ref x, &y)| (x.to_string(), y))
+                        .map(|(x, y)| (x.to_owned(), *y))
                         .collect();
-                    let other_index: BTreeMap<String, usize> = other.index
-                        .iter()
-                        .map(|(x, y)| (x.to_string() + "_x", y + self.index.len()))
-                        .collect();
-                    let new_index: BTreeMap<String, usize> = self.index
-                        .iter()
-                        .chain(other_index.iter())
-                        .map(|(x, y)| (x.to_string(), *y))
-                        .collect();
+
+                    let new_index: BTreeMap<IndexType, usize> = concat_index_maps(&self.index,
+                                                                                  &other.index);
+
+
                     // let other_matrix = other.inner_matrix.select(Axis(1), &other_index[..]);
                     let new_matrix = match stack(Axis(0),
                                                  &[self.inner_matrix.view(),
@@ -182,14 +250,14 @@ impl<T: Float> DataFrame<T> {
             }
             Axis(1) => {
                 if self.shape().0 == other.shape().0 {
-                    let other_map: BTreeMap<String, usize> = other.columns
+                    let other_map: BTreeMap<ColumnType, usize> = other.columns
                         .iter()
-                        .map(|(x, y)| (x.to_string(), y + self.columns.len()))
+                        .map(|(x, y)| (x.to_owned(), y + self.columns.len()))
                         .collect();
-                    let new_map: BTreeMap<String, usize> = self.columns
+                    let new_map: BTreeMap<ColumnType, usize> = self.columns
                         .iter()
                         .chain(other_map.iter())
-                        .map(|(x, y)| (x.to_string(), *y))
+                        .map(|(x, y)| (x.to_owned(), *y))
                         .collect();
 
                     let new_matrix = match stack(Axis(1),
@@ -207,17 +275,18 @@ impl<T: Float> DataFrame<T> {
         }
 
     }
-    pub fn inner_join(&self, other: &DataFrame<T>) -> Result<DataFrame<T>, &'static str> {
+    pub fn inner_join(&self, other: &DataFrame) -> Result<DataFrame, &'static str> {
 
-        let idxs: Vec<(String, usize, Option<usize>)> = Join::new(JoinType::InnerJoin,
-                                                                  self.index.clone().into_iter(),
-                                                                  other.index.clone())
-            .collect();
+        let idxs: Vec<(IndexType, usize, Option<usize>)> =
+            Join::new(JoinType::InnerJoin,
+                      self.index.clone().into_iter(),
+                      other.index.clone())
+                .collect();
         if idxs.len() == 0 {
             return Err("no common values");
         }
 
-        let new_matrix: Matrix<T> = {
+        let new_matrix: Matrix<InnerType> = {
             let i1: Vec<usize> = idxs.iter().map(|&(_, x, _)| x).collect();
             let i2: Vec<usize> = idxs.iter().map(|&(_, _, y)| y.unwrap()).collect();
             let mat1 = self.inner_matrix.select(Axis(0), &i1[..]);
@@ -228,20 +297,13 @@ impl<T: Float> DataFrame<T> {
             }
 
         };
-        let ns: BTreeMap<String, usize> = other.columns
-            .iter()
-            .map(|(x, y)| (x.to_string() + "_x", *y + self.columns.len()))
-            .collect();
 
+        let new_names: BTreeMap<ColumnType, usize> = concat_column_maps(&self.columns,
+                                                                        &other.columns);
 
-        let names_chain: BTreeMap<String, usize> = self.columns
-            .iter()
-            .chain(ns.iter())
-            .map(|(x, y)| (x.to_string(), *y))
-            .collect();
 
         DataFrame::new(new_matrix,
-                       names_chain,
+                       new_names,
                        Some(merge_maps(&self.index, &other.index)))
     }
 }

@@ -8,6 +8,8 @@ ndarray = "*"
 ndarray-rand="*"
 rand="*"
 num = "*"
+chrono = "0.2"
+
 [[bin]]
 name="dataframe"
 path='src/main.rs'
