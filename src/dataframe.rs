@@ -50,8 +50,17 @@ impl DataFrame {
     pub fn inner_matrix(&self) -> &Matrix<InnerType> {
         &self.inner_matrix
     }
+
     pub fn datamap(&self) -> &BTreeMap<ColumnType, usize> {
         &self.columns
+    }
+
+    pub fn index(&self) -> &BTreeMap<IndexType, usize> {
+        &self.index
+    }
+
+    pub fn columns(&self) -> Vec<ColumnType> {
+        self.columns.keys().map(|x| x.to_owned()).collect()
     }
 
     pub fn new(data: Matrix<InnerType>,
@@ -97,6 +106,23 @@ impl DataFrame {
     }
 
 
+    pub fn insert_row(mut self,
+                      data: Matrix<InnerType>,
+                      index: IndexType)
+                      -> Result<DataFrame, &'static str> {
+
+        let ind_idx = {
+            self.index.len()
+        };
+        self.index.insert(index, ind_idx);
+        self.inner_matrix = match stack(Axis(0), &[self.inner_matrix.view(), data.view()]) {
+            Ok(z) => z,
+            Err(_) => return Err("could not insert row into matrix."),
+        };
+        Ok(self)
+
+    }
+
     pub fn insert_column(mut self,
                          data: Matrix<InnerType>,
                          name: ColumnType)
@@ -108,7 +134,7 @@ impl DataFrame {
         self.columns.insert(name, datamap_idx);
         self.inner_matrix = match stack(Axis(1), &[self.inner_matrix.view(), data.view()]) {
             Ok(z) => z,
-            Err(_) => return Err("could not insert into matrix."),
+            Err(_) => return Err("could not insert column into matrix."),
         };
         Ok(self)
 
@@ -172,8 +198,6 @@ impl DataFrame {
                     let new_index: BTreeMap<IndexType, usize> = concat_index_maps(&self.index,
                                                                                   &other.index);
 
-
-                    // let other_matrix = other.inner_matrix.select(Axis(1), &other_index[..]);
                     let new_matrix = match stack(Axis(0),
                                                  &[self.inner_matrix.view(),
                                                    other.inner_matrix.view()]) {
