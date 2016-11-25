@@ -12,8 +12,6 @@ pub type ColumnView<'a, T> = ArrayView<'a, T, Ix>;
 pub type MatrixView<'a, T> = ArrayView<'a, T, (Ix, Ix)>;
 
 
-
-
 #[derive(Hash, Eq ,PartialOrd, PartialEq, Ord , Clone, Debug)]
 pub enum ColumnType {
     Str(String),
@@ -193,10 +191,9 @@ impl DataFrame {
                 }
             }
         }
-        let cols = self.shape().1;
-        let to_keep: Vec<usize> = (0..cols).filter(|x| !idxs.iter().any(|&y| y == *x)).collect();
-
-        DataFrame::new(self.inner_matrix.select(Axis(1), &to_keep[..]),
+        let rows = self.shape().0;
+        let to_keep: Vec<usize> = (0..rows).filter(|x| !idxs.iter().any(|&y| y == *x)).collect();
+        DataFrame::new(self.inner_matrix.select(Axis(0), &to_keep[..]),
                        self.columns.to_owned(),
                        Some(new_map.to_owned()))
     }
@@ -282,6 +279,7 @@ impl DataFrame {
                       self.index.clone().into_iter(),
                       other.index.clone())
                 .collect();
+
         if idxs.len() == 0 {
             return Err("no common values");
         }
@@ -295,15 +293,10 @@ impl DataFrame {
                 Ok(z) => z,
                 Err(_) => return Err("could not build joined matrix."),
             }
-
         };
 
-        let new_names: BTreeMap<ColumnType, usize> = concat_column_maps(&self.columns,
-                                                                        &other.columns);
-
-
         DataFrame::new(new_matrix,
-                       new_names,
+                       concat_column_maps(&self.columns, &other.columns),
                        Some(merge_maps(&self.index, &other.index)))
     }
 }

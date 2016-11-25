@@ -229,6 +229,25 @@ pub mod tests {
     }
 
     #[test]
+    fn dataframe_drop_row() {
+        let a = arr2(&[[2., 3.], [5., 4.]]);
+        let a = a.mapv(InnerType::from_float);
+        let mut names: BTreeMap<ColumnType, usize> = BTreeMap::new();
+        names.insert(ColumnType::Str("a".to_string()), 0);
+        names.insert(ColumnType::Str("b".to_string()), 1);
+        let mut df = DataFrame::new(a, names, None).unwrap();
+        let new_df = df.drop_row(&[IndexType::Str("1".to_string())]);
+        let mut new_names: BTreeMap<ColumnType, usize> = BTreeMap::new();
+        new_names.insert(ColumnType::Str("a".to_string()), 0);
+        new_names.insert(ColumnType::Str("b".to_string()), 1);
+        let a_prime = arr2(&[[2., 3.]]);
+        let a_prime = a_prime.mapv(InnerType::from_float);
+        assert_eq!(DataFrame::new(a_prime, new_names, None).unwrap(),
+                   new_df.unwrap())
+    }
+
+
+    #[test]
     fn dataframe_creation_failure() {
         let a = Array::random((2, 5), Range::new(0., 10.));
         let a = a.mapv(InnerType::from_float);
