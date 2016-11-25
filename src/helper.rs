@@ -33,6 +33,10 @@ pub fn concat_index_maps(first_context: &BTreeMap<IndexType, usize>,
                 new_context.insert(IndexType::Str(z.to_string() + "_x"),
                                    *value + first_context.len())
             }
+            IndexType::Int(z) => {
+                new_context.insert(IndexType::Str(z.to_string() + "_x"),
+                                   *value + first_context.len())
+            }
 
         };
     }
@@ -54,6 +58,10 @@ pub fn concat_column_maps(first_context: &BTreeMap<ColumnType, usize>,
                                    *value + first_context.len())
             }
             ColumnType::Date(z) => {
+                new_context.insert(ColumnType::Str(z.to_string() + "_x"),
+                                   *value + first_context.len())
+            }
+            ColumnType::Int(z) => {
                 new_context.insert(ColumnType::Str(z.to_string() + "_x"),
                                    *value + first_context.len())
             }

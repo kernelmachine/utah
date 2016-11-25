@@ -15,12 +15,14 @@ pub type MatrixView<'a, T> = ArrayView<'a, T, (Ix, Ix)>;
 pub enum ColumnType {
     Str(String),
     Date(DateTime<UTC>),
+    Int(i64),
 }
 
 #[derive(Hash, PartialOrd, PartialEq, Eq , Ord , Clone,  Debug)]
 pub enum IndexType {
     Str(String),
     Date(DateTime<UTC>),
+    Int(i64),
 }
 
 #[derive(PartialOrd, PartialEq,  Clone, Debug, Copy)]
