@@ -11,6 +11,8 @@ extern crate chrono;
 
 
 pub mod dataframe;
+pub mod helper;
+pub mod join;
 fn main() {
     // dataframe!()
     // let a = arr2(&[[2., 3.], [3., 4.], [7., 34.]]);

@@ -1,10 +1,9 @@
 use ndarray::{Array, Ix, Axis, ArrayView, stack};
 use std::collections::BTreeMap;
-use std::collections::HashMap;
-use std::hash::Hash;
-use std::fmt::Debug;
-use std::string::ToString;
 use chrono::*;
+use helper::*;
+use join::*;
+
 
 pub type Column<InnerType> = Array<InnerType, Ix>;
 pub type Matrix<InnerType> = Array<InnerType, (Ix, Ix)>;
@@ -41,69 +40,10 @@ impl InnerType {
     pub fn from_float(f: f64) -> InnerType {
         InnerType::Float(f)
     }
+    pub fn from_int(i: i64) -> InnerType {
+        InnerType::Int(i)
+    }
 }
-
-
-pub fn merge_maps(first_context: &BTreeMap<IndexType, usize>,
-                  second_context: &BTreeMap<IndexType, usize>)
-                  -> BTreeMap<IndexType, usize> {
-    let mut new_context: BTreeMap<IndexType, usize> = BTreeMap::new();
-    for (key, value) in first_context.iter() {
-        new_context.insert(key.to_owned(), *value);
-    }
-    for (key, value) in second_context.iter() {
-        new_context.insert(key.to_owned(), *value);
-    }
-    new_context
-}
-
-pub fn concat_index_maps(first_context: &BTreeMap<IndexType, usize>,
-                         second_context: &BTreeMap<IndexType, usize>)
-                         -> BTreeMap<IndexType, usize> {
-    let mut new_context: BTreeMap<IndexType, usize> = BTreeMap::new();
-    for (key, value) in first_context.iter() {
-        new_context.insert(key.to_owned(), *value);
-    }
-
-    for (key, value) in second_context.iter() {
-        let _ = match key.to_owned() {
-            IndexType::Str(z) => {
-                new_context.insert(IndexType::Str(z.to_string() + "_x"),
-                                   *value + first_context.len())
-            }
-            IndexType::Date(z) => {
-                new_context.insert(IndexType::Str(z.to_string() + "_x"),
-                                   *value + first_context.len())
-            }
-
-        };
-    }
-    new_context
-}
-
-pub fn concat_column_maps(first_context: &BTreeMap<ColumnType, usize>,
-                          second_context: &BTreeMap<ColumnType, usize>)
-                          -> BTreeMap<ColumnType, usize> {
-    let mut new_context: BTreeMap<ColumnType, usize> = BTreeMap::new();
-    for (key, value) in first_context.iter() {
-        new_context.insert(key.to_owned(), *value);
-    }
-
-    for (key, value) in second_context.iter() {
-        let _ = match key.to_owned() {
-            ColumnType::Str(z) => {
-                new_context.insert(ColumnType::Str(z.to_string() + "_x"),
-                                   *value + first_context.len())
-            }
-            ColumnType::Date(z) => {
-                new_context.insert(ColumnType::Str(z.to_string() + "_x"),
-                                   *value + first_context.len())
-            }
-        };
-    }
-    new_context
-}
-
 
 
 impl DataFrame {
@@ -301,81 +241,6 @@ impl DataFrame {
     }
 }
 
-
-
-pub enum JoinType {
-    InnerJoin,
-    OuterLeftJoin,
-}
-pub enum Join<L, K, RV> {
-    InnerJoin { left: L, right: HashMap<K, RV> },
-    OuterLeftJoin { left: L, right: HashMap<K, RV> },
-}
-
-impl<L, K, RV> Join<L, K, RV>
-    where K: Hash + Eq
-{
-    pub fn new<LI, RI>(t: JoinType, left: LI, right: RI) -> Self
-        where L: Iterator<Item = LI::Item>,
-              LI: IntoIterator<IntoIter = L>,
-              RI: IntoIterator<Item = (K, RV)>
-    {
-        match t {
-            JoinType::InnerJoin => {
-                Join::InnerJoin {
-                    left: left.into_iter(),
-                    right: right.into_iter().collect(),
-                }
-            }
-            JoinType::OuterLeftJoin => {
-                Join::OuterLeftJoin {
-                    left: left.into_iter(),
-                    right: right.into_iter().collect(),
-                }
-            }
-
-        }
-
-    }
-}
-
-impl<L, K, LV, RV> Iterator for Join<L, K, RV>
-    where L: Iterator<Item = (K, LV)>,
-          K: Hash + Eq + Debug,
-          RV: Clone + Debug
-{
-    type Item = (K, LV, Option<RV>);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self {
-            &mut Join::InnerJoin { ref mut left, ref right } => {
-                loop {
-                    match left.next() {
-                        Some((k, lv)) => {
-                            let rv = right.get(&k);
-                            match rv {
-                                Some(v) => return Some((k, lv, Some(v).cloned())),
-                                None => continue,
-                            }
-                        }
-                        None => return None,
-                    }
-
-                }
-            }
-            &mut Join::OuterLeftJoin { ref mut left, ref right } => {
-                match left.next() {
-                    Some((k, lv)) => {
-                        let rv = right.get(&k);
-                        Some((k, lv, rv.cloned()))
-                    }
-                    None => None,
-                }
-            }
-        }
-
-    }
-}
 
 // To implement....?
 // // parallelized join
