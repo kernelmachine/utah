@@ -92,15 +92,14 @@ pub mod tests {
         let e = stack(Axis(1), &[d.view(), f.view()]).unwrap();
 
         let c_names: Vec<String> = vec!["1".to_string(), "2".to_string(), "3".to_string()];
+        let e_names: Vec<String> = vec!["4".to_string(), "5".to_string(), "6".to_string()];
+
+        let c_index: Vec<String> = vec!["1".to_string(), "2".to_string(), "3".to_string()];
+        let e_index: Vec<String> = vec!["1".to_string(), "2".to_string(), "4".to_string()];
 
 
-
-        let e_names: Vec<String> = vec!["4".to_string(), "5".to_string(), "3".to_string()];
-
-
-
-        let c_df = DataFrame::new(c.clone()).columns(c_names).unwrap();
-        let e_df = DataFrame::new(e.clone()).columns(e_names).unwrap();
+        let c_df = DataFrame::new(c.clone()).columns(c_names).unwrap().index(c_index).unwrap();
+        let e_df = DataFrame::new(e.clone()).columns(e_names).unwrap().index(e_index).unwrap();
 
 
 
@@ -109,15 +108,15 @@ pub mod tests {
                                            "3".to_string(),
                                            "4_x".to_string(),
                                            "5_x".to_string(),
-                                           "3_x".to_string()];
+                                           "6_x".to_string()];
 
 
-        let join_index: Vec<String> = vec!["0".to_string(), "1".to_string(), "2".to_string()];
+        let join_index: Vec<String> = vec!["1".to_string(), "2".to_string()];
 
 
         let join_matrix = stack(Axis(1),
-                                &[c.select(Axis(0), &[0, 1, 2]).view(),
-                                  e.select(Axis(0), &[0, 1, 2]).view()])
+                                &[c.select(Axis(0), &[0, 1]).view(),
+                                  e.select(Axis(0), &[0, 1]).view()])
             .unwrap();
 
         let join_df = DataFrame::new(join_matrix).columns(join_names).unwrap().index(join_index);

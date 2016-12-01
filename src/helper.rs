@@ -6,11 +6,16 @@ pub fn merge_maps(first_context: &BTreeMap<IndexType, usize>,
                   second_context: &BTreeMap<IndexType, usize>)
                   -> BTreeMap<IndexType, usize> {
     let mut new_context: BTreeMap<IndexType, usize> = BTreeMap::new();
+
     for (key, value) in first_context.iter() {
-        new_context.insert(key.to_owned(), *value);
+        if second_context.contains_key(key) {
+            new_context.insert(key.to_owned(), *value);
+        }
     }
     for (key, value) in second_context.iter() {
-        new_context.insert(key.to_owned(), *value);
+        if first_context.contains_key(key) {
+            new_context.insert(key.to_owned(), *value);
+        }
     }
     new_context
 }
