@@ -96,6 +96,11 @@ impl DataFrame {
 
     }
 
+    pub fn shape(&self) -> (usize, usize) {
+        self.data.dim()
+    }
+
+
     pub fn insert_column(mut self, data: Matrix<f64>, name: &str) -> Result<DataFrame> {
         let name = ColumnType::from(name.to_string());
         let data = data.mapv(InnerType::from);
@@ -109,34 +114,6 @@ impl DataFrame {
         };
         Ok(self)
 
-    }
-
-    pub fn shape(&self) -> (usize, usize) {
-        self.data.dim()
-    }
-
-    pub fn drop_row(&mut self, indexes: &[&str]) -> Result<DataFrame> {
-        let mut idxs = vec![];
-        let indexes: Vec<IndexType> =
-            indexes.iter().map(|x| IndexType::from(x.to_string())).collect();
-
-        let new_map: &mut BTreeMap<IndexType, usize> = &mut self.index.clone();
-        for name in indexes.iter() {
-            let idx = new_map.remove(name);
-            idxs.push(idx.unwrap());
-            for (_, y) in new_map.iter_mut() {
-                if y > &mut idx.unwrap() {
-                    *y -= 1;
-                }
-            }
-        }
-        let rows = self.shape().0;
-        let to_keep: Vec<usize> = (0..rows).filter(|x| !idxs.iter().any(|&y| y == *x)).collect();
-        Ok(DataFrame {
-            data: self.data.select(Axis(0), &to_keep[..]),
-            columns: self.columns.to_owned(),
-            index: new_map.to_owned(),
-        })
     }
 
     pub fn drop_column(&mut self, names: &[&str]) -> Result<DataFrame> {
@@ -161,6 +138,30 @@ impl DataFrame {
             data: self.data.select(Axis(1), &to_keep[..]),
             columns: new_map.to_owned(),
             index: self.index.to_owned(),
+        })
+    }
+
+    pub fn drop_row(&mut self, indexes: &[&str]) -> Result<DataFrame> {
+        let mut idxs = vec![];
+        let indexes: Vec<IndexType> =
+            indexes.iter().map(|x| IndexType::from(x.to_string())).collect();
+
+        let new_map: &mut BTreeMap<IndexType, usize> = &mut self.index.clone();
+        for name in indexes.iter() {
+            let idx = new_map.remove(name);
+            idxs.push(idx.unwrap());
+            for (_, y) in new_map.iter_mut() {
+                if y > &mut idx.unwrap() {
+                    *y -= 1;
+                }
+            }
+        }
+        let rows = self.shape().0;
+        let to_keep: Vec<usize> = (0..rows).filter(|x| !idxs.iter().any(|&y| y == *x)).collect();
+        Ok(DataFrame {
+            data: self.data.select(Axis(0), &to_keep[..]),
+            columns: self.columns.to_owned(),
+            index: new_map.to_owned(),
         })
     }
 
