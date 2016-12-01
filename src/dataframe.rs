@@ -60,43 +60,6 @@ impl DataFrame {
         self.columns.keys().map(|x| x.to_owned()).collect()
     }
 
-    // pub fn new(data: Matrix<f64>,
-    //            columns: BTreeMap<ColumnType, usize>,
-    //            index: Option<BTreeMap<IndexType, usize>>)
-    //            -> Result<DataFrame> {
-    //
-    //     let data: Matrix<InnerType> = data.mapv(InnerType::from);
-    //
-    //     if columns.len() != data.shape()[1] {
-    //         return Err(ErrorKind::ColumnShapeMismatch.into());
-    //     }
-    //
-    //
-    //     let idx = match index {
-    //         Some(z) => {
-    //             if z.len() != data.shape()[0] {
-    //                 return Err(ErrorKind::RowShapeMismatch.into());
-    //             }
-    //             z
-    //         }
-    //         None => {
-    //             let b: BTreeMap<IndexType, usize> = (0..data.shape()[0])
-    //                 .enumerate()
-    //                 .map(|(x, y)| (IndexType::Str(x.to_string()), y))
-    //                 .collect();
-    //             b
-    //         }
-    //     };
-    //
-    //     let dm = DataFrame {
-    //         columns: columns,
-    //         data: data,
-    //         index: idx,
-    //     };
-    //
-    //     Ok(dm)
-    // }
-
     pub fn get(self, name: &str) -> Result<Column<InnerType>> {
         let name = ColumnType::from(name.to_string());
         match self.columns.get(&name) {
