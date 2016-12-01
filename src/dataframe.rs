@@ -1,108 +1,99 @@
-use ndarray::{Array, Ix, Axis, ArrayView, stack};
+use ndarray::{Axis, stack};
 use std::collections::BTreeMap;
-use chrono::*;
 use helper::*;
 use join::*;
 use error::*;
-
-pub type Column<InnerType> = Array<InnerType, Ix>;
-pub type Matrix<InnerType> = Array<InnerType, (Ix, Ix)>;
-pub type ColumnView<'a, T> = ArrayView<'a, T, Ix>;
-pub type MatrixView<'a, T> = ArrayView<'a, T, (Ix, Ix)>;
-
-
-#[derive(Hash, Eq ,PartialOrd, PartialEq, Ord , Clone, Debug)]
-pub enum ColumnType {
-    Str(String),
-    Date(DateTime<UTC>),
-    Int(i64),
-}
-
-#[derive(Hash, PartialOrd, PartialEq, Eq , Ord , Clone,  Debug)]
-pub enum IndexType {
-    Str(String),
-    Date(DateTime<UTC>),
-    Int(i64),
-}
-
-#[derive(PartialOrd, PartialEq,  Clone, Debug, Copy)]
-pub enum InnerType {
-    Float(f64),
-    Int(i64),
-}
+use types::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame {
-    pub columns: BTreeMap<ColumnType, usize>,
-    pub inner_matrix: Matrix<InnerType>,
-    pub index: BTreeMap<IndexType, usize>,
+    columns: BTreeMap<ColumnType, usize>,
+    data: Matrix<InnerType>,
+    index: BTreeMap<IndexType, usize>,
 }
-
-impl InnerType {
-    pub fn from_float(f: f64) -> InnerType {
-        InnerType::Float(f)
-    }
-    pub fn from_int(i: i64) -> InnerType {
-        InnerType::Int(i)
-    }
-}
-
 
 impl DataFrame {
-    pub fn inner_matrix(&self) -> &Matrix<InnerType> {
-        &self.inner_matrix
+    pub fn new(data: Matrix<f64>) -> DataFrame {
+        let data: Matrix<InnerType> = data.mapv(InnerType::from);
+
+        let columns: BTreeMap<ColumnType, usize> = (0..data.shape()[1])
+            .enumerate()
+            .map(|(x, y)| (ColumnType::Str(x.to_string()), y))
+            .collect();
+
+        let index: BTreeMap<IndexType, usize> = (0..data.shape()[0])
+            .enumerate()
+            .map(|(x, y)| (IndexType::Str(x.to_string()), y))
+            .collect();
+
+        DataFrame {
+            data: data,
+            columns: columns,
+            index: index,
+        }
     }
 
-    pub fn datamap(&self) -> &BTreeMap<ColumnType, usize> {
-        &self.columns
+
+    pub fn columns(mut self, columns: BTreeMap<ColumnType, usize>) -> Result<DataFrame> {
+        if columns.len() != self.data.shape()[1] {
+            return Err(ErrorKind::ColumnShapeMismatch.into());
+        }
+        self.columns = columns;
+        Ok(self)
     }
 
-    pub fn index(&self) -> &BTreeMap<IndexType, usize> {
-        &self.index
+    pub fn index(mut self, index: BTreeMap<IndexType, usize>) -> Result<DataFrame> {
+        if index.len() != self.data.shape()[0] {
+            return Err(ErrorKind::RowShapeMismatch.into());
+        }
+        self.index = index;
+        Ok(self)
     }
 
-    pub fn columns(&self) -> Vec<ColumnType> {
+    pub fn names(&self) -> Vec<ColumnType> {
         self.columns.keys().map(|x| x.to_owned()).collect()
     }
 
-    pub fn new(data: Matrix<InnerType>,
-               datamap: BTreeMap<ColumnType, usize>,
-               index: Option<BTreeMap<IndexType, usize>>)
-               -> Result<DataFrame> {
-
-        if datamap.len() != data.shape()[1] {
-            return Err(ErrorKind::ColumnShapeMismatch.into());
-        }
-
-
-        let idx = match index {
-            Some(z) => {
-                if z.len() != data.shape()[0] {
-                    return Err(ErrorKind::RowShapeMismatch.into());
-                }
-                z
-            }
-            None => {
-                let b: BTreeMap<IndexType, usize> = (0..data.shape()[0])
-                    .enumerate()
-                    .map(|(x, y)| (IndexType::Str(x.to_string()), y))
-                    .collect();
-                b
-            }
-        };
-
-        let dm = DataFrame {
-            columns: datamap,
-            inner_matrix: data,
-            index: idx,
-        };
-
-        Ok(dm)
-    }
+    // pub fn new(data: Matrix<f64>,
+    //            columns: BTreeMap<ColumnType, usize>,
+    //            index: Option<BTreeMap<IndexType, usize>>)
+    //            -> Result<DataFrame> {
+    //
+    //     let data: Matrix<InnerType> = data.mapv(InnerType::from);
+    //
+    //     if columns.len() != data.shape()[1] {
+    //         return Err(ErrorKind::ColumnShapeMismatch.into());
+    //     }
+    //
+    //
+    //     let idx = match index {
+    //         Some(z) => {
+    //             if z.len() != data.shape()[0] {
+    //                 return Err(ErrorKind::RowShapeMismatch.into());
+    //             }
+    //             z
+    //         }
+    //         None => {
+    //             let b: BTreeMap<IndexType, usize> = (0..data.shape()[0])
+    //                 .enumerate()
+    //                 .map(|(x, y)| (IndexType::Str(x.to_string()), y))
+    //                 .collect();
+    //             b
+    //         }
+    //     };
+    //
+    //     let dm = DataFrame {
+    //         columns: columns,
+    //         data: data,
+    //         index: idx,
+    //     };
+    //
+    //     Ok(dm)
+    // }
 
     pub fn get(self, name: ColumnType) -> Result<Column<InnerType>> {
         match self.columns.get(&name) {
-            Some(x) => Ok(self.inner_matrix.column(*x).to_owned()),
+            Some(x) => Ok(self.data.column(*x).to_owned()),
             None => {
                 match name {
                     ColumnType::Str(z) => {
@@ -126,7 +117,7 @@ impl DataFrame {
             self.index.len()
         };
         self.index.insert(index, ind_idx);
-        self.inner_matrix = match stack(Axis(0), &[self.inner_matrix.view(), data.view()]) {
+        self.data = match stack(Axis(0), &[self.data.view(), data.view()]) {
             Ok(z) => z,
             Err(_) => return Err(ErrorKind::StackFail.into()),
         };
@@ -134,13 +125,14 @@ impl DataFrame {
 
     }
 
-    pub fn insert_column(mut self, data: Matrix<InnerType>, name: ColumnType) -> Result<DataFrame> {
+    pub fn insert_column(mut self, data: Matrix<f64>, name: ColumnType) -> Result<DataFrame> {
 
-        let datamap_idx = {
+        let data = data.mapv(InnerType::from);
+        let columns_idx = {
             self.columns.len()
         };
-        self.columns.insert(name, datamap_idx);
-        self.inner_matrix = match stack(Axis(1), &[self.inner_matrix.view(), data.view()]) {
+        self.columns.insert(name, columns_idx);
+        self.data = match stack(Axis(1), &[self.data.view(), data.view()]) {
             Ok(z) => z,
             Err(_) => return Err(ErrorKind::StackFail.into()),
         };
@@ -149,7 +141,7 @@ impl DataFrame {
     }
 
     pub fn shape(&self) -> (usize, usize) {
-        self.inner_matrix.dim()
+        self.data.dim()
     }
 
     pub fn drop_row(&mut self, indexes: &[IndexType]) -> Result<DataFrame> {
@@ -167,9 +159,11 @@ impl DataFrame {
         }
         let rows = self.shape().0;
         let to_keep: Vec<usize> = (0..rows).filter(|x| !idxs.iter().any(|&y| y == *x)).collect();
-        DataFrame::new(self.inner_matrix.select(Axis(0), &to_keep[..]),
-                       self.columns.to_owned(),
-                       Some(new_map.to_owned()))
+        Ok(DataFrame {
+            data: self.data.select(Axis(0), &to_keep[..]),
+            columns: self.columns.to_owned(),
+            index: new_map.to_owned(),
+        })
     }
 
     pub fn drop_column(&mut self, names: &[ColumnType]) -> Result<DataFrame> {
@@ -188,9 +182,11 @@ impl DataFrame {
         let cols = self.shape().1;
         let to_keep: Vec<usize> = (0..cols).filter(|x| !idxs.iter().any(|&y| y == *x)).collect();
 
-        DataFrame::new(self.inner_matrix.select(Axis(1), &to_keep[..]),
-                       new_map.to_owned(),
-                       Some(self.index.to_owned()))
+        Ok(DataFrame {
+            data: self.data.select(Axis(1), &to_keep[..]),
+            columns: new_map.to_owned(),
+            index: self.index.to_owned(),
+        })
     }
 
     pub fn concat(&self, axis: Axis, other: &DataFrame) -> Result<DataFrame> {
@@ -206,13 +202,15 @@ impl DataFrame {
                     let new_index: BTreeMap<IndexType, usize> = concat_index_maps(&self.index,
                                                                                   &other.index);
 
-                    let new_matrix = match stack(Axis(0),
-                                                 &[self.inner_matrix.view(),
-                                                   other.inner_matrix.view()]) {
+                    let new_matrix = match stack(Axis(0), &[self.data.view(), other.data.view()]) {
                         Ok(z) => z,
                         Err(_) => return Err(ErrorKind::StackFail.into()),
                     };
-                    DataFrame::new(new_matrix, new_map, Some(new_index))
+                    Ok(DataFrame {
+                        data: new_matrix,
+                        columns: new_map,
+                        index: new_index,
+                    })
                 } else {
                     return Err(ErrorKind::ColumnShapeMismatch.into());
                 }
@@ -229,13 +227,15 @@ impl DataFrame {
                         .map(|(x, y)| (x.to_owned(), *y))
                         .collect();
 
-                    let new_matrix = match stack(Axis(1),
-                                                 &[self.inner_matrix.view(),
-                                                   other.inner_matrix.view()]) {
+                    let new_matrix = match stack(Axis(1), &[self.data.view(), other.data.view()]) {
                         Ok(z) => z,
                         Err(_) => return Err(ErrorKind::StackFail.into()),
                     };
-                    DataFrame::new(new_matrix, new_map, Some(self.index.to_owned()))
+                    Ok(DataFrame {
+                        data: new_matrix,
+                        columns: new_map,
+                        index: self.index.to_owned(),
+                    })
                 } else {
                     return Err(ErrorKind::RowShapeMismatch.into());
                 }
@@ -259,17 +259,19 @@ impl DataFrame {
         let new_matrix: Matrix<InnerType> = {
             let i1: Vec<usize> = idxs.iter().map(|&(_, x, _)| x).collect();
             let i2: Vec<usize> = idxs.iter().map(|&(_, _, y)| y.unwrap()).collect();
-            let mat1 = self.inner_matrix.select(Axis(0), &i1[..]);
-            let mat2 = other.inner_matrix.select(Axis(0), &i2[..]);
+            let mat1 = self.data.select(Axis(0), &i1[..]);
+            let mat2 = other.data.select(Axis(0), &i2[..]);
             match stack(Axis(1), &[mat1.view(), mat2.view()]) {
                 Ok(z) => z,
                 Err(_) => return Err(ErrorKind::StackFail.into()),
             }
         };
 
-        DataFrame::new(new_matrix,
-                       concat_column_maps(&self.columns, &other.columns),
-                       Some(merge_maps(&self.index, &other.index)))
+        Ok(DataFrame {
+            data: new_matrix,
+            columns: concat_column_maps(&self.columns, &other.columns),
+            index: merge_maps(&self.index, &other.index),
+        })
     }
 }
 

@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use dataframe::*;
+use types::*;
 
 
 pub fn merge_maps(first_context: &BTreeMap<IndexType, usize>,
