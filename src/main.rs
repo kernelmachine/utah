@@ -8,12 +8,16 @@ extern crate rand;
 extern crate ndarray_rand;
 extern crate num;
 extern crate chrono;
-
+extern crate error_chain;
 
 pub mod dataframe;
 pub mod helper;
 pub mod join;
+pub mod error;
+
 fn main() {
+
+
     // dataframe!()
     // let a = arr2(&[[2., 3.], [3., 4.], [7., 34.]]);
     // let names = vec!["a", "b"].iter().map(|x| x.to_string()).collect();

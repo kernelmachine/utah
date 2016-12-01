@@ -5,6 +5,7 @@ pub mod tests {
     extern crate test;
     use ndarray::{arr2, arr1, Axis, stack};
     use dataframe::*;
+    use join::{Join, JoinType};
     use test::Bencher;
     use ndarray::Array;
     use rand::distributions::Range;
@@ -83,8 +84,8 @@ pub mod tests {
         index.insert(IndexType::Str("b".to_string()), 1);
 
         let df = DataFrame::new(a, names, None).unwrap();
-        assert!(df.get(ColumnType::Str("a".to_string())) ==
-                Ok(arr2(&[[2., 3.], [3., 4.]]).mapv(InnerType::from_float).column(0).to_owned()))
+        assert!(df.get(ColumnType::Str("a".to_string())).unwrap() ==
+                arr2(&[[2., 3.], [3., 4.]]).mapv(InnerType::from_float).column(0).to_owned())
     }
 
     #[test]
@@ -137,7 +138,7 @@ pub mod tests {
 
         let join_df = DataFrame::new(join_matrix, join_names, Some(join_index));
         let test_df = c_df.inner_join(&e_df);
-        assert_eq!(join_df.unwrap(), test_df.clone().unwrap())
+        assert_eq!(join_df.unwrap(), test_df.unwrap().clone())
 
     }
 

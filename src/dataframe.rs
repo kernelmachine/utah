@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use chrono::*;
 use helper::*;
 use join::*;
-
+use error::*;
 
 pub type Column<InnerType> = Array<InnerType, Ix>;
 pub type Matrix<InnerType> = Array<InnerType, (Ix, Ix)>;
@@ -68,17 +68,17 @@ impl DataFrame {
     pub fn new(data: Matrix<InnerType>,
                datamap: BTreeMap<ColumnType, usize>,
                index: Option<BTreeMap<IndexType, usize>>)
-               -> Result<DataFrame, &'static str> {
+               -> Result<DataFrame> {
 
         if datamap.len() != data.shape()[1] {
-            return Err("column shape mismatch!");
+            return Err(ErrorKind::ColumnShapeMismatch.into());
         }
 
 
         let idx = match index {
             Some(z) => {
                 if z.len() != data.shape()[0] {
-                    return Err("row shape mismatch!");
+                    return Err(ErrorKind::RowShapeMismatch.into());
                 }
                 z
             }
@@ -100,18 +100,27 @@ impl DataFrame {
         Ok(dm)
     }
 
-    pub fn get(self, name: ColumnType) -> Result<Column<InnerType>, &'static str> {
+    pub fn get(self, name: ColumnType) -> Result<Column<InnerType>> {
         match self.columns.get(&name) {
             Some(x) => Ok(self.inner_matrix.column(*x).to_owned()),
-            None => Err("no such column exists"),
+            None => {
+                match name {
+                    ColumnType::Str(z) => {
+                        return Err(ErrorKind::InvalidColumnName(z.to_string()).into())
+                    }
+                    ColumnType::Date(z) => {
+                        return Err(ErrorKind::InvalidColumnName(z.to_string()).into())
+                    }
+                    ColumnType::Int(z) => {
+                        return Err(ErrorKind::InvalidColumnName(z.to_string()).into())
+                    }
+                }
+            }
         }
     }
 
 
-    pub fn insert_row(mut self,
-                      data: Matrix<InnerType>,
-                      index: IndexType)
-                      -> Result<DataFrame, &'static str> {
+    pub fn insert_row(mut self, data: Matrix<InnerType>, index: IndexType) -> Result<DataFrame> {
 
         let ind_idx = {
             self.index.len()
@@ -119,16 +128,13 @@ impl DataFrame {
         self.index.insert(index, ind_idx);
         self.inner_matrix = match stack(Axis(0), &[self.inner_matrix.view(), data.view()]) {
             Ok(z) => z,
-            Err(_) => return Err("could not insert row into matrix."),
+            Err(_) => return Err(ErrorKind::StackFail.into()),
         };
         Ok(self)
 
     }
 
-    pub fn insert_column(mut self,
-                         data: Matrix<InnerType>,
-                         name: ColumnType)
-                         -> Result<DataFrame, &'static str> {
+    pub fn insert_column(mut self, data: Matrix<InnerType>, name: ColumnType) -> Result<DataFrame> {
 
         let datamap_idx = {
             self.columns.len()
@@ -136,7 +142,7 @@ impl DataFrame {
         self.columns.insert(name, datamap_idx);
         self.inner_matrix = match stack(Axis(1), &[self.inner_matrix.view(), data.view()]) {
             Ok(z) => z,
-            Err(_) => return Err("could not insert column into matrix."),
+            Err(_) => return Err(ErrorKind::StackFail.into()),
         };
         Ok(self)
 
@@ -146,7 +152,7 @@ impl DataFrame {
         self.inner_matrix.dim()
     }
 
-    pub fn drop_row(&mut self, indexes: &[IndexType]) -> Result<DataFrame, &'static str> {
+    pub fn drop_row(&mut self, indexes: &[IndexType]) -> Result<DataFrame> {
         let mut idxs = vec![];
 
         let new_map: &mut BTreeMap<IndexType, usize> = &mut self.index.clone();
@@ -166,7 +172,7 @@ impl DataFrame {
                        Some(new_map.to_owned()))
     }
 
-    pub fn drop_column(&mut self, names: &[ColumnType]) -> Result<DataFrame, &'static str> {
+    pub fn drop_column(&mut self, names: &[ColumnType]) -> Result<DataFrame> {
         let mut idxs = vec![];
 
         let new_map: &mut BTreeMap<ColumnType, usize> = &mut self.columns.clone();
@@ -187,7 +193,7 @@ impl DataFrame {
                        Some(self.index.to_owned()))
     }
 
-    pub fn concat(&self, axis: Axis, other: &DataFrame) -> Result<DataFrame, &'static str> {
+    pub fn concat(&self, axis: Axis, other: &DataFrame) -> Result<DataFrame> {
 
         match axis {
             Axis(0) => {
@@ -204,11 +210,11 @@ impl DataFrame {
                                                  &[self.inner_matrix.view(),
                                                    other.inner_matrix.view()]) {
                         Ok(z) => z,
-                        Err(_) => return Err("could not insert into matrix."),
+                        Err(_) => return Err(ErrorKind::StackFail.into()),
                     };
                     DataFrame::new(new_matrix, new_map, Some(new_index))
                 } else {
-                    return Err("DataFrame column dimensions do not match.");
+                    return Err(ErrorKind::ColumnShapeMismatch.into());
                 }
             }
             Axis(1) => {
@@ -227,18 +233,18 @@ impl DataFrame {
                                                  &[self.inner_matrix.view(),
                                                    other.inner_matrix.view()]) {
                         Ok(z) => z,
-                        Err(_) => return Err("could not insert into matrix."),
+                        Err(_) => return Err(ErrorKind::StackFail.into()),
                     };
                     DataFrame::new(new_matrix, new_map, Some(self.index.to_owned()))
                 } else {
-                    return Err("DataFrame row dimensions do not match.");
+                    return Err(ErrorKind::RowShapeMismatch.into());
                 }
             }
-            _ => Err("invalid axis"),
+            _ => return Err(ErrorKind::InvalidAxis.into()),
         }
 
     }
-    pub fn inner_join(&self, other: &DataFrame) -> Result<DataFrame, &'static str> {
+    pub fn inner_join(&self, other: &DataFrame) -> Result<DataFrame> {
 
         let idxs: Vec<(IndexType, usize, Option<usize>)> =
             Join::new(JoinType::InnerJoin,
@@ -247,7 +253,7 @@ impl DataFrame {
                 .collect();
 
         if idxs.len() == 0 {
-            return Err("no common values");
+            return Err(ErrorKind::NoCommonValues.into());
         }
 
         let new_matrix: Matrix<InnerType> = {
@@ -257,7 +263,7 @@ impl DataFrame {
             let mat2 = other.inner_matrix.select(Axis(0), &i2[..]);
             match stack(Axis(1), &[mat1.view(), mat2.view()]) {
                 Ok(z) => z,
-                Err(_) => return Err("could not build joined matrix."),
+                Err(_) => return Err(ErrorKind::StackFail.into()),
             }
         };
 

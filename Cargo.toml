@@ -9,6 +9,7 @@ ndarray-rand="*"
 rand="*"
 num = "*"
 chrono = "0.2"
+error-chain="*"
 
 [[bin]]
 name="dataframe"
