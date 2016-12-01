@@ -54,38 +54,30 @@ pub mod tests {
     #[test]
     fn dataframe_creation() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
-        let mut names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        names.insert(ColumnType::Str("a".to_string()), 0);
-        names.insert(ColumnType::Str("b".to_string()), 1);
-
+        let names: Vec<String> = vec!["a".to_string(), "b".to_string()];
         let df = DataFrame::new(a).columns(names);
         assert!(df.is_ok())
     }
 
-    #[test]
-    fn dataframe_creation_datetime_index() {
-        let a = arr2(&[[2., 3.], [3., 4.]]);
-        let mut names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        names.insert(ColumnType::Date(UTC.ymd(2014, 7, 8).and_hms(9, 10, 11)), 0);
-        names.insert(ColumnType::Date(UTC.ymd(2014, 10, 5).and_hms(2, 5, 7)), 1);
-
-        let df: Result<DataFrame> = DataFrame::new(a).columns(names);
-        assert!(df.is_ok())
-    }
+    // #[test]
+    // fn dataframe_creation_datetime_index() {
+    //     let a = arr2(&[[2., 3.], [3., 4.]]);
+    //     let names: Vec<String> = vec![];
+    //     names.insert(ColumnType::Date(UTC.ymd(2014, 7, 8).and_hms(9, 10, 11)), 0);
+    //     names.insert(ColumnType::Date(UTC.ymd(2014, 10, 5).and_hms(2, 5, 7)), 1);
+    //
+    //     let df: Result<DataFrame> = DataFrame::new(a).columns(names);
+    //     assert!(df.is_ok())
+    // }
 
     #[test]
     fn dataframe_index() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
-        let mut names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        names.insert(ColumnType::Str("a".to_string()), 0);
-        names.insert(ColumnType::Str("b".to_string()), 1);
+        let names: Vec<String> = vec!["a".to_string(), "b".to_string()];
 
-        let mut index: BTreeMap<IndexType, usize> = BTreeMap::new();
-        index.insert(IndexType::Str("a".to_string()), 0);
-        index.insert(IndexType::Str("b".to_string()), 1);
 
         let df = DataFrame::new(a).columns(names).unwrap();
-        assert!(df.get(ColumnType::Str("a".to_string())).unwrap() ==
+        assert!(df.get("a").unwrap() ==
                 arr2(&[[2., 3.], [3., 4.]]).mapv(InnerType::from).column(0).to_owned())
     }
 
@@ -99,16 +91,11 @@ pub mod tests {
         let c = stack(Axis(1), &[a.view(), b.view()]).unwrap();
         let e = stack(Axis(1), &[d.view(), f.view()]).unwrap();
 
-        let mut c_names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        c_names.insert(ColumnType::Str("1".to_string()), 0);
-        c_names.insert(ColumnType::Str("2".to_string()), 1);
-        c_names.insert(ColumnType::Str("3".to_string()), 2);
+        let c_names: Vec<String> = vec!["1".to_string(), "2".to_string(), "3".to_string()];
 
 
-        let mut e_names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        e_names.insert(ColumnType::Str("4".to_string()), 0);
-        e_names.insert(ColumnType::Str("5".to_string()), 1);
-        e_names.insert(ColumnType::Str("3".to_string()), 2);
+
+        let e_names: Vec<String> = vec!["4".to_string(), "5".to_string(), "3".to_string()];
 
 
 
@@ -117,18 +104,16 @@ pub mod tests {
 
 
 
-        let mut join_names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        join_names.insert(ColumnType::Str("1".to_string()), 0);
-        join_names.insert(ColumnType::Str("2".to_string()), 1);
-        join_names.insert(ColumnType::Str("3".to_string()), 2);
-        join_names.insert(ColumnType::Str("4_x".to_string()), 3);
-        join_names.insert(ColumnType::Str("5_x".to_string()), 4);
-        join_names.insert(ColumnType::Str("3_x".to_string()), 5);
+        let join_names: Vec<String> = vec!["1".to_string(),
+                                           "2".to_string(),
+                                           "3".to_string(),
+                                           "4_x".to_string(),
+                                           "5_x".to_string(),
+                                           "3_x".to_string()];
 
-        let mut join_index: BTreeMap<IndexType, usize> = BTreeMap::new();
-        join_index.insert(IndexType::Str("0".to_string()), 0);
-        join_index.insert(IndexType::Str("1".to_string()), 1);
-        join_index.insert(IndexType::Str("2".to_string()), 2);
+
+        let join_index: Vec<String> = vec!["0".to_string(), "1".to_string(), "2".to_string()];
+
 
         let join_matrix = stack(Axis(1),
                                 &[c.select(Axis(0), &[0, 1, 2]).view(),
@@ -145,18 +130,15 @@ pub mod tests {
     #[test]
     fn dataframe_insert() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
-        let mut names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        names.insert(ColumnType::Str("a".to_string()), 0);
-        names.insert(ColumnType::Str("b".to_string()), 1);
+        let names: Vec<String> = vec!["a".to_string(), "b".to_string()];
+
         let df = DataFrame::new(a).columns(names).unwrap();
 
         let new_array = arr2(&[[5.], [6.]]);
 
-        let new_df = df.insert_column(new_array, ColumnType::Str("c".to_string()));
-        let mut new_names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        new_names.insert(ColumnType::Str("a".to_string()), 0);
-        new_names.insert(ColumnType::Str("b".to_string()), 1);
-        new_names.insert(ColumnType::Str("c".to_string()), 2);
+        let new_df = df.insert_column(new_array, "c");
+        let new_names: Vec<String> = vec!["a".to_string(), "b".to_string(), "c".to_string()];
+
         let a_prime = arr2(&[[2., 3., 5.], [3., 4., 6.]]);
         assert_eq!(DataFrame::new(a_prime).columns(new_names).unwrap(),
                    new_df.unwrap())
@@ -166,13 +148,10 @@ pub mod tests {
     fn dataframe_concat() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
         let b = arr2(&[[7., 1.], [7., 6.]]);
-        let mut a_names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        a_names.insert(ColumnType::Str("a".to_string()), 0);
-        a_names.insert(ColumnType::Str("b".to_string()), 1);
+        let a_names: Vec<String> = vec!["a".to_string(), "b".to_string()];
 
-        let mut b_names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        b_names.insert(ColumnType::Str("c".to_string()), 0);
-        b_names.insert(ColumnType::Str("d".to_string()), 1);
+        let b_names: Vec<String> = vec!["c".to_string(), "d".to_string()];
+
         let df = DataFrame::new(a).columns(a_names).unwrap();
         let df_1 = DataFrame::new(b).columns(b_names).unwrap();
 
@@ -180,21 +159,15 @@ pub mod tests {
         let col_concat = df.concat(Axis(1), &df_1);
 
 
-        let mut a_prime_names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        a_prime_names.insert(ColumnType::Str("a".to_string()), 0);
-        a_prime_names.insert(ColumnType::Str("b".to_string()), 1);
+        let a_prime_names: Vec<String> = vec!["a".to_string(), "b".to_string()];
 
-        let mut a_prime_index: BTreeMap<IndexType, usize> = BTreeMap::new();
-        a_prime_index.insert(IndexType::Str("0".to_string()), 0);
-        a_prime_index.insert(IndexType::Str("1".to_string()), 1);
-        a_prime_index.insert(IndexType::Str("0_x".to_string()), 2);
-        a_prime_index.insert(IndexType::Str("1_x".to_string()), 3);
+        let a_prime_index: Vec<String> =
+            vec!["0".to_string(), "1".to_string(), "0_x".to_string(), "1_x".to_string()];
 
-        let mut b_prime_names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        b_prime_names.insert(ColumnType::Str("a".to_string()), 0);
-        b_prime_names.insert(ColumnType::Str("b".to_string()), 1);
-        b_prime_names.insert(ColumnType::Str("c".to_string()), 2);
-        b_prime_names.insert(ColumnType::Str("d".to_string()), 3);
+
+        let b_prime_names: Vec<String> =
+            vec!["a".to_string(), "b".to_string(), "c".to_string(), "d".to_string()];
+
         let a_prime = arr2(&[[2., 3.], [3., 4.], [7., 1.], [7., 6.]]);
         let b_prime = arr2(&[[2., 3., 7., 1.], [3., 4., 7., 6.]]);
 
@@ -211,13 +184,11 @@ pub mod tests {
     #[test]
     fn dataframe_drop_column() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
-        let mut names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        names.insert(ColumnType::Str("a".to_string()), 0);
-        names.insert(ColumnType::Str("b".to_string()), 1);
+        let names: Vec<String> = vec!["a".to_string(), "b".to_string()];
+
         let mut df = DataFrame::new(a).columns(names).unwrap();
-        let new_df = df.drop_column(&[ColumnType::Str("a".to_string())]);
-        let mut new_names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        new_names.insert(ColumnType::Str("b".to_string()), 0);
+        let new_df = df.drop_column(&["a"]);
+        let new_names: Vec<String> = vec!["b".to_string()];
         let a_prime = arr2(&[[3.], [4.]]);
         assert_eq!(DataFrame::new(a_prime).columns(new_names).unwrap(),
                    new_df.unwrap())
@@ -226,14 +197,12 @@ pub mod tests {
     #[test]
     fn dataframe_drop_row() {
         let a = arr2(&[[2., 3.], [5., 4.]]);
-        let mut names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        names.insert(ColumnType::Str("a".to_string()), 0);
-        names.insert(ColumnType::Str("b".to_string()), 1);
+        let names: Vec<String> = vec!["a".to_string(), "b".to_string()];
+
         let mut df = DataFrame::new(a).columns(names).unwrap();
-        let new_df = df.drop_row(&[IndexType::Str("1".to_string())]);
-        let mut new_names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        new_names.insert(ColumnType::Str("a".to_string()), 0);
-        new_names.insert(ColumnType::Str("b".to_string()), 1);
+        let new_df = df.drop_row(&["1"]);
+        let new_names: Vec<String> = vec!["a".to_string(), "b".to_string()];
+
         let a_prime = arr2(&[[2., 3.]]);
         assert_eq!(DataFrame::new(a_prime).columns(new_names).unwrap(),
                    new_df.unwrap())
@@ -243,9 +212,8 @@ pub mod tests {
     #[test]
     fn dataframe_creation_failure() {
         let a = Array::random((2, 5), Range::new(0., 10.));
-        let mut names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        names.insert(ColumnType::Str("1".to_string()), 0);
-        names.insert(ColumnType::Str("2".to_string()), 1);
+        let names: Vec<String> = vec!["1".to_string(), "2".to_string()];
+
         let df = DataFrame::new(a).columns(names);
         assert!(df.is_err())
     }
@@ -255,12 +223,12 @@ pub mod tests {
     #[bench]
     fn bench_creation(b: &mut Bencher) {
         let a = Array::random((10, 5), Range::new(0., 10.));
-        let mut names: BTreeMap<ColumnType, usize> = BTreeMap::new();
-        names.insert(ColumnType::Str("1".to_string()), 0);
-        names.insert(ColumnType::Str("2".to_string()), 1);
-        names.insert(ColumnType::Str("3".to_string()), 2);
-        names.insert(ColumnType::Str("4".to_string()), 3);
-        names.insert(ColumnType::Str("5".to_string()), 4);
+        let names: Vec<String> = vec!["1".to_string(),
+                                      "2".to_string(),
+                                      "3".to_string(),
+                                      "4".to_string(),
+                                      "5".to_string()];
+
         b.iter(|| DataFrame::new(a.clone()).columns(names.clone()));
     }
 
@@ -272,30 +240,34 @@ pub mod tests {
         let e = Array::random((20000, 10), Range::new(0., 10.));
 
 
-        let mut c_names: BTreeMap<ColumnType, usize> = BTreeMap::new();
+        let mut c_names: Vec<String> = vec![];
         for i in 0..10 {
-            c_names.insert(ColumnType::Str(i.to_string()), i);
+            c_names.push(i.to_string());
         }
 
-        let mut e_names: BTreeMap<ColumnType, usize> = BTreeMap::new();
+        let mut e_names: Vec<String> = vec![];
         for i in 0..10 {
-            e_names.insert(ColumnType::Str(i.to_string()), i);
+            e_names.push(i.to_string());
         }
 
-        let mut c_index: BTreeMap<IndexType, usize> = BTreeMap::new();
+        let mut c_index: Vec<String> = vec![];
         for i in 0..20000 {
-            c_index.insert(IndexType::Str(i.to_string()), i);
+            c_index.push(i.to_string());
         }
 
-        let mut e_index: BTreeMap<IndexType, usize> = BTreeMap::new();
+        let mut e_index: Vec<String> = vec![];
         for i in 1999..21999 {
-            e_index.insert(IndexType::Str(i.to_string()), i - 1999);
+            e_index.push(i.to_string());
         }
 
-        let c_df = DataFrame::new(c).columns(c_names).unwrap().index(c_index).unwrap();
+        let c_df = DataFrame::new(c)
+            .columns(c_names)
+            .unwrap()
+            .index(c_index)
+            .unwrap();
         let e_df = DataFrame::new(e).columns(e_names).unwrap().index(e_index).unwrap();
 
-        b.iter(|| c_df.inner_join(&e_df));
+        b.iter(|| c_df.clone().inner_join(&e_df.clone()));
     }
 
     #[bench]
@@ -310,17 +282,17 @@ pub mod tests {
     #[bench]
     fn bench_inner_join_bare(b: &mut Bencher) {
         let mut left = HashMap::new();
-        for (i, j) in (1..20000).zip((1..20000).map(|x| x.to_string())) {
+        for (i, j) in (1..20000).zip((1..20000)) {
             left.insert(i, j);
         }
 
         let mut right = HashMap::new();
-        for (i, j) in (19993..40000).zip((19993..40000).map(|x| x.to_string())) {
+        for (i, j) in (19993..40000).zip((19993..40000)) {
             right.insert(i, j);
         }
 
         b.iter(|| {
-            let res: Vec<(i32, String, Option<String>)> =
+            let res: Vec<(i32, i32, Option<i32>)> =
                 Join::new(JoinType::InnerJoin, left.clone().into_iter(), right.clone()).collect();
             res
         });

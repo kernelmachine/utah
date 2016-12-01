@@ -34,19 +34,25 @@ impl DataFrame {
     }
 
 
-    pub fn columns(mut self, columns: BTreeMap<ColumnType, usize>) -> Result<DataFrame> {
+    pub fn columns(mut self, columns: Vec<String>) -> Result<DataFrame> {
         if columns.len() != self.data.shape()[1] {
             return Err(ErrorKind::ColumnShapeMismatch.into());
         }
-        self.columns = columns;
+        self.columns = columns.iter()
+            .zip((0..columns.len()))
+            .map(|(x, y)| (ColumnType::from(x.to_string()), y))
+            .collect();
         Ok(self)
     }
 
-    pub fn index(mut self, index: BTreeMap<IndexType, usize>) -> Result<DataFrame> {
+    pub fn index(mut self, index: Vec<String>) -> Result<DataFrame> {
         if index.len() != self.data.shape()[0] {
             return Err(ErrorKind::RowShapeMismatch.into());
         }
-        self.index = index;
+        self.index = index.iter()
+            .zip((0..index.len()))
+            .map(|(x, y)| (IndexType::from(x.to_string()), y))
+            .collect();
         Ok(self)
     }
 
@@ -91,7 +97,8 @@ impl DataFrame {
     //     Ok(dm)
     // }
 
-    pub fn get(self, name: ColumnType) -> Result<Column<InnerType>> {
+    pub fn get(self, name: &str) -> Result<Column<InnerType>> {
+        let name = ColumnType::from(name.to_string());
         match self.columns.get(&name) {
             Some(x) => Ok(self.data.column(*x).to_owned()),
             None => {
@@ -111,7 +118,8 @@ impl DataFrame {
     }
 
 
-    pub fn insert_row(mut self, data: Matrix<InnerType>, index: IndexType) -> Result<DataFrame> {
+    pub fn insert_row(mut self, data: Matrix<InnerType>, index: &str) -> Result<DataFrame> {
+        let index = IndexType::from(index.to_string());
 
         let ind_idx = {
             self.index.len()
@@ -125,8 +133,8 @@ impl DataFrame {
 
     }
 
-    pub fn insert_column(mut self, data: Matrix<f64>, name: ColumnType) -> Result<DataFrame> {
-
+    pub fn insert_column(mut self, data: Matrix<f64>, name: &str) -> Result<DataFrame> {
+        let name = ColumnType::from(name.to_string());
         let data = data.mapv(InnerType::from);
         let columns_idx = {
             self.columns.len()
@@ -144,8 +152,10 @@ impl DataFrame {
         self.data.dim()
     }
 
-    pub fn drop_row(&mut self, indexes: &[IndexType]) -> Result<DataFrame> {
+    pub fn drop_row(&mut self, indexes: &[&str]) -> Result<DataFrame> {
         let mut idxs = vec![];
+        let indexes: Vec<IndexType> =
+            indexes.iter().map(|x| IndexType::from(x.to_string())).collect();
 
         let new_map: &mut BTreeMap<IndexType, usize> = &mut self.index.clone();
         for name in indexes.iter() {
@@ -166,8 +176,10 @@ impl DataFrame {
         })
     }
 
-    pub fn drop_column(&mut self, names: &[ColumnType]) -> Result<DataFrame> {
+    pub fn drop_column(&mut self, names: &[&str]) -> Result<DataFrame> {
         let mut idxs = vec![];
+        let names: Vec<ColumnType> =
+            names.iter().map(|x| ColumnType::from(x.to_string())).collect();
 
         let new_map: &mut BTreeMap<ColumnType, usize> = &mut self.columns.clone();
         for name in names.iter() {

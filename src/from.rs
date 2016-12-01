@@ -1,11 +1,15 @@
 use chrono::*;
 use types::*;
 
-
-
 impl From<f64> for InnerType {
     fn from(f: f64) -> InnerType {
         InnerType::Float(f)
+    }
+}
+
+impl From<i64> for InnerType {
+    fn from(i: i64) -> InnerType {
+        InnerType::Int(i)
     }
 }
 
