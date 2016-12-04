@@ -13,7 +13,7 @@ extern crate test;
 extern crate num;
 extern crate chrono;
 extern crate error_chain;
-
+extern crate itertools;
 
 pub mod dataframe;
 pub mod tests;
@@ -22,3 +22,4 @@ pub mod join;
 pub mod error;
 pub mod from;
 pub mod types;
+// pub mod slower_dataframe;

@@ -9,6 +9,7 @@ extern crate ndarray_rand;
 extern crate num;
 extern crate chrono;
 extern crate error_chain;
+extern crate itertools;
 
 pub mod dataframe;
 pub mod helper;

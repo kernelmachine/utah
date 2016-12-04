@@ -54,29 +54,26 @@ pub mod tests {
     #[test]
     fn dataframe_creation() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
-        let names: Vec<String> = vec!["a".to_string(), "b".to_string()];
-        let df = DataFrame::new(a).columns(names);
+        let df = DataFrame::new(a).columns(&["a", "b"]);
         assert!(df.is_ok())
     }
 
-    // #[test]
-    // fn dataframe_creation_datetime_index() {
-    //     let a = arr2(&[[2., 3.], [3., 4.]]);
-    //     let names: Vec<String> = vec![];
-    //     names.insert(ColumnType::Date(UTC.ymd(2014, 7, 8).and_hms(9, 10, 11)), 0);
-    //     names.insert(ColumnType::Date(UTC.ymd(2014, 10, 5).and_hms(2, 5, 7)), 1);
-    //
-    //     let df: Result<DataFrame> = DataFrame::new(a).columns(names);
-    //     assert!(df.is_ok())
-    // }
+    #[test]
+    fn dataframe_creation_datetime_index() {
+        let a = arr2(&[[2., 3.], [3., 4.]]);
+
+        let df: Result<DataFrame> = DataFrame::new(a)
+            .columns(&[UTC.ymd(2014, 7, 8).and_hms(9, 10, 11),
+                       UTC.ymd(2014, 10, 5).and_hms(2, 5, 7)]);
+        assert!(df.is_ok())
+    }
 
     #[test]
     fn dataframe_index() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
-        let names: Vec<String> = vec!["a".to_string(), "b".to_string()];
 
 
-        let df = DataFrame::new(a).columns(names).unwrap();
+        let df = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         assert!(df.get("a").unwrap() ==
                 arr2(&[[2., 3.], [3., 4.]]).mapv(InnerType::from).column(0).to_owned())
     }
@@ -91,27 +88,17 @@ pub mod tests {
         let c = stack(Axis(1), &[a.view(), b.view()]).unwrap();
         let e = stack(Axis(1), &[d.view(), f.view()]).unwrap();
 
-        let c_names: Vec<String> = vec!["1".to_string(), "2".to_string(), "3".to_string()];
-        let e_names: Vec<String> = vec!["4".to_string(), "5".to_string(), "6".to_string()];
+        let c_df = DataFrame::new(c.clone())
+            .columns(&["1", "2", "3"])
+            .unwrap()
+            .index(&["1", "2", "3"])
+            .unwrap();
 
-        let c_index: Vec<String> = vec!["1".to_string(), "2".to_string(), "3".to_string()];
-        let e_index: Vec<String> = vec!["1".to_string(), "2".to_string(), "4".to_string()];
-
-
-        let c_df = DataFrame::new(c.clone()).columns(c_names).unwrap().index(c_index).unwrap();
-        let e_df = DataFrame::new(e.clone()).columns(e_names).unwrap().index(e_index).unwrap();
-
-
-
-        let join_names: Vec<String> = vec!["1".to_string(),
-                                           "2".to_string(),
-                                           "3".to_string(),
-                                           "4_x".to_string(),
-                                           "5_x".to_string(),
-                                           "6_x".to_string()];
-
-
-        let join_index: Vec<String> = vec!["1".to_string(), "2".to_string()];
+        let e_df = DataFrame::new(e.clone())
+            .columns(&["4", "5", "6"])
+            .unwrap()
+            .index(&["1", "2", "4"])
+            .unwrap();
 
 
         let join_matrix = stack(Axis(1),
@@ -119,7 +106,10 @@ pub mod tests {
                                   e.select(Axis(0), &[0, 1]).view()])
             .unwrap();
 
-        let join_df = DataFrame::new(join_matrix).columns(join_names).unwrap().index(join_index);
+        let join_df = DataFrame::new(join_matrix)
+            .columns(&["1", "2", "3", "4_x", "5_x", "6_x"])
+            .unwrap()
+            .index(&["1", "2"]);
         let test_df = c_df.inner_join(&e_df);
         assert_eq!(join_df.unwrap(), test_df.unwrap().clone())
 
@@ -129,17 +119,15 @@ pub mod tests {
     #[test]
     fn dataframe_insert() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
-        let names: Vec<String> = vec!["a".to_string(), "b".to_string()];
 
-        let df = DataFrame::new(a).columns(names).unwrap();
+        let df = DataFrame::new(a).columns(&["a", "b"]).unwrap();
 
         let new_array = arr2(&[[5.], [6.]]);
 
         let new_df = df.insert_column(new_array, "c");
-        let new_names: Vec<String> = vec!["a".to_string(), "b".to_string(), "c".to_string()];
 
         let a_prime = arr2(&[[2., 3., 5.], [3., 4., 6.]]);
-        assert_eq!(DataFrame::new(a_prime).columns(new_names).unwrap(),
+        assert_eq!(DataFrame::new(a_prime).columns(&["a", "b", "c"]).unwrap(),
                    new_df.unwrap())
     }
 
@@ -147,63 +135,47 @@ pub mod tests {
     fn dataframe_concat() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
         let b = arr2(&[[7., 1.], [7., 6.]]);
-        let a_names: Vec<String> = vec!["a".to_string(), "b".to_string()];
 
-        let b_names: Vec<String> = vec!["c".to_string(), "d".to_string()];
 
-        let df = DataFrame::new(a).columns(a_names).unwrap();
-        let df_1 = DataFrame::new(b).columns(b_names).unwrap();
+        let df = DataFrame::new(a).columns(&["a", "b"]).unwrap();
+        let df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap();
 
         let row_concat = df.concat(Axis(0), &df_1);
         let col_concat = df.concat(Axis(1), &df_1);
-
-
-        let a_prime_names: Vec<String> = vec!["a".to_string(), "b".to_string()];
-
-        let a_prime_index: Vec<String> =
-            vec!["0".to_string(), "1".to_string(), "0_x".to_string(), "1_x".to_string()];
-
-
-        let b_prime_names: Vec<String> =
-            vec!["a".to_string(), "b".to_string(), "c".to_string(), "d".to_string()];
 
         let a_prime = arr2(&[[2., 3.], [3., 4.], [7., 1.], [7., 6.]]);
         let b_prime = arr2(&[[2., 3., 7., 1.], [3., 4., 7., 6.]]);
 
         assert_eq!(DataFrame::new(a_prime)
-                       .columns(a_prime_names)
+                       .columns(&["a", "b"])
                        .unwrap()
-                       .index(a_prime_index)
+                       .index(&["0", "1", "0_x", "1_x"])
                        .unwrap(),
                    row_concat.unwrap());
-        assert_eq!(DataFrame::new(b_prime).columns(b_prime_names).unwrap(),
+        assert_eq!(DataFrame::new(b_prime).columns(&["a", "b", "c", "d"]).unwrap(),
                    col_concat.unwrap())
     }
 
     #[test]
     fn dataframe_drop_column() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
-        let names: Vec<String> = vec!["a".to_string(), "b".to_string()];
 
-        let mut df = DataFrame::new(a).columns(names).unwrap();
+        let mut df = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         let new_df = df.drop_column(&["a"]);
-        let new_names: Vec<String> = vec!["b".to_string()];
         let a_prime = arr2(&[[3.], [4.]]);
-        assert_eq!(DataFrame::new(a_prime).columns(new_names).unwrap(),
+        assert_eq!(DataFrame::new(a_prime).columns(&["b"]).unwrap(),
                    new_df.unwrap())
     }
 
     #[test]
     fn dataframe_drop_row() {
         let a = arr2(&[[2., 3.], [5., 4.]]);
-        let names: Vec<String> = vec!["a".to_string(), "b".to_string()];
 
-        let mut df = DataFrame::new(a).columns(names).unwrap();
+        let mut df = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         let new_df = df.drop_row(&["1"]);
-        let new_names: Vec<String> = vec!["a".to_string(), "b".to_string()];
 
         let a_prime = arr2(&[[2., 3.]]);
-        assert_eq!(DataFrame::new(a_prime).columns(new_names).unwrap(),
+        assert_eq!(DataFrame::new(a_prime).columns(&["a", "b"]).unwrap(),
                    new_df.unwrap())
     }
 
@@ -211,9 +183,7 @@ pub mod tests {
     #[test]
     fn dataframe_creation_failure() {
         let a = Array::random((2, 5), Range::new(0., 10.));
-        let names: Vec<String> = vec!["1".to_string(), "2".to_string()];
-
-        let df = DataFrame::new(a).columns(names);
+        let df = DataFrame::new(a).columns(&["1", "2"]);
         assert!(df.is_err())
     }
 
@@ -222,13 +192,8 @@ pub mod tests {
     #[bench]
     fn bench_creation(b: &mut Bencher) {
         let a = Array::random((10, 5), Range::new(0., 10.));
-        let names: Vec<String> = vec!["1".to_string(),
-                                      "2".to_string(),
-                                      "3".to_string(),
-                                      "4".to_string(),
-                                      "5".to_string()];
 
-        b.iter(|| DataFrame::new(a.clone()).columns(names.clone()));
+        b.iter(|| DataFrame::new(a.clone()).columns(&["1", "2", "3", "4", "5"]));
     }
 
 
@@ -260,11 +225,15 @@ pub mod tests {
         }
 
         let c_df = DataFrame::new(c)
-            .columns(c_names)
+            .columns(&c_names[..])
             .unwrap()
-            .index(c_index)
+            .index(&c_index[..])
             .unwrap();
-        let e_df = DataFrame::new(e).columns(e_names).unwrap().index(e_index).unwrap();
+        let e_df = DataFrame::new(e)
+            .columns(&e_names[..])
+            .unwrap()
+            .index(&e_index[..])
+            .unwrap();
 
         b.iter(|| c_df.clone().inner_join(&e_df.clone()));
     }

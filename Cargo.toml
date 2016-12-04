@@ -10,7 +10,7 @@ rand="*"
 num = "*"
 chrono = "0.2"
 error-chain="*"
-
+itertools = "*"
 [[bin]]
 name="dataframe"
 path='src/main.rs'

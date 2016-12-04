@@ -4,22 +4,16 @@ use helper::*;
 use join::*;
 use error::*;
 use types::*;
-use std::string::ToString;
+
 #[derive(Debug, Clone, PartialEq)]
-pub struct DataFrame {
-    columns: BTreeMap<ColumnType, usize>,
-    data: Matrix<InnerType>,
+pub struct SlowerDataFrame {
+    data: BTreeMap<ColumnType, SlowerInnerType>,
     index: BTreeMap<IndexType, usize>,
 }
 
-
-
-
-impl DataFrame {
-    pub fn new<T: Clone>(data: Matrix<T>) -> DataFrame
-        where InnerType: From<T>
-    {
-        let data: Matrix<InnerType> = data.mapv(InnerType::from);
+impl SlowerDataFrame {
+    pub fn new(data: Matrix<f64>) -> SlowerDataFrame {
+        let data: Matrix<SlowerInnerType> = data.mapv(SlowerInnerType::from);
 
         let columns: BTreeMap<ColumnType, usize> = (0..data.shape()[1])
             .enumerate()
@@ -31,7 +25,7 @@ impl DataFrame {
             .map(|(x, y)| (IndexType::Str(x.to_string()), y))
             .collect();
 
-        DataFrame {
+        SlowerDataFrame {
             data: data,
             columns: columns,
             index: index,
@@ -39,28 +33,24 @@ impl DataFrame {
     }
 
 
-    pub fn columns<'a, T>(mut self, columns: &'a [T]) -> Result<DataFrame>
-        where ColumnType: From<&'a T>
-    {
+    pub fn columns(mut self, columns: Vec<String>) -> Result<SlowerDataFrame> {
         if columns.len() != self.data.shape()[1] {
             return Err(ErrorKind::ColumnShapeMismatch.into());
         }
         self.columns = columns.iter()
-            .map(|x| ColumnType::from(x))
             .zip((0..columns.len()))
+            .map(|(x, y)| (ColumnType::from(x.to_string()), y))
             .collect();
         Ok(self)
     }
 
-    pub fn index<'a, T>(mut self, index: &'a [T]) -> Result<DataFrame>
-        where IndexType: From<&'a T>
-    {
+    pub fn index(mut self, index: Vec<String>) -> Result<SlowerDataFrame> {
         if index.len() != self.data.shape()[0] {
             return Err(ErrorKind::RowShapeMismatch.into());
         }
         self.index = index.iter()
-            .map(|x| IndexType::from(x))
             .zip((0..index.len()))
+            .map(|(x, y)| (IndexType::from(x.to_string()), y))
             .collect();
         Ok(self)
     }
@@ -69,10 +59,8 @@ impl DataFrame {
         self.columns.keys().map(|x| x.to_owned()).collect()
     }
 
-    pub fn get<T>(self, name: T) -> Result<Column<InnerType>>
-        where ColumnType: From<T>
-    {
-        let name = ColumnType::from(name);
+    pub fn get(self, name: &str) -> Result<Column<SlowerInnerType>> {
+        let name = ColumnType::from(name.to_string());
         match self.columns.get(&name) {
             Some(x) => Ok(self.data.column(*x).to_owned()),
             None => {
@@ -92,12 +80,9 @@ impl DataFrame {
     }
 
 
-    pub fn insert_row<T: Clone, S>(mut self, data: Matrix<T>, index: S) -> Result<DataFrame>
-        where IndexType: From<S>,
-              InnerType: From<T>
-    {
-        let index = IndexType::from(index);
-        let data = data.mapv(InnerType::from);
+    pub fn insert_row(mut self, data: Matrix<f64>, index: &str) -> Result<SlowerDataFrame> {
+        let index = IndexType::from(index.to_string());
+        let data = data.mapv(SlowerInnerType::from);
         let end = self.index.len();
         self.index.insert(index, end);
         self.data = match stack(Axis(0), &[self.data.view(), data.view()]) {
@@ -112,12 +97,9 @@ impl DataFrame {
     }
 
 
-    pub fn insert_column<T: Clone, S>(mut self, data: Matrix<T>, name: S) -> Result<DataFrame>
-        where ColumnType: From<S>,
-              InnerType: From<T>
-    {
-        let name = ColumnType::from(name);
-        let data = data.mapv(InnerType::from);
+    pub fn insert_column(mut self, data: Matrix<f64>, name: &str) -> Result<SlowerDataFrame> {
+        let name = ColumnType::from(name.to_string());
+        let data = data.mapv(SlowerInnerType::from);
         let end = self.columns.len();
         self.columns.insert(name, end);
         self.data = match stack(Axis(1), &[self.data.view(), data.view()]) {
@@ -128,15 +110,14 @@ impl DataFrame {
 
     }
 
-    pub fn drop_column<'a, T>(&mut self, names: &'a [T]) -> Result<DataFrame>
-        where ColumnType: From<&'a T>
-    {
+    pub fn drop_column(&mut self, names: &[&str]) -> Result<SlowerDataFrame> {
         let mut idxs = vec![];
+        let names: Vec<ColumnType> =
+            names.iter().map(|x| ColumnType::from(x.to_string())).collect();
 
         let new_map: &mut BTreeMap<ColumnType, usize> = &mut self.columns.clone();
         for name in names.iter() {
-            let name = ColumnType::from(name);
-            let idx = new_map.remove(&name);
+            let idx = new_map.remove(name);
             idxs.push(idx.unwrap());
             for (_, y) in new_map.iter_mut() {
                 if y > &mut idx.unwrap() {
@@ -147,22 +128,21 @@ impl DataFrame {
         let cols = self.shape().1;
         let to_keep: Vec<usize> = (0..cols).filter(|x| !idxs.iter().any(|&y| y == *x)).collect();
 
-        Ok(DataFrame {
+        Ok(SlowerDataFrame {
             data: self.data.select(Axis(1), &to_keep[..]),
             columns: new_map.to_owned(),
             index: self.index.to_owned(),
         })
     }
 
-    pub fn drop_row<'a, T>(&mut self, indexes: &'a [T]) -> Result<DataFrame>
-        where IndexType: From<&'a T>
-    {
+    pub fn drop_row(&mut self, indexes: &[&str]) -> Result<SlowerDataFrame> {
         let mut idxs = vec![];
+        let indexes: Vec<IndexType> =
+            indexes.iter().map(|x| IndexType::from(x.to_string())).collect();
 
         let new_map: &mut BTreeMap<IndexType, usize> = &mut self.index.clone();
         for name in indexes.iter() {
-            let name = IndexType::from(name);
-            let idx = new_map.remove(&name);
+            let idx = new_map.remove(name);
             idxs.push(idx.unwrap());
             for (_, y) in new_map.iter_mut() {
                 if y > &mut idx.unwrap() {
@@ -172,14 +152,14 @@ impl DataFrame {
         }
         let rows = self.shape().0;
         let to_keep: Vec<usize> = (0..rows).filter(|x| !idxs.iter().any(|&y| y == *x)).collect();
-        Ok(DataFrame {
+        Ok(SlowerDataFrame {
             data: self.data.select(Axis(0), &to_keep[..]),
             columns: self.columns.to_owned(),
             index: new_map.to_owned(),
         })
     }
 
-    pub fn concat(&self, axis: Axis, other: &DataFrame) -> Result<DataFrame> {
+    pub fn concat(&self, axis: Axis, other: &SlowerDataFrame) -> Result<SlowerDataFrame> {
 
         match axis {
             Axis(0) => {
@@ -196,7 +176,7 @@ impl DataFrame {
                         Ok(z) => z,
                         Err(_) => return Err(ErrorKind::StackFail.into()),
                     };
-                    Ok(DataFrame {
+                    Ok(SlowerDataFrame {
                         data: new_matrix,
                         columns: new_map,
                         index: new_index,
@@ -221,7 +201,7 @@ impl DataFrame {
                         Ok(z) => z,
                         Err(_) => return Err(ErrorKind::StackFail.into()),
                     };
-                    Ok(DataFrame {
+                    Ok(SlowerDataFrame {
                         data: new_matrix,
                         columns: new_map,
                         index: self.index.to_owned(),
@@ -236,7 +216,7 @@ impl DataFrame {
     }
 
 
-    pub fn inner_join(&self, other: &DataFrame) -> Result<DataFrame> {
+    pub fn inner_join(&self, other: &SlowerDataFrame) -> Result<SlowerDataFrame> {
 
         let idxs: Vec<(IndexType, usize, Option<usize>)> =
             Join::new(JoinType::InnerJoin,
@@ -248,7 +228,7 @@ impl DataFrame {
             return Err(ErrorKind::NoCommonValues.into());
         }
 
-        let new_matrix: Matrix<InnerType> = {
+        let new_matrix: Matrix<SlowerInnerType> = {
             let i1: Vec<usize> = idxs.iter().map(|&(_, x, _)| x).collect();
             let i2: Vec<usize> = idxs.iter().map(|&(_, _, y)| y.unwrap()).collect();
             let mat1 = self.data.select(Axis(0), &i1[..]);
@@ -260,16 +240,16 @@ impl DataFrame {
             }
         };
 
-        Ok(DataFrame {
+        Ok(SlowerDataFrame {
             data: new_matrix,
             columns: concat_column_maps(&self.columns, &other.columns),
             index: merge_maps(&self.index, &other.index),
         })
     }
 
-    // pub fn sort_values(&self, by: &str, ascending: bool, axis: Axis) -> Result<DataFrame> {
+    // pub fn sort_values(&self, by: &str, ascending: bool, axis: Axis) -> Result<SlowerDataFrame> {
     //     let column = self.get(by)?;
-    //     let mut enum_col: Vec<(usize, &InnerType)> =
+    //     let mut enum_col: Vec<(usize, &SlowerInnerType)> =
     //         column.iter().enumerate().sort_by(|a, &b| a.1.partial_cmp(b.1).unwrap());
     //     let indices: Vec<usize> = enum_col.iter().map(|x| x.0).collect();
     //     for index in indices {
@@ -283,19 +263,3 @@ impl DataFrame {
     //     Ok(*self)
     // }
 }
-
-
-
-// To implement....?
-// // parallelized join
-// // parallelized concatenation
-// // parallelized frequency counts
-// // index dataframe?
-// // sample rows
-// // find/select
-// // sort
-// // statistics (mean, median, stdev)
-// // print
-//
-// // statistics (mean, median, stdev)
-// // print
