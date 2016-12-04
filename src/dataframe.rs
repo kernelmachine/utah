@@ -5,14 +5,61 @@ use join::*;
 use error::*;
 use types::*;
 use std::string::ToString;
+use std::iter::{Iterator, Chain};
+use ndarray::AxisIter;
+use std::collections::btree_map::Iter;
+use std::iter::Sum;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame {
-    columns: BTreeMap<ColumnType, usize>,
+    columns: BTreeMap<OuterType, usize>,
     data: Matrix<InnerType>,
-    index: BTreeMap<IndexType, usize>,
+    index: BTreeMap<OuterType, usize>,
 }
 
 
+
+pub enum DataFrameIterator<'a> {
+    DataFrameRowIterator {
+        index: Iter<'a, OuterType, usize>,
+        axis_iter: AxisIter<'a, InnerType, usize>,
+    },
+    DataFrameColIterator {
+        columns: Iter<'a, OuterType, usize>,
+        axis_iter: AxisIter<'a, InnerType, usize>,
+    },
+}
+
+
+impl<'a> Iterator for DataFrameIterator<'a> {
+    type Item = (OuterType, RowView<'a, InnerType>);
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            &mut DataFrameIterator::DataFrameColIterator { ref mut columns, ref mut axis_iter } => {
+                match columns.next() {
+                    Some((k, _)) => {
+                        match axis_iter.next() {
+                            Some(z) => return Some((k.clone(), z)),
+                            None => None,
+                        }
+                    }
+                    None => None,
+                }
+            }
+            &mut DataFrameIterator::DataFrameRowIterator { ref mut index, ref mut axis_iter } => {
+                match index.next() {
+                    Some((k, _)) => {
+                        match axis_iter.next() {
+                            Some(z) => return Some((k.clone(), z)),
+                            None => None,
+                        }
+                    }
+                    None => None,
+                }
+            }
+        }
+    }
+}
 
 
 impl DataFrame {
@@ -21,14 +68,14 @@ impl DataFrame {
     {
         let data: Matrix<InnerType> = data.mapv(InnerType::from);
 
-        let columns: BTreeMap<ColumnType, usize> = (0..data.shape()[1])
+        let columns: BTreeMap<OuterType, usize> = (0..data.shape()[1])
             .enumerate()
-            .map(|(x, y)| (ColumnType::Str(x.to_string()), y))
+            .map(|(x, y)| (OuterType::Str(x.to_string()), y))
             .collect();
 
-        let index: BTreeMap<IndexType, usize> = (0..data.shape()[0])
+        let index: BTreeMap<OuterType, usize> = (0..data.shape()[0])
             .enumerate()
-            .map(|(x, y)| (IndexType::Str(x.to_string()), y))
+            .map(|(x, y)| (OuterType::Str(x.to_string()), y))
             .collect();
 
         DataFrame {
@@ -38,52 +85,100 @@ impl DataFrame {
         }
     }
 
+    pub fn iter<'a>(&'a mut self, axis: Axis) -> Result<DataFrameIterator<'a>> {
+        match axis {
+            Axis(0) => {
+                Ok(DataFrameIterator::DataFrameRowIterator {
+                    index: self.index.iter(),
+                    axis_iter: self.data.axis_iter(Axis(0)),
+                })
+            }
+            Axis(1) => {
+                Ok(DataFrameIterator::DataFrameColIterator {
+                    columns: self.columns.iter(),
+                    axis_iter: self.data.axis_iter(Axis(1)),
+                })
+            }
+            _ => return Err(ErrorKind::InvalidAxis.into()),
+
+        }
+
+
+    }
 
     pub fn columns<'a, T>(mut self, columns: &'a [T]) -> Result<DataFrame>
-        where ColumnType: From<&'a T>
+        where OuterType: From<&'a T>
     {
         if columns.len() != self.data.shape()[1] {
             return Err(ErrorKind::ColumnShapeMismatch.into());
         }
         self.columns = columns.iter()
-            .map(|x| ColumnType::from(x))
+            .map(|x| OuterType::from(x))
             .zip((0..columns.len()))
             .collect();
         Ok(self)
     }
 
     pub fn index<'a, T>(mut self, index: &'a [T]) -> Result<DataFrame>
-        where IndexType: From<&'a T>
+        where OuterType: From<&'a T>
     {
         if index.len() != self.data.shape()[0] {
             return Err(ErrorKind::RowShapeMismatch.into());
         }
         self.index = index.iter()
-            .map(|x| IndexType::from(x))
+            .map(|x| OuterType::from(x))
             .zip((0..index.len()))
             .collect();
         Ok(self)
     }
 
-    pub fn names(&self) -> Vec<ColumnType> {
+    pub fn names(&self) -> Vec<OuterType> {
         self.columns.keys().map(|x| x.to_owned()).collect()
     }
+    pub fn chain<'a>(&'a self,
+                     other: &'a DataFrame)
+                     -> Chain<AxisIter<'a, InnerType, usize>, AxisIter<'a, InnerType, usize>> {
+        self.data.axis_iter(Axis(0)).chain(other.data.axis_iter(Axis(0)))
+    }
 
-    pub fn get<T>(self, name: T) -> Result<Column<InnerType>>
-        where ColumnType: From<T>
+
+    pub fn get_column<T>(self, name: T) -> Result<Column<InnerType>>
+        where OuterType: From<T>
     {
-        let name = ColumnType::from(name);
+        let name = OuterType::from(name);
         match self.columns.get(&name) {
             Some(x) => Ok(self.data.column(*x).to_owned()),
             None => {
                 match name {
-                    ColumnType::Str(z) => {
+                    OuterType::Str(z) => {
                         return Err(ErrorKind::InvalidColumnName(z.to_string()).into())
                     }
-                    ColumnType::Date(z) => {
+                    OuterType::Date(z) => {
                         return Err(ErrorKind::InvalidColumnName(z.to_string()).into())
                     }
-                    ColumnType::Int(z) => {
+                    OuterType::Int(z) => {
+                        return Err(ErrorKind::InvalidColumnName(z.to_string()).into())
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn get_index<T>(self, name: T) -> Result<Row<InnerType>>
+        where OuterType: From<T>
+    {
+        let name = OuterType::from(name);
+        match self.index.get(&name) {
+            Some(x) => Ok(self.data.row(*x).to_owned()),
+            None => {
+                match name {
+                    OuterType::Str(z) => {
+                        return Err(ErrorKind::InvalidColumnName(z.to_string()).into())
+                    }
+                    OuterType::Date(z) => {
+                        return Err(ErrorKind::InvalidColumnName(z.to_string()).into())
+                    }
+                    OuterType::Int(z) => {
                         return Err(ErrorKind::InvalidColumnName(z.to_string()).into())
                     }
                 }
@@ -92,11 +187,13 @@ impl DataFrame {
     }
 
 
+
+
     pub fn insert_row<T: Clone, S>(mut self, data: Matrix<T>, index: S) -> Result<DataFrame>
-        where IndexType: From<S>,
+        where OuterType: From<S>,
               InnerType: From<T>
     {
-        let index = IndexType::from(index);
+        let index = OuterType::from(index);
         let data = data.mapv(InnerType::from);
         let end = self.index.len();
         self.index.insert(index, end);
@@ -113,10 +210,10 @@ impl DataFrame {
 
 
     pub fn insert_column<T: Clone, S>(mut self, data: Matrix<T>, name: S) -> Result<DataFrame>
-        where ColumnType: From<S>,
+        where OuterType: From<S>,
               InnerType: From<T>
     {
-        let name = ColumnType::from(name);
+        let name = OuterType::from(name);
         let data = data.mapv(InnerType::from);
         let end = self.columns.len();
         self.columns.insert(name, end);
@@ -129,13 +226,13 @@ impl DataFrame {
     }
 
     pub fn drop_column<'a, T>(&mut self, names: &'a [T]) -> Result<DataFrame>
-        where ColumnType: From<&'a T>
+        where OuterType: From<&'a T>
     {
         let mut idxs = vec![];
 
-        let new_map: &mut BTreeMap<ColumnType, usize> = &mut self.columns.clone();
+        let new_map: &mut BTreeMap<OuterType, usize> = &mut self.columns.clone();
         for name in names.iter() {
-            let name = ColumnType::from(name);
+            let name = OuterType::from(name);
             let idx = new_map.remove(&name);
             idxs.push(idx.unwrap());
             for (_, y) in new_map.iter_mut() {
@@ -155,13 +252,13 @@ impl DataFrame {
     }
 
     pub fn drop_row<'a, T>(&mut self, indexes: &'a [T]) -> Result<DataFrame>
-        where IndexType: From<&'a T>
+        where OuterType: From<&'a T>
     {
         let mut idxs = vec![];
 
-        let new_map: &mut BTreeMap<IndexType, usize> = &mut self.index.clone();
+        let new_map: &mut BTreeMap<OuterType, usize> = &mut self.index.clone();
         for name in indexes.iter() {
-            let name = IndexType::from(name);
+            let name = OuterType::from(name);
             let idx = new_map.remove(&name);
             idxs.push(idx.unwrap());
             for (_, y) in new_map.iter_mut() {
@@ -184,12 +281,12 @@ impl DataFrame {
         match axis {
             Axis(0) => {
                 if self.shape().1 == other.shape().1 {
-                    let new_map: BTreeMap<ColumnType, usize> = self.columns
+                    let new_map: BTreeMap<OuterType, usize> = self.columns
                         .iter()
                         .map(|(x, y)| (x.to_owned(), *y))
                         .collect();
 
-                    let new_index: BTreeMap<IndexType, usize> = concat_index_maps(&self.index,
+                    let new_index: BTreeMap<OuterType, usize> = concat_index_maps(&self.index,
                                                                                   &other.index);
 
                     let new_matrix = match stack(Axis(0), &[self.data.view(), other.data.view()]) {
@@ -207,11 +304,11 @@ impl DataFrame {
             }
             Axis(1) => {
                 if self.shape().0 == other.shape().0 {
-                    let other_map: BTreeMap<ColumnType, usize> = other.columns
+                    let other_map: BTreeMap<OuterType, usize> = other.columns
                         .iter()
                         .map(|(x, y)| (x.to_owned(), y + self.columns.len()))
                         .collect();
-                    let new_map: BTreeMap<ColumnType, usize> = self.columns
+                    let new_map: BTreeMap<OuterType, usize> = self.columns
                         .iter()
                         .chain(other_map.iter())
                         .map(|(x, y)| (x.to_owned(), *y))
@@ -238,7 +335,7 @@ impl DataFrame {
 
     pub fn inner_join(&self, other: &DataFrame) -> Result<DataFrame> {
 
-        let idxs: Vec<(IndexType, usize, Option<usize>)> =
+        let idxs: Vec<(OuterType, usize, Option<usize>)> =
             Join::new(JoinType::InnerJoin,
                       self.index.clone().into_iter(),
                       other.index.clone())

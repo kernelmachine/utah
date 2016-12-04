@@ -160,59 +160,21 @@ impl SlowerDataFrame {
     }
 
     pub fn concat(&self, axis: Axis, other: &SlowerDataFrame) -> Result<SlowerDataFrame> {
-
         match axis {
             Axis(0) => {
-                if self.shape().1 == other.shape().1 {
-                    let new_map: BTreeMap<ColumnType, usize> = self.columns
-                        .iter()
-                        .map(|(x, y)| (x.to_owned(), *y))
-                        .collect();
-
-                    let new_index: BTreeMap<IndexType, usize> = concat_index_maps(&self.index,
-                                                                                  &other.index);
-
-                    let new_matrix = match stack(Axis(0), &[self.data.view(), other.data.view()]) {
-                        Ok(z) => z,
-                        Err(_) => return Err(ErrorKind::StackFail.into()),
-                    };
-                    Ok(SlowerDataFrame {
-                        data: new_matrix,
-                        columns: new_map,
-                        index: new_index,
-                    })
-                } else {
-                    return Err(ErrorKind::ColumnShapeMismatch.into());
-                }
+                self.index
+                    .keys()
+                    .zip(self.data.axis_iter(Axis(0)))
+                    .chain(other.index.keys().zip(other.data.iter()))
             }
             Axis(1) => {
-                if self.shape().0 == other.shape().0 {
-                    let other_map: BTreeMap<ColumnType, usize> = other.columns
-                        .iter()
-                        .map(|(x, y)| (x.to_owned(), y + self.columns.len()))
-                        .collect();
-                    let new_map: BTreeMap<ColumnType, usize> = self.columns
-                        .iter()
-                        .chain(other_map.iter())
-                        .map(|(x, y)| (x.to_owned(), *y))
-                        .collect();
-
-                    let new_matrix = match stack(Axis(1), &[self.data.view(), other.data.view()]) {
-                        Ok(z) => z,
-                        Err(_) => return Err(ErrorKind::StackFail.into()),
-                    };
-                    Ok(SlowerDataFrame {
-                        data: new_matrix,
-                        columns: new_map,
-                        index: self.index.to_owned(),
-                    })
-                } else {
-                    return Err(ErrorKind::RowShapeMismatch.into());
-                }
+                self.columns
+                    .keys()
+                    .zip(self.data.axis_iter(Axis(1)))
+                    .chain(other.columns.keys().zip(other.data.iter()))
             }
-            _ => return Err(ErrorKind::InvalidAxis.into()),
-        }
 
+        }
     }
 
 

@@ -33,6 +33,7 @@ pub mod tests {
                    vec![(1, "Alice", Some("Programmer")), (2, "Bob", None)])
 
     }
+
     #[test]
     fn inner_join() {
         let mut left = HashMap::new();
@@ -72,9 +73,8 @@ pub mod tests {
     fn dataframe_index() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
 
-
         let df = DataFrame::new(a).columns(&["a", "b"]).unwrap();
-        assert!(df.get("a").unwrap() ==
+        assert!(df.get_column("a").unwrap() ==
                 arr2(&[[2., 3.], [3., 4.]]).mapv(InnerType::from).column(0).to_owned())
     }
 

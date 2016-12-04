@@ -18,9 +18,16 @@ pub mod error;
 pub mod from;
 pub mod types;
 
+use ndarray::{arr2, Axis};
+use dataframe::*;
 fn main() {
-
-
+    // let a = arr2(&[[2, 3], [3, 4]]);
+    // let b = arr2(&[[2, 3], [3, 4]]);
+    // let mut df = DataFrame::new(a).columns(&["a", "b"]).unwrap();
+    // let mut df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap();
+    // // let concat: Vec<_> = df.iter(Axis(0)).unwrap().map(|(x, y)| y.mapv(|x| x * 2)).collect();
+    //
+    // println!("{:?}", concat);
     // dataframe!()
     // let a = arr2(&[[2., 3.], [3., 4.], [7., 34.]]);
     // let names = vec!["a", "b"].iter().map(|x| x.to_string()).collect();
