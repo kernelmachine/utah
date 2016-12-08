@@ -67,7 +67,6 @@ impl<'a> Iterator for DataFrameIterator<'a> {
 impl<'a> DataFrameIterator<'a> {
     pub fn select<T>(self, name: T) -> impl Iterator<Item = RowView<'a,InnerType>> + 'a
         where OuterType: From<T>
-
     {
         let name = OuterType::from(name);
         self.filter(move |&(ref x, _)| *x == name).map(|x| x.1)
