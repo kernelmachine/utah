@@ -1,5 +1,7 @@
 
 #![feature(test)]
+#![feature(conservative_impl_trait)]
+
 #[macro_use]
 
 extern crate ndarray;
@@ -20,14 +22,16 @@ pub mod types;
 
 use ndarray::{arr2, Axis};
 use dataframe::*;
+use error::*;
+
 fn main() {
-    // let a = arr2(&[[2, 3], [3, 4]]);
-    // let b = arr2(&[[2, 3], [3, 4]]);
-    // let mut df = DataFrame::new(a).columns(&["a", "b"]).unwrap();
-    // let mut df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap();
-    // // let concat: Vec<_> = df.iter(Axis(0)).unwrap().map(|(x, y)| y.mapv(|x| x * 2)).collect();
-    //
-    // println!("{:?}", concat);
+    let a = arr2(&[[2, 7], [3, 4]]);
+    let b = arr2(&[[2, 3], [3, 4]]);
+    let mut df = DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1","2"]).unwrap();
+    let mut df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap();
+    let select: Vec<_> = df.iter(Axis(0)).unwrap().select("2").collect();
+    let concat : Vec<_> = df.iter(Axis(1)).unwrap().concat(df_1.iter(Axis(1)).unwrap()).collect();
+    println!("{:?}", concat);
     // dataframe!()
     // let a = arr2(&[[2., 3.], [3., 4.], [7., 34.]]);
     // let names = vec!["a", "b"].iter().map(|x| x.to_string()).collect();

@@ -5,8 +5,8 @@ use join::*;
 use error::*;
 use types::*;
 use std::string::ToString;
-use std::iter::{Iterator, Chain};
-use ndarray::AxisIter;
+use std::iter::{Iterator, Chain, Map, Filter};
+use ndarray::{Elements, AxisIter};
 use std::collections::btree_map::Iter;
 use std::iter::Sum;
 
@@ -62,6 +62,23 @@ impl<'a> Iterator for DataFrameIterator<'a> {
 }
 
 
+impl<'a> DataFrameIterator<'a> {
+    pub fn select<T>(self, name: T) -> impl Iterator<Item = RowView<'a,InnerType>> + 'a
+        where OuterType: From<T>
+
+    {
+        let name = OuterType::from(name);
+        self.filter(move |&(ref x, _)| *x == name).map(|x| x.1)
+    }
+
+    pub fn concat(self, other : DataFrameIterator<'a>) -> impl Iterator<Item = RowView<'a,InnerType>> + 'a
+        
+
+    {
+        self.map(|x| x.1).chain(other.map(|x| x.1))
+    }
+
+}
 impl DataFrame {
     pub fn new<T: Clone>(data: Matrix<T>) -> DataFrame
         where InnerType: From<T>
@@ -85,7 +102,7 @@ impl DataFrame {
         }
     }
 
-    pub fn iter<'a>(&'a mut self, axis: Axis) -> Result<DataFrameIterator<'a>> {
+    pub fn iter<'a>(&'a self, axis: Axis) -> Result<DataFrameIterator<'a>> {
         match axis {
             Axis(0) => {
                 Ok(DataFrameIterator::DataFrameRowIterator {
@@ -105,6 +122,7 @@ impl DataFrame {
 
 
     }
+
 
     pub fn columns<'a, T>(mut self, columns: &'a [T]) -> Result<DataFrame>
         where OuterType: From<&'a T>
@@ -142,27 +160,6 @@ impl DataFrame {
     }
 
 
-    pub fn get_column<T>(self, name: T) -> Result<Column<InnerType>>
-        where OuterType: From<T>
-    {
-        let name = OuterType::from(name);
-        match self.columns.get(&name) {
-            Some(x) => Ok(self.data.column(*x).to_owned()),
-            None => {
-                match name {
-                    OuterType::Str(z) => {
-                        return Err(ErrorKind::InvalidColumnName(z.to_string()).into())
-                    }
-                    OuterType::Date(z) => {
-                        return Err(ErrorKind::InvalidColumnName(z.to_string()).into())
-                    }
-                    OuterType::Int(z) => {
-                        return Err(ErrorKind::InvalidColumnName(z.to_string()).into())
-                    }
-                }
-            }
-        }
-    }
 
     pub fn get_index<T>(self, name: T) -> Result<Row<InnerType>>
         where OuterType: From<T>
