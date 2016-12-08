@@ -9,7 +9,7 @@ use std::iter::{Iterator, Chain, Map, Filter};
 use ndarray::{Elements, AxisIter};
 use std::collections::btree_map::Iter;
 use std::iter::Sum;
-
+use itertools::PutBack;
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame {
     columns: BTreeMap<OuterType, usize>,
@@ -72,11 +72,33 @@ impl<'a> DataFrameIterator<'a> {
     }
 
     pub fn concat(self, other : DataFrameIterator<'a>) -> impl Iterator<Item = RowView<'a,InnerType>> + 'a
-        
+
 
     {
         self.map(|x| x.1).chain(other.map(|x| x.1))
     }
+
+    pub fn remove<T>(self, name: T) -> impl Iterator<Item = (OuterType,RowView<'a,InnerType>)> + 'a
+        where OuterType: From<T>
+
+    {
+        let name = OuterType::from(name);
+        self.filter(move |&(ref x, _)| *x != name)
+    }
+
+    pub fn add<T>(self, name: T, data : RowView<'a, InnerType>) -> impl Iterator<Item = (OuterType,RowView<'a,InnerType>)> + 'a 
+        where OuterType: From<T>
+
+    {
+        let name = OuterType::from(name);
+        let mut it = PutBack::new(self);
+        it.put_back((name,data));
+        it
+    }
+
+
+
+
 
 }
 impl DataFrame {
