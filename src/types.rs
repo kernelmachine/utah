@@ -9,10 +9,11 @@ pub enum OuterType {
     Int(i64),
 }
 
-#[derive(PartialOrd, PartialEq,  Clone, Debug, Copy)]
+#[derive(PartialOrd, PartialEq,  Clone, Debug)]
 pub enum InnerType {
     Float(f64),
     Int(i64),
+    Str(String)
 }
 
 
