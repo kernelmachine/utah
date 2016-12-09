@@ -5,7 +5,7 @@ use join::*;
 use error::*;
 use types::*;
 use std::string::ToString;
-use std::iter::{Iterator, Chain, Map, Filter};
+use std::iter::{Iterator, FromIterator, Chain, Map, Filter};
 use ndarray::{Elements, AxisIter};
 use std::collections::btree_map::Iter;
 use std::iter::Sum;
@@ -65,18 +65,18 @@ impl<'a> Iterator for DataFrameIterator<'a> {
 
 
 impl<'a> DataFrameIterator<'a> {
-    pub fn select<T>(self, name: T) -> impl Iterator<Item = RowView<'a,InnerType>> + 'a
+    pub fn select<T>(self, name: T) -> impl Iterator<Item = (OuterType,RowView<'a,InnerType>)> + 'a
         where OuterType: From<T>
     {
         let name = OuterType::from(name);
-        self.filter(move |&(ref x, _)| *x == name).map(|x| x.1)
+        self.filter(move |&(ref x, _)| *x == name)
     }
 
-    pub fn concat(self, other : DataFrameIterator<'a>) -> impl Iterator<Item = RowView<'a,InnerType>> + 'a
+    pub fn concat(self, other : DataFrameIterator<'a>) -> impl Iterator<Item = (OuterType,RowView<'a,InnerType>)> + 'a
 
 
     {
-        self.map(|x| x.1).chain(other.map(|x| x.1))
+        self.chain(other)
     }
 
     pub fn remove<T>(self, name: T) -> impl Iterator<Item = (OuterType,RowView<'a,InnerType>)> + 'a
@@ -97,17 +97,11 @@ impl<'a> DataFrameIterator<'a> {
         it
     }
 
-    // pub fn join(self, other :DataFrameIterator<'a>) -> impl Iterator<Item = RowView<'a,InnerType>> + 'a
-    // {
-    //
-    //     let idxs: HashMap<OuterType , (usize, Option<usize>)> =
-    //         Join::new(JoinType::InnerJoin,
-    //                   self.index.clone().into_iter(),
-    //                   other.index.clone())
-    //             .collect();
-    //
-    //     self.filter(|&(ref x, _)| idxs[x].2.issome()).concat()
-    // }
+    pub fn submatrix<T>(self, ind : &'a [OuterType]) -> impl Iterator<Item = (OuterType,RowView<'a,InnerType>)> + 'a
+        where OuterType: From<T>{
+            self.filter(move |&(ref x, _)| ind.contains(x))
+    }
+
 
 
 
@@ -181,6 +175,21 @@ impl DataFrame {
             .zip((0..index.len()))
             .collect();
         Ok(self)
+    }
+
+    pub fn join<'a>(self, other :DataFrame) -> impl Iterator<Item = (OuterType,RowView<'a,InnerType>)> + 'a
+    {
+
+        let idxs: Vec<(OuterType , usize, Option<usize>)> =
+            Join::new(JoinType::InnerJoin,
+                      self.index.clone().into_iter(),
+                      other.index.clone())
+                .collect();
+        let i1: Vec<OuterType> = idxs.iter().filter(|x| x.2.is_some()).map(|&(x, _, _)| x).collect();
+        let df :  DataFrameIterator<'a> = self.iter(Axis(0)).unwrap().submatrix(&i1);
+        let other_df : DataFrameIterator<'a> = other.iter(Axis(0)).unwrap().submatrix(&i1[..]);
+        df.concat(other_df)
+
     }
 
     // pub fn names(&self) -> Vec<OuterType> {

@@ -7,6 +7,7 @@ impl From<f64> for InnerType {
     }
 }
 
+
 impl From<i64> for InnerType {
     fn from(i: i64) -> InnerType {
         InnerType::Int(i)
