@@ -101,6 +101,7 @@ pub mod tests {
             .unwrap();
 
 
+
         let join_matrix = stack(Axis(1),
                                 &[c.select(Axis(0), &[0, 1]).view(),
                                   e.select(Axis(0), &[0, 1]).view()])
@@ -115,6 +116,13 @@ pub mod tests {
 
     }
 
+    #[test]
+    fn new_join() {
+        let a = arr2(&[[2., 3.], [3., 4.]]);
+        let df = DataFrame::new(a).columns(&["a", "b"]);
+        DataFrame::new(df.data, df.names)
+
+    }
 
     #[test]
     fn dataframe_insert() {

@@ -13,7 +13,7 @@ pub enum OuterType {
 pub enum InnerType {
     Float(f64),
     Int(i64),
-    Str(String)
+    Str(String),
 }
 
 

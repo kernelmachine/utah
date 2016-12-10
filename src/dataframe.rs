@@ -5,121 +5,357 @@ use join::*;
 use error::*;
 use types::*;
 use std::string::ToString;
-use std::iter::{Iterator, FromIterator, Chain, Map, Filter};
+use std::iter::{Iterator, IntoIterator, FromIterator, Chain, Map, Filter};
 use ndarray::{Elements, AxisIter};
-use std::collections::btree_map::Iter;
 use std::iter::Sum;
 use itertools::PutBack;
 use std::collections::HashMap;
+use std::slice::Iter;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame {
-    columns: BTreeMap<OuterType, usize>,
-    data: Matrix<InnerType>,
-    index: BTreeMap<OuterType, usize>,
+    pub columns: Vec<OuterType>,
+    pub data: Matrix<InnerType>,
+    pub index: Vec<OuterType>,
+}
+
+#[derive(Clone)]
+pub struct DataFrameIterator<'a> {
+    pub names: Iter<'a, OuterType>,
+    pub data: AxisIter<'a, InnerType, usize>,
+}
+
+// impl <'a> FromIterator for DataFrame<'a> {
+//     fn from_iter<T>(iter: T) -> Self {
+//         DataFrame {
+//             columns : iter.
+//         }
+//     }
+// }
+
+// pub struct Select<'a> {
+//     data : AxisIter<'a, InnerType, usize>,
+//     names : Iter<'a, OuterType>,
+//     ind : &'a [OuterType]
+// }
+
+pub struct Select<'a> {
+    names: Iter<'a, OuterType>,
+    data: AxisIter<'a, InnerType, usize>,
+    ind: Vec<OuterType>,
+}
+
+pub struct Remove<'a> {
+    names: Iter<'a, OuterType>,
+    data: AxisIter<'a, InnerType, usize>,
+    ind: Vec<OuterType>,
+}
+
+pub struct Append<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub new_data: PutBack<I>,
+}
+
+
+// pub enum ConcatState {
+//     Front,
+//     Back,
+//     Both,
+// }
+// pub struct Concat<'a>
+//     where I: Iterator<Item = RowView<'a, InnerType>>,
+//           J: Iterator<Item = RowView<'a, InnerType>>,
+//           K: Iterator<Item = OuterType>,
+//           L: Iterator<Item = OuterType>
+// {
+//     a: I,
+//     b: J,
+//     a_names: K,
+//     b_names: L,
+//     state: ConcatState,
+// }
+//
+// impl<'a, I, J, K, L> Iterator for Concat<'a, I, J, K, L>
+//     where I: Iterator<Item = RowView<'a, InnerType>>,
+//           J: Iterator<Item = RowView<'a, InnerType>>,
+//           K: Iterator<Item = OuterType>,
+//           L: Iterator<Item = OuterType>
+// {
+//     type Item = (OuterType, RowView<'a, InnerType>);
+//     fn next(&mut self) -> Option<Self::Item> {
+//         match self.state {
+//             ConcatState::Both => {
+//                 match self.a.next() {
+//                     Some(dat) => {
+//                         match self.a_names.next() {
+//                             Some(val) => return Some((val.clone(), dat)),
+//                             None => return None,
+//                         }
+//                     }
+//
+//                     None => {
+//                         self.state = ConcatState::Back;
+//                         match self.b.next() {
+//                             Some(dat) => {
+//                                 match self.b_names.next() {
+//                                     Some(val) => return Some((val.clone(), dat)),
+//                                     None => return None,
+//                                 }
+//                             }
+//                             None => return None,
+//
+//                         }
+//                     }
+//                 }
+//             }
+//             ConcatState::Front => {
+//                 match self.a.next() {
+//                     Some(dat) => {
+//                         match self.a_names.next() {
+//                             Some(val) => return Some((val.clone(), dat)),
+//                             None => return None,
+//                         }
+//                     }
+//
+//                     None => return None,
+//                 }
+//             }
+//             ConcatState::Back => {
+//                 match self.b.next() {
+//                     Some(dat) => {
+//                         match self.b_names.next() {
+//                             Some(val) => return Some((val.clone(), dat)),
+//                             None => return None,
+//                         }
+//                     }
+//
+//                     None => return None,
+//                 }
+//             }
+//
+//         }
+//     }
+// }
+
+
+
+
+impl<'a> Iterator for Select<'a> {
+    type Item = (OuterType, RowView<'a, InnerType>);
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.names.next() {
+
+                Some(val) => {
+                    println!("{:?}", val);
+                    match self.data.next() {
+
+                        Some(dat) => {
+                            if self.ind.contains(&val) {
+                                return Some((val.clone(), dat));
+                            } else {
+                                continue;
+                            }
+                        }
+                        None => return None,
+                    }
+
+                }
+                None => return None,
+            }
+
+
+        }
+    }
+}
+
+impl<'a> Iterator for Remove<'a> {
+    type Item = (OuterType, RowView<'a, InnerType>);
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.names.next() {
+
+                Some(val) => {
+                    match self.data.next() {
+
+                        Some(dat) => {
+                            if !self.ind.contains(&val) {
+                                println!("{:?}", val);
+
+                                return Some((val.clone(), dat));
+                            } else {
+                                continue;
+                            }
+                        }
+                        None => return None,
+                    }
+                }
+                None => return None,
+            }
+
+
+        }
+    }
+}
+
+impl<'a, I> Iterator for Append<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    type Item = (OuterType, RowView<'a, InnerType>);
+    fn next(&mut self) -> Option<Self::Item> {
+        self.new_data.next()
+    }
 }
 
 
 
-pub enum DataFrameIterator<'a> {
-    DataFrameRowIterator {
-        index: Iter<'a, OuterType, usize>,
-        axis_iter: AxisIter<'a, InnerType, usize>,
-    },
-    DataFrameColIterator {
-        columns: Iter<'a, OuterType, usize>,
-        axis_iter: AxisIter<'a, InnerType, usize>,
-    },
+
+
+
+
+
+
+
+pub fn select<'a>(df: DataFrameIterator<'a>, ind: Vec<OuterType>) -> Select<'a> {
+
+    Select {
+        data: df.data,
+        names: df.names,
+        ind: ind,
+    }
 }
+
+pub fn remove<'a>(df: DataFrameIterator<'a>, ind: Vec<OuterType>) -> Remove<'a> {
+
+    Remove {
+        data: df.data,
+        names: df.names,
+        ind: ind,
+    }
+}
+
+
+
+pub fn append<'a>(df: DataFrameIterator<'a>,
+                  name: OuterType,
+                  data: RowView<'a, InnerType>)
+                  -> Append<'a, DataFrameIterator<'a>> {
+    let name = OuterType::from(name);
+    let mut it = PutBack::new(df);
+    it.put_back((name, data));
+    Append { new_data: it }
+}
+
+
+// pub fn concat<'a, I, J, K, L>(df: DataFrameIterator<'a>, other: DataFrameIterator<'a>) -> Concat<'a>
+//     where I: Iterator<Item = RowView<'a, InnerType>>,
+//           J: Iterator<Item = RowView<'a, InnerType>>,
+//           K: Iterator<Item = OuterType>,
+//           L: Iterator<Item = OuterType>
+// {
+//     Concat {
+//         a: df.data,
+//         b: other.data,
+//         a_names: df.names,
+//         b_names: other.names,
+//         state: ConcatState::Both,
+//     }
+// }
+
+pub fn join<'a>(this: DataFrameIterator<'a>,
+                other: &DataFrameIterator<'a>)
+                -> Chain<Select<'a>, Select<'a>> {
+    let this_index: BTreeMap<OuterType, usize> =
+        this.clone().names.enumerate().map(|(x, y)| (y.clone(), x)).collect();
+    let other_index: BTreeMap<OuterType, usize> =
+        other.clone().names.enumerate().map(|(x, y)| (y.clone(), x)).collect();
+    let idxs: Vec<(OuterType, usize, Option<usize>)> =
+        Join::new(JoinType::InnerJoin, this_index.into_iter(), other_index).collect();
+    let i1: Vec<OuterType> =
+        idxs.iter().filter(|x| x.2.is_some()).map(|&(ref x, _, _)| x.to_owned()).collect();
+    let df: Select<'a> = this.select(i1.clone());
+    let other_df: Select<'a> = other.clone().select(i1.clone());
+    df.chain(other_df)
+}
+
 
 
 impl<'a> Iterator for DataFrameIterator<'a> {
     type Item = (OuterType, RowView<'a, InnerType>);
     fn next(&mut self) -> Option<Self::Item> {
-        match self {
-            &mut DataFrameIterator::DataFrameColIterator { ref mut columns, ref mut axis_iter } => {
-                match columns.next() {
-                    Some((k, _)) => {
-                        match axis_iter.next() {
-                            Some(z) => return Some((k.clone(), z)),
-                            None => None,
-                        }
-                    }
+        match self.names.next() {
+            Some(val) => {
+                match self.data.next() {
+                    Some(dat) => Some((val.clone(), dat)),
                     None => None,
                 }
             }
-            &mut DataFrameIterator::DataFrameRowIterator { ref mut index, ref mut axis_iter } => {
-                match index.next() {
-                    Some((k, _)) => {
-                        match axis_iter.next() {
-                            Some(z) => return Some((k.clone(), z)),
-                            None => None,
-                        }
-                    }
-                    None => None,
-                }
-            }
+            None => None,
         }
     }
 }
 
 
 impl<'a> DataFrameIterator<'a> {
-    pub fn select<T>(self, name: T) -> impl Iterator<Item = (OuterType,RowView<'a,InnerType>)> + 'a
-        where OuterType: From<T>
-    {
-        let name = OuterType::from(name);
-        self.filter(move |&(ref x, _)| *x == name)
-    }
+    pub fn select(self, names: Vec<OuterType>) -> Select<'a> {
 
-    pub fn concat(self, other : DataFrameIterator<'a>) -> impl Iterator<Item = (OuterType,RowView<'a,InnerType>)> + 'a
-
-
-    {
-        self.chain(other)
-    }
-
-    pub fn remove<T>(self, name: T) -> impl Iterator<Item = (OuterType,RowView<'a,InnerType>)> + 'a
-        where OuterType: From<T>
-
-    {
-        let name = OuterType::from(name);
-        self.filter(move |&(ref x, _)| *x != name)
-    }
-
-    pub fn add<T>(self, name: T, data : RowView<'a, InnerType>) -> impl Iterator<Item = (OuterType,RowView<'a,InnerType>)> + 'a
-        where OuterType: From<T>
-
-    {
-        let name = OuterType::from(name);
-        let mut it = PutBack::new(self);
-        it.put_back((name,data));
-        it
-    }
-
-    pub fn submatrix<T>(self, ind : &'a [OuterType]) -> impl Iterator<Item = (OuterType,RowView<'a,InnerType>)> + 'a
-        where OuterType: From<T>{
-            self.filter(move |&(ref x, _)| ind.contains(x))
+        select(self, names)
     }
 
 
+    pub fn remove(self, names: Vec<OuterType>) -> Remove<'a> {
+
+        remove(self, names)
+
+    }
+    pub fn append(self,
+                  name: OuterType,
+                  data: RowView<'a, InnerType>)
+                  -> Append<'a, DataFrameIterator<'a>> {
+        append(self, name, data)
+
+    }
 
 
+    pub fn new(df: &'a DataFrame, axis: Axis) -> Self {
+        match axis {
+            Axis(0) => {
+                DataFrameIterator {
+                    names: df.index.iter(),
+                    data: df.data.axis_iter(Axis(0)),
+                }
+            }
+            Axis(1) => {
+                DataFrameIterator {
+                    names: df.columns.iter(),
+                    data: df.data.axis_iter(Axis(1)),
+                }
+            }
+            _ => panic!(),
+
+        }
+
+
+    }
 }
+
+
+
+
+
 impl DataFrame {
     pub fn new<T: Clone>(data: Matrix<T>) -> DataFrame
         where InnerType: From<T>
     {
         let data: Matrix<InnerType> = data.mapv(InnerType::from);
 
-        let columns: BTreeMap<OuterType, usize> = (0..data.shape()[1])
-            .enumerate()
-            .map(|(x, y)| (OuterType::Str(x.to_string()), y))
+        let columns: Vec<OuterType> = (0..data.shape()[1])
+            .map(|x| OuterType::Str(x.to_string()))
             .collect();
 
-        let index: BTreeMap<OuterType, usize> = (0..data.shape()[0])
-            .enumerate()
-            .map(|(x, y)| (OuterType::Str(x.to_string()), y))
+        let index: Vec<OuterType> = (0..data.shape()[0])
+            .map(|x| OuterType::Str(x.to_string()))
             .collect();
 
         DataFrame {
@@ -129,26 +365,7 @@ impl DataFrame {
         }
     }
 
-    pub fn iter<'a>(&'a self, axis: Axis) -> Result<DataFrameIterator<'a>> {
-        match axis {
-            Axis(0) => {
-                Ok(DataFrameIterator::DataFrameRowIterator {
-                    index: self.index.iter(),
-                    axis_iter: self.data.axis_iter(Axis(0)),
-                })
-            }
-            Axis(1) => {
-                Ok(DataFrameIterator::DataFrameColIterator {
-                    columns: self.columns.iter(),
-                    axis_iter: self.data.axis_iter(Axis(1)),
-                })
-            }
-            _ => return Err(ErrorKind::InvalidAxis.into()),
 
-        }
-
-
-    }
 
 
     pub fn columns<'a, T>(mut self, columns: &'a [T]) -> Result<DataFrame>
@@ -159,7 +376,6 @@ impl DataFrame {
         }
         self.columns = columns.iter()
             .map(|x| OuterType::from(x))
-            .zip((0..columns.len()))
             .collect();
         Ok(self)
     }
@@ -172,25 +388,10 @@ impl DataFrame {
         }
         self.index = index.iter()
             .map(|x| OuterType::from(x))
-            .zip((0..index.len()))
             .collect();
         Ok(self)
     }
 
-    pub fn join<'a>(self, other :DataFrame) -> impl Iterator<Item = (OuterType,RowView<'a,InnerType>)> + 'a
-    {
-
-        let idxs: Vec<(OuterType , usize, Option<usize>)> =
-            Join::new(JoinType::InnerJoin,
-                      self.index.clone().into_iter(),
-                      other.index.clone())
-                .collect();
-        let i1: Vec<OuterType> = idxs.iter().filter(|x| x.2.is_some()).map(|&(x, _, _)| x).collect();
-        let df :  DataFrameIterator<'a> = self.iter(Axis(0)).unwrap().submatrix(&i1);
-        let other_df : DataFrameIterator<'a> = other.iter(Axis(0)).unwrap().submatrix(&i1[..]);
-        df.concat(other_df)
-
-    }
 
     // pub fn names(&self) -> Vec<OuterType> {
     //     self.columns.keys().map(|x| x.to_owned()).collect()
