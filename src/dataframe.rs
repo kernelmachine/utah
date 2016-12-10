@@ -1,16 +1,13 @@
 use ndarray::Axis;
-use std::collections::BTreeMap;
-use join::*;
 use error::*;
 use types::*;
 use std::string::ToString;
-use std::iter::{Iterator, IntoIterator, Chain, Map, FilterMap};
+use std::iter::{Iterator, Chain, Map};
 use ndarray::AxisIter;
 use itertools::PutBack;
 use std::slice::Iter;
 use std::marker::Sized;
-use std::hash::Hash;
-use std::fmt::Debug;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame {
@@ -46,19 +43,103 @@ pub struct Append<'a, I>
 }
 
 
-
-pub fn join<'a, I, J>(this: I, other: J) -> InnerJoin<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-          J: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+impl<'a, I> Remove<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
-    // let this_index: BTreeMap<OuterType, usize> =
-    //     this.clone().names.enumerate().map(|(x, y)| (y.clone(), x)).collect();
-    // let other_index: BTreeMap<OuterType, usize> =
-    //     other.clone().names.enumerate().map(|(x, y)| (y.clone(), x)).collect();
+    pub fn new(df: I, ind: Vec<OuterType>) -> Remove<'a, I>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
 
-    InnerJoin::new(this, other)
-
+        Remove {
+            data: df,
+            ind: ind,
+        }
+    }
 }
+
+
+
+impl<'a, I> Select<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new(df: I, ind: Vec<OuterType>) -> Select<'a, I>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+
+        Select {
+            data: df,
+            ind: ind,
+        }
+    }
+}
+
+
+impl<'a, I> Append<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new(df: I, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, I>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        let name = OuterType::from(name);
+        let mut it = PutBack::new(df);
+        it.put_back((name, data));
+        Append { new_data: it }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+pub struct InnerJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    left: L,
+    right: HashMap<OuterType, RowView<'a, InnerType>>,
+}
+
+impl<'a, L> InnerJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new<RI>(left: L, right: RI) -> Self
+        where RI: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        InnerJoin {
+            left: left,
+            right: right.collect(),
+        }
+    }
+}
+
+pub struct OuterJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    left: L,
+    right: HashMap<OuterType, RowView<'a, InnerType>>,
+}
+
+
+impl<'a, L> OuterJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new<RI>(left: L, right: RI) -> Self
+        where RI: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        OuterJoin {
+            left: left,
+            right: right.collect(),
+        }
+    }
+}
+
+
+
+
 
 impl<'a, I> Iterator for Select<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -117,35 +198,58 @@ impl<'a, I> Iterator for Append<'a, I>
 }
 
 
-pub fn select<'a, I>(df: I, ind: Vec<OuterType>) -> Select<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+impl<'a, L> Iterator for InnerJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
+    type Item = (OuterType, RowView<'a, InnerType>, RowView<'a, InnerType>);
 
-    Select {
-        data: df,
-        ind: ind,
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.left.next() {
+                Some((k, lv)) => {
+                    let rv = self.right.get(&k);
+                    match rv {
+                        Some(&v) => return Some((k, lv, v)),
+                        None => continue,
+                    }
+                }
+                None => return None,
+            }
+
+        }
     }
 }
 
-pub fn remove<'a, I>(df: I, ind: Vec<OuterType>) -> Remove<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-{
 
-    Remove {
-        data: df,
-        ind: ind,
+impl<'a, L> Iterator for OuterJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    type Item = (OuterType, RowView<'a, InnerType>, Option<RowView<'a, InnerType>>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+
+        match self.left.next() {
+            Some((k, lv)) => {
+                let rv = self.right.get(&k);
+                match rv {
+                    Some(&v) => return Some((k, lv, Some(v))),
+                    None => Some((k, lv, None)),
+                }
+
+            }
+            None => None,
+        }
+
     }
 }
 
 
 
-pub fn append<'a, I>(df: I, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+pub fn inner_join<'a, I, J>(this: I, other: J) -> InnerJoin<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+          J: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
-    let name = OuterType::from(name);
-    let mut it = PutBack::new(df);
-    it.put_back((name, data));
-    Append { new_data: it }
+    InnerJoin::new(this, other)
 }
 
 // pub fn join<'a, I>(this: DataFrameIterator<'a>,
@@ -197,6 +301,18 @@ pub trait DFIter<'a> {
     fn mapdf<B, F>(self, f: F) -> Map<Self, F>
         where F: FnMut(Self::DFItem) -> B,
               Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+    fn inner_left_join<I>(self, other: I) -> InnerJoin<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+    fn outer_left_join<I>(self, other: I) -> OuterJoin<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+    fn inner_right_join<I>(self, other: I) -> InnerJoin<'a, I>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+    fn outer_right_join<I>(self, other: I) -> OuterJoin<'a, I>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
 }
 
 impl<'a> DFIter<'a> for DataFrameIterator<'a> {
@@ -204,18 +320,18 @@ impl<'a> DFIter<'a> for DataFrameIterator<'a> {
 
     fn select(self, names: Vec<OuterType>) -> Select<'a, Self> {
 
-        select(self, names)
+        Select::new(self, names)
     }
 
 
     fn remove(self, names: Vec<OuterType>) -> Remove<'a, Self> {
 
-        remove(self, names)
+        Remove::new(self, names)
 
     }
 
     fn append(self, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, Self> {
-        append(self, name, data)
+        Append::new(self, name, data)
 
     }
 
@@ -231,6 +347,31 @@ impl<'a> DFIter<'a> for DataFrameIterator<'a> {
 
         self.map(f)
     }
+
+    fn inner_left_join<I>(self, other: I) -> InnerJoin<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        InnerJoin::new(self, other)
+    }
+    fn outer_left_join<I>(self, other: I) -> OuterJoin<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        OuterJoin::new(self, other)
+    }
+    fn inner_right_join<I>(self, other: I) -> InnerJoin<'a, I>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        InnerJoin::new(other, self)
+    }
+    fn outer_right_join<I>(self, other: I) -> OuterJoin<'a, I>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        OuterJoin::new(other, self)
+    }
 }
 
 impl<'a, I> DFIter<'a> for Select<'a, I>
@@ -239,18 +380,18 @@ impl<'a, I> DFIter<'a> for Select<'a, I>
     type DFItem = (OuterType, RowView<'a, InnerType>);
     fn select(self, names: Vec<OuterType>) -> Select<'a, Self> {
 
-        select(self, names)
+        Select::new(self, names)
     }
 
 
     fn remove(self, names: Vec<OuterType>) -> Remove<'a, Self> {
 
-        remove(self, names)
+        Remove::new(self, names)
 
     }
 
     fn append(self, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, Self> {
-        append(self, name, data)
+        Append::new(self, name, data)
 
     }
     fn concat<J>(self, other: J) -> Chain<Self, J>
@@ -263,6 +404,30 @@ impl<'a, I> DFIter<'a> for Select<'a, I>
     {
 
         self.map(f)
+    }
+    fn inner_left_join<J>(self, other: J) -> InnerJoin<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        InnerJoin::new(self, other)
+    }
+    fn outer_left_join<J>(self, other: J) -> OuterJoin<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        OuterJoin::new(self, other)
+    }
+    fn inner_right_join<J>(self, other: J) -> InnerJoin<'a, J>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        InnerJoin::new(other, self)
+    }
+    fn outer_right_join<J>(self, other: J) -> OuterJoin<'a, J>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        OuterJoin::new(other, self)
     }
 }
 
@@ -272,18 +437,18 @@ impl<'a, I> DFIter<'a> for Remove<'a, I>
     type DFItem = (OuterType, RowView<'a, InnerType>);
     fn select(self, names: Vec<OuterType>) -> Select<'a, Self> {
 
-        select(self, names)
+        Select::new(self, names)
     }
 
 
     fn remove(self, names: Vec<OuterType>) -> Remove<'a, Self> {
 
-        remove(self, names)
+        Remove::new(self, names)
 
     }
 
     fn append(self, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, Self> {
-        append(self, name, data)
+        Append::new(self, name, data)
 
     }
     fn concat<J>(self, other: J) -> Chain<Self, J>
@@ -296,6 +461,30 @@ impl<'a, I> DFIter<'a> for Remove<'a, I>
     {
 
         self.map(f)
+    }
+    fn inner_left_join<J>(self, other: J) -> InnerJoin<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        InnerJoin::new(self, other)
+    }
+    fn outer_left_join<J>(self, other: J) -> OuterJoin<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        OuterJoin::new(self, other)
+    }
+    fn inner_right_join<J>(self, other: J) -> InnerJoin<'a, J>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        InnerJoin::new(other, self)
+    }
+    fn outer_right_join<J>(self, other: J) -> OuterJoin<'a, J>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        OuterJoin::new(other, self)
     }
 }
 
@@ -305,18 +494,18 @@ impl<'a, I> DFIter<'a> for Append<'a, I>
     type DFItem = (OuterType, RowView<'a, InnerType>);
     fn select(self, names: Vec<OuterType>) -> Select<'a, Self> {
 
-        select(self, names)
+        Select::new(self, names)
     }
 
 
     fn remove(self, names: Vec<OuterType>) -> Remove<'a, Self> {
 
-        remove(self, names)
+        Remove::new(self, names)
 
     }
 
     fn append(self, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, Self> {
-        append(self, name, data)
+        Append::new(self, name, data)
 
     }
     fn concat<J>(self, other: J) -> Chain<Self, J>
@@ -329,6 +518,30 @@ impl<'a, I> DFIter<'a> for Append<'a, I>
     {
 
         self.map(f)
+    }
+    fn inner_left_join<J>(self, other: J) -> InnerJoin<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        inner_join(self, other)
+    }
+    fn outer_left_join<J>(self, other: J) -> OuterJoin<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        OuterJoin::new(self, other)
+    }
+    fn inner_right_join<J>(self, other: J) -> InnerJoin<'a, J>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        InnerJoin::new(other, self)
+    }
+    fn outer_right_join<J>(self, other: J) -> OuterJoin<'a, J>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        OuterJoin::new(other, self)
     }
 }
 
@@ -404,8 +617,8 @@ impl DataFrame {
                       axis: Axis)
                       -> Select<'a, DataFrameIterator<'a>> {
         match axis {
-            Axis(0) => select(self.df_iter(Axis(0)), ind),
-            Axis(1) => select(self.df_iter(Axis(1)), ind),
+            Axis(0) => Select::new(self.df_iter(Axis(0)), ind),
+            Axis(1) => Select::new(self.df_iter(Axis(1)), ind),
             _ => panic!(),
 
         }
@@ -417,8 +630,8 @@ impl DataFrame {
                       axis: Axis)
                       -> Remove<'a, DataFrameIterator<'a>> {
         match axis {
-            Axis(0) => remove(self.df_iter(Axis(0)), ind),
-            Axis(1) => remove(self.df_iter(Axis(1)), ind),
+            Axis(0) => Remove::new(self.df_iter(Axis(0)), ind),
+            Axis(1) => Remove::new(self.df_iter(Axis(1)), ind),
             _ => panic!(),
 
         }
@@ -430,8 +643,8 @@ impl DataFrame {
                       axis: Axis)
                       -> Append<'a, DataFrameIterator<'a>> {
         match axis {
-            Axis(0) => append(self.df_iter(Axis(0)), name, data),
-            Axis(1) => append(self.df_iter(Axis(1)), name, data),
+            Axis(0) => Append::new(self.df_iter(Axis(0)), name, data),
+            Axis(1) => Append::new(self.df_iter(Axis(1)), name, data),
             _ => panic!(),
 
         }

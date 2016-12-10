@@ -197,8 +197,8 @@ pub mod tests {
 
 
 
-    #[bench]
-    fn bench_inner_join(b: &mut Bencher) {
+    #[test]
+    fn test_inner_join() {
         let c = Array::random((200000, 10), Range::new(0., 10.));
         let e = Array::random((200000, 10), Range::new(0., 10.));
 
@@ -233,33 +233,29 @@ pub mod tests {
             .unwrap()
             .index(&e_index[..])
             .unwrap();
-
         b.iter(|| {
-            let z: Vec<_> = join(DataFrameIterator::new(&c_df, Axis(0)),
-                                 &DataFrameIterator::new(&e_df, Axis(0)))
-                .collect();
+            let z: Vec<_> = join(c_df.df_iter(Axis(0)), e_df.df_iter(Axis(0))).collect();
         });
     }
 
-
-    #[bench]
-    fn bench_inner_join_bare(b: &mut Bencher) {
-        let mut left = HashMap::new();
-        for (i, j) in (1..20000).zip((1..20000)) {
-            left.insert(i, j);
-        }
-
-        let mut right = HashMap::new();
-        for (i, j) in (19993..40000).zip((19993..40000)) {
-            right.insert(i, j);
-        }
-
-        b.iter(|| {
-            let res: Vec<(i32, i32, Option<i32>)> =
-                Join::new(JoinType::InnerJoin, left.clone().into_iter(), right.clone()).collect();
-            res
-        });
-
-    }
+    // #[bench]
+    // fn bench_inner_join_bare(b: &mut Bencher) {
+    //     let mut left = HashMap::new();
+    //     for (i, j) in (1..20000).zip((1..20000)) {
+    //         left.insert(i, j);
+    //     }
+    //
+    //     let mut right = HashMap::new();
+    //     for (i, j) in (19993..40000).zip((19993..40000)) {
+    //         right.insert(i, j);
+    //     }
+    //
+    //     b.iter(|| {
+    //         let res: Vec<(i32, i32, Option<i32>)> =
+    //             InnerJoin::new(left.clone().into_iter(), right.clone()).collect();
+    //         res
+    //     });
+    //
+    // }
 
 }

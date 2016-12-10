@@ -15,7 +15,6 @@ extern crate itertools;
 
 pub mod dataframe;
 pub mod helper;
-pub mod join;
 pub mod error;
 pub mod from;
 pub mod types;
