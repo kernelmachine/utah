@@ -38,7 +38,6 @@ fn main() {
         .select(vec![OuterType::Str("b".to_string())])
         .append(OuterType::Str("c".to_string()), new_data.view())
         .concat(df_1.df_iter(Axis(1)));
-
     // let concat : Vec<_> = df.iter(Axis(1)).unwrap().concat(df_1.iter(Axis(1)).unwrap()).collect();
     // let r : Row<InnerType> =  c.row(1).mapv(InnerType::Int);
     // let added : Vec<_> = df.iter(Axis(0)).unwrap().add("z", r.view()).collect();

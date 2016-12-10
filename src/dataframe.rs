@@ -4,11 +4,14 @@ use join::*;
 use error::*;
 use types::*;
 use std::string::ToString;
-use std::iter::{Iterator, IntoIterator, Chain};
+use std::iter::{Iterator, IntoIterator, Chain, Map, FilterMap};
 use ndarray::AxisIter;
 use itertools::PutBack;
 use std::slice::Iter;
 use std::marker::Sized;
+use std::hash::Hash;
+use std::fmt::Debug;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame {
     pub columns: Vec<OuterType>,
@@ -42,6 +45,20 @@ pub struct Append<'a, I>
     pub new_data: PutBack<I>,
 }
 
+
+
+pub fn join<'a, I, J>(this: I, other: J) -> InnerJoin<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+          J: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    // let this_index: BTreeMap<OuterType, usize> =
+    //     this.clone().names.enumerate().map(|(x, y)| (y.clone(), x)).collect();
+    // let other_index: BTreeMap<OuterType, usize> =
+    //     other.clone().names.enumerate().map(|(x, y)| (y.clone(), x)).collect();
+
+    InnerJoin::new(this, other)
+
+}
 
 impl<'a, I> Iterator for Select<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -131,23 +148,22 @@ pub fn append<'a, I>(df: I, name: OuterType, data: RowView<'a, InnerType>) -> Ap
     Append { new_data: it }
 }
 
-
-pub fn join<'a, I>(this: DataFrameIterator<'a>,
-                   other: &DataFrameIterator<'a>)
-                   -> Chain<Select<'a, DataFrameIterator<'a>>, Select<'a, DataFrameIterator<'a>>>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-{
-    let this_index: BTreeMap<OuterType, usize> =
-        this.clone().names.enumerate().map(|(x, y)| (y.clone(), x)).collect();
-    let other_index: BTreeMap<OuterType, usize> =
-        other.clone().names.enumerate().map(|(x, y)| (y.clone(), x)).collect();
-    let idxs: Vec<(OuterType, usize, Option<usize>)> =
-        Join::new(JoinType::InnerJoin, this_index.into_iter(), other_index).collect();
-    let i1: Vec<OuterType> =
-        idxs.iter().filter(|x| x.2.is_some()).map(|&(ref x, _, _)| x.to_owned()).collect();
-    this.select(i1.clone()).chain(other.clone().select(i1.clone()))
-}
-
+// pub fn join<'a, I>(this: DataFrameIterator<'a>,
+//                    other: &DataFrameIterator<'a>)
+//                    -> Chain<Select<'a, DataFrameIterator<'a>>, Select<'a, DataFrameIterator<'a>>>
+//     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+// {
+//     let this_index: BTreeMap<OuterType, usize> =
+//         this.clone().names.enumerate().map(|(x, y)| (y.clone(), x)).collect();
+//     let other_index: BTreeMap<OuterType, usize> =
+//         other.clone().names.enumerate().map(|(x, y)| (y.clone(), x)).collect();
+//     let  =
+//         InnerJoin::new(this, other);
+//     let i1: Vec<OuterType> =
+//         idxs.iter().filter(|x| x.2.is_some()).map(|&(ref x, _, _)| x.to_owned()).collect();
+//     this.select(i1.clone()).chain(other.clone().select(i1.clone()))
+// }
+//
 
 
 impl<'a> Iterator for DataFrameIterator<'a> {
@@ -167,6 +183,8 @@ impl<'a> Iterator for DataFrameIterator<'a> {
 
 
 pub trait DFIter<'a> {
+    type DFItem;
+
     fn select(self, names: Vec<OuterType>) -> Select<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
     fn remove(self, names: Vec<OuterType>) -> Remove<'a, Self>
@@ -176,9 +194,14 @@ pub trait DFIter<'a> {
     fn concat<I>(self, other: I) -> Chain<Self, I>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+    fn mapdf<B, F>(self, f: F) -> Map<Self, F>
+        where F: FnMut(Self::DFItem) -> B,
+              Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
 }
 
 impl<'a> DFIter<'a> for DataFrameIterator<'a> {
+    type DFItem = (OuterType, RowView<'a, InnerType>);
+
     fn select(self, names: Vec<OuterType>) -> Select<'a, Self> {
 
         select(self, names)
@@ -201,11 +224,19 @@ impl<'a> DFIter<'a> for DataFrameIterator<'a> {
     {
         self.chain(other)
     }
+
+    fn mapdf<B, F>(self, f: F) -> Map<Self, F>
+        where F: FnMut(Self::DFItem) -> B
+    {
+
+        self.map(f)
+    }
 }
 
 impl<'a, I> DFIter<'a> for Select<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
+    type DFItem = (OuterType, RowView<'a, InnerType>);
     fn select(self, names: Vec<OuterType>) -> Select<'a, Self> {
 
         select(self, names)
@@ -226,12 +257,19 @@ impl<'a, I> DFIter<'a> for Select<'a, I>
         where J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
         self.chain(other)
+    }
+    fn mapdf<B, F>(self, f: F) -> Map<Self, F>
+        where F: FnMut(Self::DFItem) -> B
+    {
+
+        self.map(f)
     }
 }
 
 impl<'a, I> DFIter<'a> for Remove<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
+    type DFItem = (OuterType, RowView<'a, InnerType>);
     fn select(self, names: Vec<OuterType>) -> Select<'a, Self> {
 
         select(self, names)
@@ -252,12 +290,19 @@ impl<'a, I> DFIter<'a> for Remove<'a, I>
         where J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
         self.chain(other)
+    }
+    fn mapdf<B, F>(self, f: F) -> Map<Self, F>
+        where F: FnMut(Self::DFItem) -> B
+    {
+
+        self.map(f)
     }
 }
 
 impl<'a, I> DFIter<'a> for Append<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
+    type DFItem = (OuterType, RowView<'a, InnerType>);
     fn select(self, names: Vec<OuterType>) -> Select<'a, Self> {
 
         select(self, names)
@@ -278,6 +323,12 @@ impl<'a, I> DFIter<'a> for Append<'a, I>
         where J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
         self.chain(other)
+    }
+    fn mapdf<B, F>(self, f: F) -> Map<Self, F>
+        where F: FnMut(Self::DFItem) -> B
+    {
+
+        self.map(f)
     }
 }
 

@@ -5,7 +5,6 @@ pub mod tests {
     extern crate test;
     use ndarray::{arr2, arr1, Axis, stack};
     use dataframe::*;
-    use join::{Join, JoinType};
     use test::Bencher;
     use ndarray::Array;
     use rand::distributions::Range;

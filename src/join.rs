@@ -1,77 +1,96 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::fmt::Debug;
+use types::*;
+use std::iter::FromIterator;
 
 
-pub enum JoinType {
-    InnerJoin,
-    OuterLeftJoin,
-}
-pub enum Join<L, K, RV> {
-    InnerJoin { left: L, right: HashMap<K, RV> },
-    OuterLeftJoin { left: L, right: HashMap<K, RV> },
-}
 
-impl<L, K, RV> Join<L, K, RV>
-    where K: Hash + Eq
+pub struct InnerJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
-    pub fn new<LI, RI>(t: JoinType, left: LI, right: RI) -> Self
-        where L: Iterator<Item = LI::Item>,
-              LI: IntoIterator<IntoIter = L>,
-              RI: IntoIterator<Item = (K, RV)>
+    left: L,
+    right: HashMap<OuterType, RowView<'a, InnerType>>,
+}
+
+pub struct OuterJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    left: L,
+    right: HashMap<OuterType, RowView<'a, InnerType>>,
+}
+
+
+
+impl<'a, L> InnerJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new<RI>(left: L, right: RI) -> Self
+        where RI: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        match t {
-            JoinType::InnerJoin => {
-                Join::InnerJoin {
-                    left: left.into_iter(),
-                    right: right.into_iter().collect(),
-                }
-            }
-            JoinType::OuterLeftJoin => {
-                Join::OuterLeftJoin {
-                    left: left.into_iter(),
-                    right: right.into_iter().collect(),
-                }
-            }
-
+        InnerJoin {
+            left: left,
+            right: right.collect(),
         }
-
     }
 }
 
-impl<L, K, LV, RV> Iterator for Join<L, K, RV>
-    where L: Iterator<Item = (K, LV)>,
-          K: Hash + Eq + Debug,
-          RV: Clone + Debug
+
+impl<'a, L> OuterJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
-    type Item = (K, LV, Option<RV>);
+    pub fn new<RI>(left: L, right: RI) -> Self
+        where RI: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        OuterJoin {
+            left: left,
+            right: right.collect(),
+        }
+    }
+}
+
+
+impl<'a, L> Iterator for InnerJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    type Item = (OuterType, RowView<'a, InnerType>, RowView<'a, InnerType>);
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self {
-            &mut Join::InnerJoin { ref mut left, ref right } => {
-                loop {
-                    match left.next() {
-                        Some((k, lv)) => {
-                            let rv = right.get(&k);
-                            match rv {
-                                Some(v) => return Some((k, lv, Some(v).cloned())),
-                                None => continue,
-                            }
-                        }
-                        None => return None,
+        loop {
+            match self.left.next() {
+                Some((k, lv)) => {
+                    let rv = self.right.get(&k);
+                    match rv {
+                        Some(&v) => return Some((k, lv, v)),
+                        None => continue,
                     }
+                }
+                None => return None,
+            }
 
+        }
+    }
+}
+
+
+
+impl<'a, L> Iterator for OuterJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    type Item = (OuterType, RowView<'a, InnerType>, Option<RowView<'a, InnerType>>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+
+        match self.left.next() {
+            Some((k, lv)) => {
+                let rv = self.right.get(&k);
+                match rv {
+                    Some(&v) => return Some((k, lv, Some(v))),
+                    None => Some((k, lv, None)),
                 }
+
             }
-            &mut Join::OuterLeftJoin { ref mut left, ref right } => {
-                match left.next() {
-                    Some((k, lv)) => {
-                        let rv = right.get(&k);
-                        Some((k, lv, rv.cloned()))
-                    }
-                    None => None,
-                }
-            }
+            None => None,
         }
 
     }
