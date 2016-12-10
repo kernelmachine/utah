@@ -24,18 +24,20 @@ use ndarray::{arr2, Axis};
 use dataframe::*;
 use error::*;
 use types::*;
+use dataframe::DFIter;
 fn main() {
     let a = arr2(&[[2, 7], [3, 4]]);
     let b = arr2(&[[2, 6], [3, 4]]);
     let c = arr2(&[[2, 6], [3, 4]]);
     let mut df = DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2"]).unwrap();
     let mut df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap().index(&["1", "2"]).unwrap();
-    let j: Vec<_> = DataFrameIterator::new(&df, Axis(1))
-        .remove(vec![OuterType::Str("a".to_string())])
-        .collect();
     let new_data = c.row(1).mapv(InnerType::from);
-    let j: Append<_> = DataFrameIterator::new(&df, Axis(0))
+
+    let j: Append<Select<Remove<DataFrameIterator>>> = df.iter(Axis(1))
+        .remove(vec![OuterType::Str("a".to_string())])
+        .select(vec![OuterType::Str("b".to_string())])
         .append(OuterType::Str("c".to_string()), new_data.view());
+
     // let concat : Vec<_> = df.iter(Axis(1)).unwrap().concat(df_1.iter(Axis(1)).unwrap()).collect();
     // let r : Row<InnerType> =  c.row(1).mapv(InnerType::Int);
     // let added : Vec<_> = df.iter(Axis(0)).unwrap().add("z", r.view()).collect();
