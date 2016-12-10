@@ -173,6 +173,9 @@ pub trait DFIter<'a> {
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
     fn append(self, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+    fn concat<I>(self, other: I) -> Chain<Self, I>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
 }
 
 impl<'a> DFIter<'a> for DataFrameIterator<'a> {
@@ -188,12 +191,15 @@ impl<'a> DFIter<'a> for DataFrameIterator<'a> {
 
     }
 
-    fn append(self,
-              name: OuterType,
-              data: RowView<'a, InnerType>)
-              -> Append<'a, DataFrameIterator<'a>> {
+    fn append(self, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, Self> {
         append(self, name, data)
 
+    }
+
+    fn concat<I>(self, other: I) -> Chain<Self, I>
+        where I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        self.chain(other)
     }
 }
 
@@ -216,6 +222,11 @@ impl<'a, I> DFIter<'a> for Select<'a, I>
         append(self, name, data)
 
     }
+    fn concat<J>(self, other: J) -> Chain<Self, J>
+        where J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        self.chain(other)
+    }
 }
 
 impl<'a, I> DFIter<'a> for Remove<'a, I>
@@ -236,6 +247,11 @@ impl<'a, I> DFIter<'a> for Remove<'a, I>
     fn append(self, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, Self> {
         append(self, name, data)
 
+    }
+    fn concat<J>(self, other: J) -> Chain<Self, J>
+        where J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        self.chain(other)
     }
 }
 
@@ -258,28 +274,15 @@ impl<'a, I> DFIter<'a> for Append<'a, I>
         append(self, name, data)
 
     }
-}
-
-impl<'a> DataFrameIterator<'a> {
-    pub fn select(self, names: Vec<OuterType>) -> Select<'a, Self> {
-
-        select(self, names)
-    }
-
-
-    pub fn remove(self, names: Vec<OuterType>) -> Remove<'a, Self> {
-
-        remove(self, names)
-
-    }
-    pub fn append(self,
-                  name: OuterType,
-                  data: RowView<'a, InnerType>)
-                  -> Append<'a, DataFrameIterator<'a>> {
-        append(self, name, data)
-
+    fn concat<J>(self, other: J) -> Chain<Self, J>
+        where J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        self.chain(other)
     }
 }
+
+
+
 
 impl DataFrame {
     pub fn new<T: Clone>(data: Matrix<T>) -> DataFrame
@@ -327,7 +330,7 @@ impl DataFrame {
         Ok(self)
     }
 
-    pub fn iter<'a>(&'a self, axis: Axis) -> DataFrameIterator<'a> {
+    pub fn df_iter<'a>(&'a self, axis: Axis) -> DataFrameIterator<'a> {
         match axis {
             Axis(0) => {
                 DataFrameIterator {
@@ -344,8 +347,43 @@ impl DataFrame {
             _ => panic!(),
 
         }
+    }
+    pub fn select<'a>(&'a self,
+                      ind: Vec<OuterType>,
+                      axis: Axis)
+                      -> Select<'a, DataFrameIterator<'a>> {
+        match axis {
+            Axis(0) => select(self.df_iter(Axis(0)), ind),
+            Axis(1) => select(self.df_iter(Axis(1)), ind),
+            _ => panic!(),
+
+        }
+    }
 
 
+    pub fn remove<'a>(&'a self,
+                      ind: Vec<OuterType>,
+                      axis: Axis)
+                      -> Remove<'a, DataFrameIterator<'a>> {
+        match axis {
+            Axis(0) => remove(self.df_iter(Axis(0)), ind),
+            Axis(1) => remove(self.df_iter(Axis(1)), ind),
+            _ => panic!(),
+
+        }
+    }
+
+    pub fn append<'a>(&'a self,
+                      name: OuterType,
+                      data: RowView<'a, InnerType>,
+                      axis: Axis)
+                      -> Append<'a, DataFrameIterator<'a>> {
+        match axis {
+            Axis(0) => append(self.df_iter(Axis(0)), name, data),
+            Axis(1) => append(self.df_iter(Axis(1)), name, data),
+            _ => panic!(),
+
+        }
     }
 }
 
