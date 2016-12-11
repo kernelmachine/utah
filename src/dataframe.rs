@@ -252,23 +252,6 @@ pub fn inner_join<'a, I, J>(this: I, other: J) -> InnerJoin<'a, I>
     InnerJoin::new(this, other)
 }
 
-// pub fn join<'a, I>(this: DataFrameIterator<'a>,
-//                    other: &DataFrameIterator<'a>)
-//                    -> Chain<Select<'a, DataFrameIterator<'a>>, Select<'a, DataFrameIterator<'a>>>
-//     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-// {
-//     let this_index: BTreeMap<OuterType, usize> =
-//         this.clone().names.enumerate().map(|(x, y)| (y.clone(), x)).collect();
-//     let other_index: BTreeMap<OuterType, usize> =
-//         other.clone().names.enumerate().map(|(x, y)| (y.clone(), x)).collect();
-//     let  =
-//         InnerJoin::new(this, other);
-//     let i1: Vec<OuterType> =
-//         idxs.iter().filter(|x| x.2.is_some()).map(|&(ref x, _, _)| x.to_owned()).collect();
-//     this.select(i1.clone()).chain(other.clone().select(i1.clone()))
-// }
-//
-
 
 impl<'a> Iterator for DataFrameIterator<'a> {
     type Item = (OuterType, RowView<'a, InnerType>);
