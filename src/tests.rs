@@ -82,7 +82,8 @@ pub mod tests {
         let a = arr2(&[[2., 3.], [3., 4.]]);
 
         let df = DataFrame::new(a).columns(&["a", "b"]).unwrap();
-        let z: Vec<_> = df.select(vec![OuterType::Str("a".to_string())], Axis(1)).collect();
+        let select_idx = vec!["a"];
+        let z: Vec<_> = df.select(&select_idx[..], Axis(1)).collect();
         assert!(z[0].1 == arr2(&[[2., 3.], [3., 4.]]).mapv(InnerType::from).column(0).to_owned())
     }
 
@@ -107,8 +108,8 @@ pub mod tests {
 
     #[bench]
     fn test_inner_join(b: &mut Bencher) {
-        let c = Array::random((20000, 10), Range::new(0., 10.));
-        let e = Array::random((20000, 10), Range::new(0., 10.));
+        let c = Array::random((20, 10), Range::new(0., 10.));
+        let e = Array::random((20, 10), Range::new(0., 10.));
 
 
         let mut c_names: Vec<String> = vec![];
@@ -122,12 +123,12 @@ pub mod tests {
         }
 
         let mut c_index: Vec<String> = vec![];
-        for i in 0..20000 {
+        for i in 0..20 {
             c_index.push(i.to_string());
         }
 
         let mut e_index: Vec<String> = vec![];
-        for i in 1999..21999 {
+        for i in 1..21 {
             e_index.push(i.to_string());
         }
 

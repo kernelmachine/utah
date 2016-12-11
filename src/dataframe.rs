@@ -264,12 +264,18 @@ impl<'a, L> Iterator for OuterJoin<'a, L>
 pub trait DFIter<'a> {
     type DFItem;
 
-    fn select(self, names: Vec<OuterType>) -> Select<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
-    fn remove(self, names: Vec<OuterType>) -> Remove<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
-    fn append(self, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+    fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              OuterType: From<&'a T>,
+              T: 'a;
+    fn remove<T>(self, names: &'a [T]) -> Remove<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              OuterType: From<&'a T>,
+              T: 'a;
+    fn append<T>(self, name: &'a T, data: RowView<'a, InnerType>) -> Append<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              OuterType: From<&'a T>,
+              T: 'a;
     fn concat<I>(self, other: I) -> Chain<Self, I>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
@@ -293,19 +299,33 @@ pub trait DFIter<'a> {
 impl<'a> DFIter<'a> for DataFrameIterator<'a> {
     type DFItem = (OuterType, RowView<'a, InnerType>);
 
-    fn select(self, names: Vec<OuterType>) -> Select<'a, Self> {
-
+    fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
+        where OuterType: From<&'a T>,
+              T: 'a
+    {
+        let names: Vec<OuterType> = names.iter()
+            .map(|x| OuterType::from(x))
+            .collect();
         Select::new(self, names)
     }
 
 
-    fn remove(self, names: Vec<OuterType>) -> Remove<'a, Self> {
-
+    fn remove<T>(self, names: &'a [T]) -> Remove<'a, Self>
+        where OuterType: From<&'a T>,
+              T: 'a
+    {
+        let names: Vec<OuterType> = names.iter()
+            .map(|x| OuterType::from(x))
+            .collect();
         Remove::new(self, names)
 
     }
 
-    fn append(self, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, Self> {
+    fn append<T>(self, name: &'a T, data: RowView<'a, InnerType>) -> Append<'a, Self>
+        where OuterType: From<&'a T>,
+              T: 'a
+    {
+        let name = OuterType::from(name);
         Append::new(self, name, data)
 
     }
@@ -353,19 +373,33 @@ impl<'a, I> DFIter<'a> for Select<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
     type DFItem = (OuterType, RowView<'a, InnerType>);
-    fn select(self, names: Vec<OuterType>) -> Select<'a, Self> {
-
+    fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
+        where OuterType: From<&'a T>,
+              T: 'a
+    {
+        let names = names.iter()
+            .map(|x| OuterType::from(x))
+            .collect();
         Select::new(self, names)
     }
 
 
-    fn remove(self, names: Vec<OuterType>) -> Remove<'a, Self> {
-
+    fn remove<T>(self, names: &'a [T]) -> Remove<'a, Self>
+        where OuterType: From<&'a T>,
+              T: 'a
+    {
+        let names = names.iter()
+            .map(|x| OuterType::from(x))
+            .collect();
         Remove::new(self, names)
 
     }
 
-    fn append(self, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, Self> {
+    fn append<T>(self, name: &'a T, data: RowView<'a, InnerType>) -> Append<'a, Self>
+        where OuterType: From<&'a T>,
+              T: 'a
+    {
+        let name = OuterType::from(name);
         Append::new(self, name, data)
 
     }
@@ -410,19 +444,30 @@ impl<'a, I> DFIter<'a> for Remove<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
     type DFItem = (OuterType, RowView<'a, InnerType>);
-    fn select(self, names: Vec<OuterType>) -> Select<'a, Self> {
-
+    fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
+        where OuterType: From<&'a T>
+    {
+        let names = names.iter()
+            .map(|x| OuterType::from(x))
+            .collect();
         Select::new(self, names)
     }
 
 
-    fn remove(self, names: Vec<OuterType>) -> Remove<'a, Self> {
-
+    fn remove<T>(self, names: &'a [T]) -> Remove<'a, Self>
+        where OuterType: From<&'a T>
+    {
+        let names = names.iter()
+            .map(|x| OuterType::from(x))
+            .collect();
         Remove::new(self, names)
 
     }
 
-    fn append(self, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, Self> {
+    fn append<T>(self, name: &'a T, data: RowView<'a, InnerType>) -> Append<'a, Self>
+        where OuterType: From<&'a T>
+    {
+        let name = OuterType::from(name);
         Append::new(self, name, data)
 
     }
@@ -467,19 +512,30 @@ impl<'a, I> DFIter<'a> for Append<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
     type DFItem = (OuterType, RowView<'a, InnerType>);
-    fn select(self, names: Vec<OuterType>) -> Select<'a, Self> {
-
+    fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
+        where OuterType: From<&'a T>
+    {
+        let names = names.iter()
+            .map(|x| OuterType::from(x))
+            .collect();
         Select::new(self, names)
     }
 
 
-    fn remove(self, names: Vec<OuterType>) -> Remove<'a, Self> {
-
+    fn remove<T>(self, names: &'a [T]) -> Remove<'a, Self>
+        where OuterType: From<&'a T>
+    {
+        let names = names.iter()
+            .map(|x| OuterType::from(x))
+            .collect();
         Remove::new(self, names)
 
     }
 
-    fn append(self, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, Self> {
+    fn append<T>(self, name: &'a T, data: RowView<'a, InnerType>) -> Append<'a, Self>
+        where OuterType: From<&'a T>
+    {
+        let name = OuterType::from(name);
         Append::new(self, name, data)
 
     }
@@ -587,36 +643,43 @@ impl DataFrame {
 
         }
     }
-    pub fn select<'a>(&'a self,
-                      ind: Vec<OuterType>,
-                      axis: Axis)
-                      -> Select<'a, DataFrameIterator<'a>> {
+    pub fn select<'a, T>(&'a self, names: &'a [T], axis: Axis) -> Select<'a, DataFrameIterator<'a>>
+        where OuterType: From<&'a T>
+    {
+        let names = names.iter()
+            .map(|x| OuterType::from(x))
+            .collect();
         match axis {
-            Axis(0) => Select::new(self.df_iter(Axis(0)), ind),
-            Axis(1) => Select::new(self.df_iter(Axis(1)), ind),
+            Axis(0) => Select::new(self.df_iter(Axis(0)), names),
+            Axis(1) => Select::new(self.df_iter(Axis(1)), names),
             _ => panic!(),
 
         }
     }
 
 
-    pub fn remove<'a>(&'a self,
-                      ind: Vec<OuterType>,
-                      axis: Axis)
-                      -> Remove<'a, DataFrameIterator<'a>> {
+    pub fn remove<'a, T>(&'a self, names: &'a [T], axis: Axis) -> Remove<'a, DataFrameIterator<'a>>
+        where OuterType: From<&'a T>
+    {
+        let names = names.iter()
+            .map(|x| OuterType::from(x))
+            .collect();
         match axis {
-            Axis(0) => Remove::new(self.df_iter(Axis(0)), ind),
-            Axis(1) => Remove::new(self.df_iter(Axis(1)), ind),
+            Axis(0) => Remove::new(self.df_iter(Axis(0)), names),
+            Axis(1) => Remove::new(self.df_iter(Axis(1)), names),
             _ => panic!(),
 
         }
     }
 
-    pub fn append<'a>(&'a self,
-                      name: OuterType,
-                      data: RowView<'a, InnerType>,
-                      axis: Axis)
-                      -> Append<'a, DataFrameIterator<'a>> {
+    pub fn append<'a, T>(&'a self,
+                         name: &'a T,
+                         data: RowView<'a, InnerType>,
+                         axis: Axis)
+                         -> Append<'a, DataFrameIterator<'a>>
+        where OuterType: From<&'a T>
+    {
+        let name = OuterType::from(name);
         match axis {
             Axis(0) => Append::new(self.df_iter(Axis(0)), name, data),
             Axis(1) => Append::new(self.df_iter(Axis(1)), name, data),

@@ -22,7 +22,6 @@ use ndarray::{arr2, Axis};
 use dataframe::*;
 use types::*;
 use dataframe::DFIter;
-use std::iter::Chain;
 
 fn main() {
     let a = arr2(&[[2, 7], [3, 4]]);
@@ -31,13 +30,15 @@ fn main() {
     let df = DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2"]).unwrap();
     let df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap().index(&["1", "2"]).unwrap();
     let new_data = c.row(1).mapv(InnerType::from);
-
-    let j: Chain<Append<Select<Remove<DataFrameIterator>>>, DataFrameIterator> = df.df_iter(Axis(1))
-        .remove(vec![OuterType::Str("a".to_string())])
-        .select(vec![OuterType::Str("b".to_string())])
-        .append(OuterType::Str("c".to_string()), new_data.view())
-        .concat(df_1.df_iter(Axis(1)));
-
+    let remove_idx = vec!["1"];
+    let select_idx = vec!["2"];
+    let append_idx = "1";
+    let j: Append<Select<Remove<DataFrameIterator>>> = df.df_iter(Axis(0))
+        .remove(&remove_idx[..])
+        .select(&select_idx[..])
+        .append(&append_idx, new_data.view());
+    let df_iter: DataFrameIterator = df_1.df_iter(Axis(0));
+    let j: InnerJoin<Append<Select<Remove<DataFrameIterator>>>> = j.inner_left_join(df_iter);
     let d: Vec<_> = j.collect();
     println!("{:?}", d);
 
