@@ -649,6 +649,52 @@ impl DataFrame {
 
         }
     }
+
+    pub fn inner_left_join<'a>(&'a self,
+                               other: &'a DataFrame,
+                               axis: Axis)
+                               -> InnerJoin<'a, DataFrameIterator<'a>> {
+        match axis {
+            Axis(0) => InnerJoin::new(self.df_iter(Axis(0)), other.df_iter(Axis(0))),
+            Axis(1) => InnerJoin::new(self.df_iter(Axis(1)), other.df_iter(Axis(1))),
+            _ => panic!(),
+
+        }
+    }
+    pub fn outer_left_join<'a>(&'a self,
+                               other: &'a DataFrame,
+                               axis: Axis)
+                               -> OuterJoin<'a, DataFrameIterator<'a>> {
+        match axis {
+            Axis(0) => OuterJoin::new(self.df_iter(Axis(0)), other.df_iter(Axis(0))),
+            Axis(1) => OuterJoin::new(self.df_iter(Axis(1)), other.df_iter(Axis(1))),
+            _ => panic!(),
+
+        }
+
+    }
+    pub fn inner_right_join<'a>(&'a self,
+                                other: &'a DataFrame,
+                                axis: Axis)
+                                -> InnerJoin<'a, DataFrameIterator<'a>> {
+        match axis {
+            Axis(0) => InnerJoin::new(other.df_iter(Axis(0)), self.df_iter(Axis(0))),
+            Axis(1) => InnerJoin::new(other.df_iter(Axis(1)), self.df_iter(Axis(1))),
+            _ => panic!(),
+
+        }
+    }
+    pub fn outer_right_join<'a>(&'a self,
+                                other: &'a DataFrame,
+                                axis: Axis)
+                                -> OuterJoin<'a, DataFrameIterator<'a>> {
+        match axis {
+            Axis(0) => OuterJoin::new(other.df_iter(Axis(0)), self.df_iter(Axis(0))),
+            Axis(1) => OuterJoin::new(other.df_iter(Axis(1)), self.df_iter(Axis(1))),
+            _ => panic!(),
+
+        }
+    }
 }
 
 

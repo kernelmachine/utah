@@ -14,7 +14,6 @@ extern crate error_chain;
 extern crate itertools;
 
 pub mod dataframe;
-pub mod helper;
 pub mod error;
 pub mod from;
 pub mod types;
@@ -24,6 +23,7 @@ use dataframe::*;
 use types::*;
 use dataframe::DFIter;
 use std::iter::Chain;
+
 fn main() {
     let a = arr2(&[[2, 7], [3, 4]]);
     let b = arr2(&[[2, 6], [3, 4]]);

@@ -6,13 +6,15 @@ use ndarray::{Array, ArrayView, Ix};
 pub enum OuterType {
     Str(String),
     Date(DateTime<UTC>),
-    Int(i64),
+    Int64(i64),
+    Int32(i32),
 }
 
 #[derive(PartialOrd, PartialEq,  Clone, Debug)]
 pub enum InnerType {
     Float(f64),
-    Int(i64),
+    Int64(i64),
+    Int32(i32),
     Str(String),
 }
 
