@@ -22,41 +22,30 @@ pub struct DataFrameIterator<'a> {
     pub data: AxisIter<'a, InnerType, usize>,
 }
 
+
+
+impl<'a> Iterator for DataFrameIterator<'a> {
+    type Item = (OuterType, RowView<'a, InnerType>);
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.names.next() {
+            Some(val) => {
+                match self.data.next() {
+                    Some(dat) => Some((val.clone(), dat)),
+                    None => None,
+                }
+            }
+            None => None,
+        }
+    }
+}
+
+
 pub struct Select<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
     data: I,
     ind: Vec<OuterType>,
 }
-
-pub struct Remove<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-{
-    data: I,
-    ind: Vec<OuterType>,
-}
-
-pub struct Append<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-{
-    pub new_data: PutBack<I>,
-}
-
-
-impl<'a, I> Remove<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-{
-    pub fn new(df: I, ind: Vec<OuterType>) -> Remove<'a, I>
-        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-
-        Remove {
-            data: df,
-            ind: ind,
-        }
-    }
-}
-
 
 
 impl<'a, I> Select<'a, I>
@@ -72,71 +61,6 @@ impl<'a, I> Select<'a, I>
         }
     }
 }
-
-
-impl<'a, I> Append<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-{
-    pub fn new(df: I, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, I>
-        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-        let name = OuterType::from(name);
-        let mut it = PutBack::new(df);
-        it.put_back((name, data));
-        Append { new_data: it }
-    }
-}
-
-
-
-
-
-
-
-
-
-
-pub struct InnerJoin<'a, L>
-    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-{
-    left: L,
-    right: HashMap<OuterType, RowView<'a, InnerType>>,
-}
-
-impl<'a, L> InnerJoin<'a, L>
-    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-{
-    pub fn new<RI>(left: L, right: RI) -> Self
-        where RI: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-        InnerJoin {
-            left: left,
-            right: right.collect(),
-        }
-    }
-}
-
-pub struct OuterJoin<'a, L>
-    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-{
-    left: L,
-    right: HashMap<OuterType, RowView<'a, InnerType>>,
-}
-
-
-impl<'a, L> OuterJoin<'a, L>
-    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-{
-    pub fn new<RI>(left: L, right: RI) -> Self
-        where RI: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-        OuterJoin {
-            left: left,
-            right: right.collect(),
-        }
-    }
-}
-
 
 
 
@@ -164,6 +88,31 @@ impl<'a, I> Iterator for Select<'a, I>
     }
 }
 
+
+pub struct Remove<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    data: I,
+    ind: Vec<OuterType>,
+}
+
+
+impl<'a, I> Remove<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new(df: I, ind: Vec<OuterType>) -> Remove<'a, I>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+
+        Remove {
+            data: df,
+            ind: ind,
+        }
+    }
+}
+
+
+
 impl<'a, I> Iterator for Remove<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
@@ -188,6 +137,29 @@ impl<'a, I> Iterator for Remove<'a, I>
     }
 }
 
+pub struct Append<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub new_data: PutBack<I>,
+}
+
+
+
+
+impl<'a, I> Append<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new(df: I, name: OuterType, data: RowView<'a, InnerType>) -> Append<'a, I>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        let name = OuterType::from(name);
+        let mut it = PutBack::new(df);
+        it.put_back((name, data));
+        Append { new_data: it }
+    }
+}
+
+
 impl<'a, I> Iterator for Append<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
@@ -196,6 +168,27 @@ impl<'a, I> Iterator for Append<'a, I>
         self.new_data.next()
     }
 }
+
+pub struct InnerJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    left: L,
+    right: HashMap<OuterType, RowView<'a, InnerType>>,
+}
+
+impl<'a, L> InnerJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new<RI>(left: L, right: RI) -> Self
+        where RI: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        InnerJoin {
+            left: left,
+            right: right.collect(),
+        }
+    }
+}
+
 
 
 impl<'a, L> Iterator for InnerJoin<'a, L>
@@ -216,6 +209,28 @@ impl<'a, L> Iterator for InnerJoin<'a, L>
                 None => return None,
             }
 
+        }
+    }
+}
+
+
+pub struct OuterJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    left: L,
+    right: HashMap<OuterType, RowView<'a, InnerType>>,
+}
+
+
+impl<'a, L> OuterJoin<'a, L>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new<RI>(left: L, right: RI) -> Self
+        where RI: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        OuterJoin {
+            left: left,
+            right: right.collect(),
         }
     }
 }
@@ -244,29 +259,6 @@ impl<'a, L> Iterator for OuterJoin<'a, L>
 }
 
 
-
-pub fn inner_join<'a, I, J>(this: I, other: J) -> InnerJoin<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-          J: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-{
-    InnerJoin::new(this, other)
-}
-
-
-impl<'a> Iterator for DataFrameIterator<'a> {
-    type Item = (OuterType, RowView<'a, InnerType>);
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.names.next() {
-            Some(val) => {
-                match self.data.next() {
-                    Some(dat) => Some((val.clone(), dat)),
-                    None => None,
-                }
-            }
-            None => None,
-        }
-    }
-}
 
 
 pub trait DFIter<'a> {
@@ -506,7 +498,7 @@ impl<'a, I> DFIter<'a> for Append<'a, I>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        inner_join(self, other)
+        InnerJoin::new(self, other)
     }
     fn outer_left_join<J>(self, other: J) -> OuterJoin<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
