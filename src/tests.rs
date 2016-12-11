@@ -107,8 +107,8 @@ pub mod tests {
 
     #[bench]
     fn test_inner_join(b: &mut Bencher) {
-        let c = Array::random((200000, 10), Range::new(0., 10.));
-        let e = Array::random((200000, 10), Range::new(0., 10.));
+        let c = Array::random((20000, 10), Range::new(0., 10.));
+        let e = Array::random((20000, 10), Range::new(0., 10.));
 
 
         let mut c_names: Vec<String> = vec![];
@@ -122,12 +122,12 @@ pub mod tests {
         }
 
         let mut c_index: Vec<String> = vec![];
-        for i in 0..200000 {
+        for i in 0..20000 {
             c_index.push(i.to_string());
         }
 
         let mut e_index: Vec<String> = vec![];
-        for i in 1999..201999 {
+        for i in 1999..21999 {
             e_index.push(i.to_string());
         }
 
