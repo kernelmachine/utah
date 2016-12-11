@@ -39,6 +39,60 @@ impl<'a> Iterator for DataFrameIterator<'a> {
     }
 }
 
+#[derive(Clone)]
+
+pub struct Dot<'a, I, J>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+          J: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    this_data: I,
+    other_data: J,
+}
+
+impl<'a, I, J> Dot<'a, I, J>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+          J: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new(df: I, other: J) -> Dot<'a, I, J>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+
+        Dot {
+            this_data: df,
+            other_data: other,
+        }
+    }
+}
+
+
+impl<'a, I, J> Iterator for Dot<'a, I, J>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+          J: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    type Item = InnerType;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.this_data.next() {
+
+            None => return None,
+            Some((_, dat)) => {
+                match self.other_data.next() {
+                    Some((_, other_dat)) => {
+                        return Some((0..dat.len()).fold(InnerType::Int32(0), |x, y| {
+                            x +
+                            dat.get(y).unwrap().to_owned() * other_dat.get(y).unwrap().to_owned()
+                        }))
+                    }
+                    None => return None,
+                }
+            }
+
+        }
+    }
+}
+
+
+#[derive(Clone)]
 
 pub struct Select<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -88,6 +142,7 @@ impl<'a, I> Iterator for Select<'a, I>
     }
 }
 
+#[derive(Clone)]
 
 pub struct Remove<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -136,6 +191,7 @@ impl<'a, I> Iterator for Remove<'a, I>
         }
     }
 }
+#[derive(Clone)]
 
 pub struct Append<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -294,6 +350,10 @@ pub trait DFIter<'a> {
     fn outer_right_join<I>(self, other: I) -> OuterJoin<'a, I>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+
+    fn dot<I>(self, other: I) -> Dot<'a, Self, I>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
 }
 
 impl<'a> DFIter<'a> for DataFrameIterator<'a> {
@@ -367,6 +427,13 @@ impl<'a> DFIter<'a> for DataFrameIterator<'a> {
     {
         OuterJoin::new(other, self)
     }
+
+    fn dot<I>(self, other: I) -> Dot<'a, Self, I>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Dot::new(self, other)
+    }
 }
 
 impl<'a, I> DFIter<'a> for Select<'a, I>
@@ -438,6 +505,12 @@ impl<'a, I> DFIter<'a> for Select<'a, I>
     {
         OuterJoin::new(other, self)
     }
+    fn dot<J>(self, other: J) -> Dot<'a, Self, J>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Dot::new(self, other)
+    }
 }
 
 impl<'a, I> DFIter<'a> for Remove<'a, I>
@@ -505,6 +578,12 @@ impl<'a, I> DFIter<'a> for Remove<'a, I>
               J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
         OuterJoin::new(other, self)
+    }
+    fn dot<J>(self, other: J) -> Dot<'a, Self, J>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Dot::new(self, other)
     }
 }
 
@@ -574,7 +653,15 @@ impl<'a, I> DFIter<'a> for Append<'a, I>
     {
         OuterJoin::new(other, self)
     }
+    fn dot<J>(self, other: J) -> Dot<'a, Self, J>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Dot::new(self, other)
+    }
 }
+
+
 
 
 
@@ -732,6 +819,14 @@ impl DataFrame {
             _ => panic!(),
 
         }
+    }
+    pub fn dot<'a>(&'a self,
+                   other: &'a DataFrame)
+                   -> Chain<Dot<'a, DataFrameIterator<'a>, DataFrameIterator<'a>>,
+                            Dot<'a, DataFrameIterator<'a>, DataFrameIterator<'a>>> {
+
+        Dot::new(self.df_iter(Axis(0)), other.df_iter(Axis(1)))
+            .chain(Dot::new(self.df_iter(Axis(1)), other.df_iter(Axis(0))))
     }
 }
 

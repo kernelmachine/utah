@@ -38,9 +38,14 @@ fn main() {
         .select(&select_idx[..])
         .append(&append_idx, new_data.view());
     let df_iter: DataFrameIterator = df_1.df_iter(Axis(0));
-    let j: InnerJoin<Append<Select<Remove<DataFrameIterator>>>> = j.inner_left_join(df_iter);
-    let d: Vec<_> = j.collect();
-    println!("{:?}", d);
+    let j: Append<Select<Remove<DataFrameIterator>>> = df.df_iter(Axis(0))
+        .remove(&remove_idx[..])
+        .select(&select_idx[..])
+        .append(&append_idx, new_data.view());
+    let res: InnerJoin<Append<Select<Remove<DataFrameIterator>>>> = j.inner_left_join(df_iter);
+
+    let res: Vec<_> = res.collect();
+    println!("{:?}", res);
 
 
 }
