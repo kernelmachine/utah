@@ -1,6 +1,7 @@
 use chrono::*;
 use ndarray::{Array, ArrayView, Ix};
-use std::ops::{Mul, Add, Sub};
+use std::ops::{Mul, Add, Sub, Div};
+use std::cmp::Ordering;
 
 #[derive(Hash, PartialOrd, PartialEq, Eq , Ord , Clone,  Debug)]
 pub enum OuterType {
@@ -10,7 +11,7 @@ pub enum OuterType {
     Int32(i32),
 }
 
-#[derive(PartialOrd, PartialEq,  Clone, Debug)]
+#[derive( Clone, Debug)]
 pub enum InnerType {
     Float(f64),
     Int64(i64),
@@ -26,6 +27,9 @@ pub type Matrix<T> = Array<T, (Ix, Ix)>;
 pub type ColumnView<'a, T> = ArrayView<'a, T, Ix>;
 pub type RowView<'a, T> = ArrayView<'a, T, Ix>;
 pub type MatrixView<'a, T> = ArrayView<'a, T, (Ix, Ix)>;
+
+
+
 
 
 
@@ -48,6 +52,108 @@ impl Mul for InnerType {
             InnerType::Int64(x) => {
                 match rhs {
                     InnerType::Int64(y) => InnerType::Int64(x * y),
+                    _ => InnerType::Empty,
+                }
+            }
+            InnerType::Str(_) => {
+                match rhs {
+                    _ => InnerType::Empty,
+                }
+            }
+            InnerType::Empty => {
+                match rhs {
+                    _ => InnerType::Empty,
+                }
+            }
+        }
+    }
+}
+
+
+impl Eq for InnerType {}
+
+
+impl Ord for InnerType {
+    fn cmp(&self, other: &InnerType) -> Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
+impl PartialOrd for InnerType {
+    fn partial_cmp(&self, rhs: &Self) -> Option<Ordering> {
+        match self {
+            &InnerType::Float(_) => panic!(),
+            &InnerType::Int32(x) => {
+                match rhs {
+                    &InnerType::Int32(y) => Some(x.cmp(&y)),
+                    _ => panic!(),
+                }
+            }
+            &InnerType::Int64(x) => {
+                match rhs {
+                    &InnerType::Int64(y) => Some(x.cmp(&y)),
+                    _ => panic!(),
+                }
+            }
+            &InnerType::Str(ref x) => {
+                match rhs {
+                    &InnerType::Str(ref y) => Some(x.cmp(&y)),
+                    _ => panic!(),
+                }
+            }
+            &InnerType::Empty => panic!(),
+        }
+    }
+}
+
+
+impl PartialEq for InnerType {
+    fn eq(&self, rhs: &Self) -> bool {
+        match self {
+            &InnerType::Float(_) => panic!(),
+            &InnerType::Int32(x) => {
+                match rhs {
+                    &InnerType::Int32(y) => x == y,
+                    _ => panic!(),
+                }
+            }
+            &InnerType::Int64(ref x) => {
+                match rhs {
+                    &InnerType::Int64(y) => x.to_owned() == y,
+                    _ => panic!(),
+                }
+            }
+            &InnerType::Str(ref x) => {
+                match rhs {
+                    &InnerType::Str(ref y) => x.to_owned() == y.to_owned(),
+                    _ => panic!(),
+                }
+            }
+            &InnerType::Empty => panic!(),
+        }
+    }
+}
+
+
+impl Div for InnerType {
+    type Output = Self;
+    fn div(self, rhs: Self) -> Self {
+        match self {
+            InnerType::Float(x) => {
+                match rhs {
+                    InnerType::Float(y) => InnerType::Float(x / y),
+                    _ => InnerType::Empty,
+                }
+            }
+            InnerType::Int32(x) => {
+                match rhs {
+                    InnerType::Int32(y) => InnerType::Int32(x / y),
+                    _ => InnerType::Empty,
+                }
+            }
+            InnerType::Int64(x) => {
+                match rhs {
+                    InnerType::Int64(y) => InnerType::Int64(x / y),
                     _ => InnerType::Empty,
                 }
             }

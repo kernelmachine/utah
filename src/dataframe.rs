@@ -124,6 +124,174 @@ impl<'a, I> Iterator for Sum<'a, I>
     }
 }
 
+#[derive(Clone)]
+pub struct Mean<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    data: I,
+}
+
+impl<'a, I> Mean<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new(df: I) -> Mean<'a, I>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+
+        Mean { data: df }
+    }
+}
+
+impl<'a, I> Iterator for Mean<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    type Item = InnerType;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.data.next() {
+
+            None => return None,
+            Some((_, dat)) => unsafe {
+                let size = dat.len();
+                let first_element = dat.uget(0).to_owned();
+                let sum = (0..size).fold(first_element, |x, y| x + dat.uget(y).to_owned());
+
+                match dat.uget(0) {
+                    &InnerType::Float(_) => return Some(sum / InnerType::Float(size as f64)),
+                    &InnerType::Int32(_) => return Some(sum / InnerType::Int32(size as i32)),
+                    &InnerType::Int64(_) => return Some(sum / InnerType::Int64(size as i64)),
+                    _ => return Some(InnerType::Empty),
+                }
+
+            },
+        }
+    }
+}
+
+
+#[derive(Clone)]
+pub struct Max<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    data: I,
+}
+
+impl<'a, I> Max<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new(df: I) -> Max<'a, I>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+
+        Max { data: df }
+    }
+}
+
+impl<'a, I> Iterator for Max<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    type Item = InnerType;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.data.next() {
+            None => return None,
+            Some((_, dat)) => return dat.iter().max().map(|x| x.to_owned()),
+        }
+
+
+
+    }
+}
+
+
+#[derive(Clone)]
+pub struct Min<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    data: I,
+}
+
+impl<'a, I> Min<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new(df: I) -> Min<'a, I>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+
+        Min { data: df }
+    }
+}
+
+impl<'a, I> Iterator for Min<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    type Item = InnerType;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.data.next() {
+            None => return None,
+            Some((_, dat)) => return dat.iter().min().map(|x| x.to_owned()),
+        }
+
+
+
+    }
+}
+
+#[derive(Clone)]
+pub struct Stdev<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    data: I,
+}
+
+impl<'a, I> Stdev<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new(df: I) -> Stdev<'a, I>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+
+        Stdev { data: df }
+    }
+}
+
+impl<'a, I> Iterator for Stdev<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    type Item = InnerType;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.data.next() {
+
+            None => return None,
+            Some((_, dat)) => unsafe {
+                let size = dat.len();
+                let first_element = dat.uget(0).to_owned();
+                let sum = (0..size).fold(first_element, |x, y| x + dat.uget(y).to_owned());
+
+                let mean = match dat.uget(0) {
+                    &InnerType::Float(_) => sum / InnerType::Float(size as f64),
+                    &InnerType::Int32(_) => sum / InnerType::Int32(size as i32),
+                    &InnerType::Int64(_) => sum / InnerType::Int64(size as i64),
+                    _ => InnerType::Empty,
+                };
+
+                let stdev = (0..size).fold(dat.uget(0).to_owned(), |x, y| {
+                    x +
+                    (dat.uget(y).to_owned() - mean.to_owned()) *
+                    (dat.uget(y).to_owned() - mean.to_owned())
+                });
+
+
+                Some(stdev)
+
+
+            },
+        }
+
+
+
+    }
+}
+
+
 
 #[derive(Clone)]
 pub struct MapDF<'a, I, F, B>
@@ -425,6 +593,19 @@ pub trait DFIter<'a> {
               F: Fn(&InnerType) -> B;
     fn sumdf(self) -> Sum<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+
+    fn max(self) -> Max<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+
+    fn min(self) -> Min<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+
+    fn mean(self) -> Mean<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+
+    fn stdev(self) -> Stdev<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+
     fn dot<I>(self, other: I) -> Dot<'a, Self, I>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
@@ -507,6 +688,31 @@ impl<'a> DFIter<'a> for DataFrameIterator<'a> {
     {
         Sum::new(self)
     }
+
+    fn max(self) -> Max<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Max::new(self)
+    }
+
+    fn min(self) -> Min<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Min::new(self)
+    }
+
+    fn mean(self) -> Mean<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Mean::new(self)
+    }
+
+    fn stdev(self) -> Stdev<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Stdev::new(self)
+    }
+
     fn dot<I>(self, other: I) -> Dot<'a, Self, I>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -592,6 +798,30 @@ impl<'a, I> DFIter<'a> for Select<'a, I>
         Sum::new(self)
     }
 
+    fn max(self) -> Max<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Max::new(self)
+    }
+
+    fn min(self) -> Min<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Min::new(self)
+    }
+
+    fn mean(self) -> Mean<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Mean::new(self)
+    }
+
+    fn stdev(self) -> Stdev<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Stdev::new(self)
+    }
+
     fn dot<J>(self, other: J) -> Dot<'a, Self, J>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -673,6 +903,31 @@ impl<'a, I> DFIter<'a> for Remove<'a, I>
     {
         Sum::new(self)
     }
+
+    fn max(self) -> Max<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Max::new(self)
+    }
+
+    fn min(self) -> Min<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Min::new(self)
+    }
+
+    fn mean(self) -> Mean<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Mean::new(self)
+    }
+
+    fn stdev(self) -> Stdev<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Stdev::new(self)
+    }
+
 
     fn dot<J>(self, other: J) -> Dot<'a, Self, J>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
@@ -756,6 +1011,30 @@ impl<'a, I> DFIter<'a> for Append<'a, I>
         Sum::new(self)
     }
 
+    fn max(self) -> Max<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Max::new(self)
+    }
+
+    fn min(self) -> Min<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Min::new(self)
+    }
+
+    fn mean(self) -> Mean<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Mean::new(self)
+    }
+
+    fn stdev(self) -> Stdev<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Stdev::new(self)
+    }
+
     fn dot<J>(self, other: J) -> Dot<'a, Self, J>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -774,7 +1053,19 @@ impl DataFrame {
         where InnerType: From<T>
     {
         let data: Matrix<InnerType> = data.mapv(InnerType::from);
+        let data: Matrix<InnerType> = data.mapv_into(|x| {
+            match x {
+                InnerType::Float(y) => {
+                    if y.is_nan() {
+                        return InnerType::Empty;
+                    } else {
+                        return x;
+                    }
+                }
+                _ => return x,
+            }
 
+        });
         let columns: Vec<OuterType> = (0..data.shape()[1])
             .map(|x| OuterType::Str(x.to_string()))
             .collect();
@@ -950,6 +1241,46 @@ impl DataFrame {
         match axis {
             Axis(0) => MapDF::new(self.df_iter(Axis(0)), f),
             Axis(1) => MapDF::new(self.df_iter(Axis(1)), f),
+            _ => panic!(),
+
+        }
+    }
+
+    pub fn mean<'a>(&'a self, axis: Axis) -> Mean<'a, DataFrameIterator<'a>> {
+
+        match axis {
+            Axis(0) => Mean::new(self.df_iter(Axis(0))),
+            Axis(1) => Mean::new(self.df_iter(Axis(1))),
+            _ => panic!(),
+
+        }
+    }
+
+    pub fn max<'a>(&'a self, axis: Axis) -> Max<'a, DataFrameIterator<'a>> {
+
+        match axis {
+            Axis(0) => Max::new(self.df_iter(Axis(0))),
+            Axis(1) => Max::new(self.df_iter(Axis(1))),
+            _ => panic!(),
+
+        }
+    }
+
+    pub fn min<'a>(&'a self, axis: Axis) -> Min<'a, DataFrameIterator<'a>> {
+
+        match axis {
+            Axis(0) => Min::new(self.df_iter(Axis(0))),
+            Axis(1) => Min::new(self.df_iter(Axis(1))),
+            _ => panic!(),
+
+        }
+    }
+
+    pub fn stdev<'a>(&'a self, axis: Axis) -> Stdev<'a, DataFrameIterator<'a>> {
+
+        match axis {
+            Axis(0) => Stdev::new(self.df_iter(Axis(0))),
+            Axis(1) => Stdev::new(self.df_iter(Axis(1))),
             _ => panic!(),
 
         }
