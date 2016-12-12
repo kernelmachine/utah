@@ -2,7 +2,7 @@ use ndarray::Axis;
 use error::*;
 use types::*;
 use std::string::ToString;
-use std::iter::{Iterator, Chain, Map};
+use std::iter::{Iterator, Chain};
 use ndarray::AxisIter;
 use itertools::PutBack;
 use std::slice::Iter;
@@ -40,7 +40,6 @@ impl<'a> Iterator for DataFrameIterator<'a> {
 }
 
 #[derive(Clone)]
-
 pub struct Dot<'a, I, J>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
           J: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -90,6 +89,81 @@ impl<'a, I, J> Iterator for Dot<'a, I, J>
         }
     }
 }
+
+#[derive(Clone)]
+pub struct Sum<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    data: I,
+}
+
+impl<'a, I> Sum<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    pub fn new(df: I) -> Sum<'a, I>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+
+        Sum { data: df }
+    }
+}
+
+impl<'a, I> Iterator for Sum<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
+    type Item = InnerType;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.data.next() {
+
+            None => return None,
+            Some((_, dat)) => {
+                return Some((0..dat.len()).fold(dat.get(0).unwrap().to_owned(),
+                                                |x, y| x + dat.get(y).unwrap().to_owned()))
+            }
+        }
+    }
+}
+
+
+#[derive(Clone)]
+pub struct MapDF<'a, I, F, B>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+          F: Fn(&InnerType) -> B
+{
+    data: I,
+    func: F,
+}
+
+impl<'a, I, F, B> MapDF<'a, I, F, B>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+          F: Fn(&InnerType) -> B
+{
+    pub fn new(df: I, f: F) -> MapDF<'a, I, F, B>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+
+        MapDF {
+            data: df,
+            func: f,
+        }
+    }
+}
+
+impl<'a, I, F, B> Iterator for MapDF<'a, I, F, B>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+          F: Fn(&InnerType) -> B,
+          B: 'a
+{
+    type Item = (OuterType, Row<B>);
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.data.next() {
+
+            None => return None,
+            Some((val, dat)) => return Some((val, dat.map(&self.func))),
+        }
+    }
+}
+
 
 
 #[derive(Clone)]
@@ -186,8 +260,6 @@ impl<'a, I> Iterator for Remove<'a, I>
                 }
                 None => return None,
             }
-
-
         }
     }
 }
@@ -335,9 +407,7 @@ pub trait DFIter<'a> {
     fn concat<I>(self, other: I) -> Chain<Self, I>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
-    fn mapdf<B, F>(self, f: F) -> Map<Self, F>
-        where F: FnMut(Self::DFItem) -> B,
-              Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+
     fn inner_left_join<I>(self, other: I) -> InnerJoin<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
@@ -350,7 +420,11 @@ pub trait DFIter<'a> {
     fn outer_right_join<I>(self, other: I) -> OuterJoin<'a, I>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
-
+    fn mapdf<F, B>(self, f: F) -> MapDF<'a, Self, F, B>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+              F: Fn(&InnerType) -> B;
+    fn sumdf(self) -> Sum<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
     fn dot<I>(self, other: I) -> Dot<'a, Self, I>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
@@ -396,12 +470,7 @@ impl<'a> DFIter<'a> for DataFrameIterator<'a> {
         self.chain(other)
     }
 
-    fn mapdf<B, F>(self, f: F) -> Map<Self, F>
-        where F: FnMut(Self::DFItem) -> B
-    {
 
-        self.map(f)
-    }
 
     fn inner_left_join<I>(self, other: I) -> InnerJoin<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
@@ -428,6 +497,16 @@ impl<'a> DFIter<'a> for DataFrameIterator<'a> {
         OuterJoin::new(other, self)
     }
 
+    fn mapdf<F, B>(self, f: F) -> MapDF<'a, Self, F, B>
+        where F: Fn(&InnerType) -> B
+    {
+        MapDF::new(self, f)
+    }
+    fn sumdf(self) -> Sum<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Sum::new(self)
+    }
     fn dot<I>(self, other: I) -> Dot<'a, Self, I>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -475,12 +554,7 @@ impl<'a, I> DFIter<'a> for Select<'a, I>
     {
         self.chain(other)
     }
-    fn mapdf<B, F>(self, f: F) -> Map<Self, F>
-        where F: FnMut(Self::DFItem) -> B
-    {
 
-        self.map(f)
-    }
     fn inner_left_join<J>(self, other: J) -> InnerJoin<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -505,6 +579,19 @@ impl<'a, I> DFIter<'a> for Select<'a, I>
     {
         OuterJoin::new(other, self)
     }
+
+    fn mapdf<F, B>(self, f: F) -> MapDF<'a, Self, F, B>
+        where F: Fn(&InnerType) -> B
+    {
+        MapDF::new(self, f)
+    }
+
+    fn sumdf(self) -> Sum<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Sum::new(self)
+    }
+
     fn dot<J>(self, other: J) -> Dot<'a, Self, J>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -549,12 +636,7 @@ impl<'a, I> DFIter<'a> for Remove<'a, I>
     {
         self.chain(other)
     }
-    fn mapdf<B, F>(self, f: F) -> Map<Self, F>
-        where F: FnMut(Self::DFItem) -> B
-    {
 
-        self.map(f)
-    }
     fn inner_left_join<J>(self, other: J) -> InnerJoin<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -579,6 +661,19 @@ impl<'a, I> DFIter<'a> for Remove<'a, I>
     {
         OuterJoin::new(other, self)
     }
+
+    fn mapdf<F, B>(self, f: F) -> MapDF<'a, Self, F, B>
+        where F: Fn(&InnerType) -> B
+    {
+        MapDF::new(self, f)
+    }
+
+    fn sumdf(self) -> Sum<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Sum::new(self)
+    }
+
     fn dot<J>(self, other: J) -> Dot<'a, Self, J>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -623,12 +718,7 @@ impl<'a, I> DFIter<'a> for Append<'a, I>
     {
         self.chain(other)
     }
-    fn mapdf<B, F>(self, f: F) -> Map<Self, F>
-        where F: FnMut(Self::DFItem) -> B
-    {
 
-        self.map(f)
-    }
     fn inner_left_join<J>(self, other: J) -> InnerJoin<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -653,6 +743,19 @@ impl<'a, I> DFIter<'a> for Append<'a, I>
     {
         OuterJoin::new(other, self)
     }
+
+    fn mapdf<F, B>(self, f: F) -> MapDF<'a, Self, F, B>
+        where F: Fn(&InnerType) -> B
+    {
+        MapDF::new(self, f)
+    }
+
+    fn sumdf(self) -> Sum<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Sum::new(self)
+    }
+
     fn dot<J>(self, other: J) -> Dot<'a, Self, J>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -827,6 +930,29 @@ impl DataFrame {
 
         Dot::new(self.df_iter(Axis(0)), other.df_iter(Axis(1)))
             .chain(Dot::new(self.df_iter(Axis(1)), other.df_iter(Axis(0))))
+    }
+
+
+    pub fn sumdf<'a>(&'a self, axis: Axis) -> Sum<'a, DataFrameIterator<'a>> {
+
+        match axis {
+            Axis(0) => Sum::new(self.df_iter(Axis(0))),
+            Axis(1) => Sum::new(self.df_iter(Axis(1))),
+            _ => panic!(),
+
+        }
+    }
+
+    pub fn map<'a, F, B>(&'a self, f: F, axis: Axis) -> MapDF<'a, DataFrameIterator<'a>, F, B>
+        where F: Fn(&InnerType) -> B
+    {
+
+        match axis {
+            Axis(0) => MapDF::new(self.df_iter(Axis(0)), f),
+            Axis(1) => MapDF::new(self.df_iter(Axis(1)), f),
+            _ => panic!(),
+
+        }
     }
 }
 

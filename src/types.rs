@@ -1,6 +1,5 @@
 use chrono::*;
 use ndarray::{Array, ArrayView, Ix};
-use num::One;
 use std::ops::{Mul, Add, Sub};
 
 #[derive(Hash, PartialOrd, PartialEq, Eq , Ord , Clone,  Debug)]
@@ -65,6 +64,7 @@ impl Mul for InnerType {
         }
     }
 }
+
 
 impl Add for InnerType {
     type Output = Self;
@@ -135,11 +135,5 @@ impl Sub for InnerType {
                 }
             }
         }
-    }
-}
-
-impl One for InnerType {
-    fn one() -> Self {
-        InnerType::Float(1.0)
     }
 }
