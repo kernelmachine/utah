@@ -4,9 +4,11 @@ use std::string::ToString;
 use std::iter::Iterator;
 use aggregate::*;
 use transform::*;
-use ndarray::Axis;
+use ndarray::{Axis, Array};
 use types::UtahAxis;
 use impute::*;
+use std::iter::FromIterator;
+
 /// Utah's core data structure.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame {
@@ -15,7 +17,62 @@ pub struct DataFrame {
     pub index: Vec<OuterType>,
 }
 
+// #[derive(Debug, Clone, PartialEq)]
+// pub struct MutableDataFrame<'a> {
+//     pub columns: Vec<OuterType>,
+//     pub data: MatrixMut<'a, InnerType>,
+//     pub index: Vec<OuterType>,
+// }
 
+
+
+// and we'll implement FromIterator
+impl<'a> FromIterator<(OuterType, RowView<'a, InnerType>)> for DataFrame {
+    fn from_iter<I>(iter: I) -> Self
+        where I: IntoIterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        let mut c = Vec::new();
+        let mut n = Vec::new();
+        let mut nrows = 0;
+        let mut ncols = 0;
+        for (i, j) in iter {
+            nrows = j.len();
+            ncols += 1;
+            c.extend(j);
+            n.push(i);
+        }
+
+        DataFrame {
+            columns: n.clone(),
+            data: Array::from_shape_vec((nrows, ncols), c).unwrap().mapv(|x| x.to_owned()),
+            index: n.clone(),
+        }
+    }
+}
+
+// impl<'a> FromIterator<(OuterType, RowViewMut<'a, InnerType>)> for MutableDataFrame<'a> {
+//     fn from_iter<I>(iter: I) -> Self
+//         where I: IntoIterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+//     {
+//         let mut c = Vec::new();
+//         let mut n = Vec::new();
+//         let mut nrows = 0;
+//         let mut ncols = 0;
+//         for (i, j) in iter {
+//             nrows = j.len();
+//             ncols += 1;
+//             c.extend(j);
+//             n.push(i);
+//         }
+//         let data = Array::from_shape_vec((nrows, ncols), c).unwrap();
+//         data.mapv_inplace(|x| x);
+//         MutableDataFrame {
+//             columns: n.clone(),
+//             data: data,
+//             index: n.clone(),
+//         }
+//     }
+// }
 
 impl DataFrame {
     /// Create a new dataframe. The only required argument is data to populate the dataframe. The data's elements can be any of `InnerType`.

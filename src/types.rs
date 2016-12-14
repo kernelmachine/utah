@@ -1,5 +1,5 @@
 use chrono::*;
-use ndarray::{Array, ArrayView, ArrayViewMut, Ix};
+use ndarray::{Array, RcArray, ArrayView, ArrayViewMut, Ix};
 use std::ops::{Mul, Add, Sub, Div};
 use std::cmp::Ordering;
 
@@ -36,6 +36,8 @@ pub enum ImputeStrategy {
 pub type Column<T> = Array<T, Ix>;
 pub type Row<T> = Array<T, Ix>;
 pub type Matrix<T> = Array<T, (Ix, Ix)>;
+pub type MatrixMut<'a, T> = Array<&'a mut T, (Ix, Ix)>;
+
 pub type ColumnView<'a, T> = ArrayView<'a, T, Ix>;
 pub type RowView<'a, T> = ArrayView<'a, T, Ix>;
 pub type RowViewMut<'a, T> = ArrayViewMut<'a, T, Ix>;
