@@ -50,9 +50,9 @@ fn main() {
         .append(&append_idx, new_data.view())
         .collect();
 
-    // let res: DataFrame = df.impute(ImputeStrategy::Mode, UtahAxis::Column).collect();
+    let res: MutableDataFrame = df.impute(ImputeStrategy::Mode, UtahAxis::Column).collect();
 
-    println!("{:?}", j);
+    println!("{:?}", res);
 
 
 }
