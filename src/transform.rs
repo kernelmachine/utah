@@ -7,6 +7,7 @@ use std::marker::Sized;
 use std::collections::HashMap;
 use aggregate::*;
 use traits::*;
+use impute::*;
 
 #[derive(Clone)]
 pub struct DataFrameIterator<'a> {
@@ -399,6 +400,11 @@ impl<'a> DFIter<'a> for DataFrameIterator<'a> {
     {
         Stdev::new(self)
     }
+    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Impute::new(self, strategy)
+    }
 }
 
 impl<'a, I> DFIter<'a> for Select<'a, I>
@@ -501,6 +507,11 @@ impl<'a, I> DFIter<'a> for Select<'a, I>
     {
         Stdev::new(self)
     }
+    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Impute::new(self, strategy)
+    }
 }
 
 impl<'a, I> DFIter<'a> for Remove<'a, I>
@@ -600,6 +611,12 @@ impl<'a, I> DFIter<'a> for Remove<'a, I>
     {
         Stdev::new(self)
     }
+
+    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Impute::new(self, strategy)
+    }
 }
 
 impl<'a, I> DFIter<'a> for Append<'a, I>
@@ -698,5 +715,11 @@ impl<'a, I> DFIter<'a> for Append<'a, I>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
         Stdev::new(self)
+    }
+
+    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Impute::new(self, strategy)
     }
 }

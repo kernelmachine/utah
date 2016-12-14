@@ -2,7 +2,7 @@ use types::*;
 use std::iter::{Iterator, Chain};
 use aggregate::*;
 use transform::*;
-
+use impute::*;
 pub trait DFIter<'a> {
     type DFItem;
 
@@ -54,5 +54,8 @@ pub trait DFIter<'a> {
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
 
     fn stdev(self) -> Stdev<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+
+    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
 }

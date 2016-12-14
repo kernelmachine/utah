@@ -17,11 +17,36 @@ extern crate chrono;
 extern crate error_chain;
 extern crate itertools;
 
+
+/// # Utah
+///
+/// ## Table of contents
+///
+/// + [DataFrame](#dataframe)
+/// + [Transformation](#transformation)
+/// + [Aggregation](#aggregation)
+/// + [Imputation](#imputation)
+
+///
+/// ## DataFrame
+/// Utah is a dataframe crate for Rust.
+/// ### What's a dataframe?
+/// ### Why use this crate?
+
+/// ## Transformation
+///
+
+/// ## Aggregation
+///
+
+/// ## Imputation
+
 pub mod dataframe;
-pub mod tests;
+mod tests;
 pub mod error;
-pub mod from;
+mod from;
 pub mod types;
 pub mod aggregate;
 pub mod transform;
 pub mod traits;
+pub mod impute; 

@@ -1,5 +1,5 @@
 [package]
-name = "dataframe"
+name = "utah"
 version = "0.1.0"
 authors = ["pegasos1 <sgrangan01@gmail.com>"]
 
@@ -12,7 +12,7 @@ chrono = "0.2"
 error-chain="*"
 itertools = "*"
 [[bin]]
-name="dataframe"
+name="df"
 path='src/main.rs'
 
 [lib]

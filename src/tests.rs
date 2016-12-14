@@ -3,7 +3,7 @@
 pub mod tests {
     extern crate rand;
     extern crate test;
-    use ndarray::{arr2, arr1, Axis, stack};
+    use ndarray::{arr2, arr1, stack};
     use dataframe::*;
     use test::Bencher;
     use ndarray::Array;
@@ -29,7 +29,7 @@ pub mod tests {
         let first_index = &left.index[0];
         let second_index = &left.index[1];
         println!("{:?}", second_index);
-        let res: Vec<_> = left.outer_left_join(&right, Axis(0)).collect();
+        let res: Vec<_> = left.outer_left_join(&right, Axis::Row).collect();
         assert_eq!(res,
                    vec![(first_index.to_owned(),
                          left.data.row(0).view(),
@@ -46,7 +46,7 @@ pub mod tests {
         let first_index = &left.index[0];
         let second_index = &left.index[2];
         println!("{:?}", second_index);
-        let res: Vec<_> = left.inner_left_join(&right, Axis(0)).collect();
+        let res: Vec<_> = left.inner_left_join(&right, Axis::Row).collect();
         assert_eq!(res,
                    vec![(first_index.to_owned(),
                          left.data.row(0).view(),
@@ -88,7 +88,7 @@ pub mod tests {
         let a = arr2(&[[2., 3.], [3., 4.]]);
         let df = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         let select_idx = vec!["a"];
-        let z: Vec<_> = df.select(&select_idx[..], Axis(1)).collect();
+        let z: Vec<_> = df.select(&select_idx[..], Axis::Column).collect();
         assert!(z[0].1 == arr2(&[[2., 3.], [3., 4.]]).mapv(InnerType::from).column(0).to_owned())
     }
 
@@ -148,7 +148,7 @@ pub mod tests {
             .index(&e_index[..])
             .unwrap();
         b.iter(|| {
-            let _: Vec<_> = c_df.inner_left_join(&e_df, Axis(0)).collect();
+            let _: Vec<_> = c_df.inner_left_join(&e_df, Axis::Row).collect();
         });
     }
 

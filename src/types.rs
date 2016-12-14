@@ -20,6 +20,18 @@ pub enum InnerType {
     Empty,
 }
 
+#[derive( Clone, Debug)]
+pub enum UtahAxis {
+    Row,
+    Column,
+}
+
+#[derive( Clone, Debug)]
+pub enum ImputeStrategy {
+    Mean,
+    Mode,
+}
+
 
 pub type Column<T> = Array<T, Ix>;
 pub type Row<T> = Array<T, Ix>;

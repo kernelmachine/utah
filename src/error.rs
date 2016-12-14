@@ -1,4 +1,4 @@
-
+#[allow(unused_imports)]
 use error_chain::*;
 
 error_chain! {
