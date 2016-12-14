@@ -1,2 +1,2 @@
 # rust-dataframe
-Rust DataFrames
+Rust Dataframes. Currenty in development. Stay tuned!
