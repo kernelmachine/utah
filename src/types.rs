@@ -1,5 +1,5 @@
 use chrono::*;
-use ndarray::{Array, ArrayView, Ix};
+use ndarray::{Array, ArrayView, ArrayViewMut, Ix};
 use std::ops::{Mul, Add, Sub, Div};
 use std::cmp::Ordering;
 
@@ -38,6 +38,8 @@ pub type Row<T> = Array<T, Ix>;
 pub type Matrix<T> = Array<T, (Ix, Ix)>;
 pub type ColumnView<'a, T> = ArrayView<'a, T, Ix>;
 pub type RowView<'a, T> = ArrayView<'a, T, Ix>;
+pub type RowViewMut<'a, T> = ArrayViewMut<'a, T, Ix>;
+
 pub type MatrixView<'a, T> = ArrayView<'a, T, (Ix, Ix)>;
 
 
@@ -74,6 +76,9 @@ impl Mul for InnerType {
             }
             InnerType::Empty => {
                 match rhs {
+                    InnerType::Float(y) => InnerType::Float(y),
+                    InnerType::Int32(y) => InnerType::Int32(y),
+                    InnerType::Int64(y) => InnerType::Int64(y),
                     _ => InnerType::Empty,
                 }
             }
@@ -94,16 +99,24 @@ impl Ord for InnerType {
 impl PartialOrd for InnerType {
     fn partial_cmp(&self, rhs: &Self) -> Option<Ordering> {
         match self {
-            &InnerType::Float(_) => panic!(),
+            &InnerType::Float(x) => {
+                match rhs {
+                    &InnerType::Float(y) => Some((x as i32).cmp(&(y as i32))),
+                    &InnerType::Empty => Some((x as i32).cmp(&(x as i32 - 1))),
+                    _ => panic!(),
+                }
+            }
             &InnerType::Int32(x) => {
                 match rhs {
                     &InnerType::Int32(y) => Some(x.cmp(&y)),
+                    &InnerType::Empty => Some(x.cmp(&(x - 1))),
                     _ => panic!(),
                 }
             }
             &InnerType::Int64(x) => {
                 match rhs {
                     &InnerType::Int64(y) => Some(x.cmp(&y)),
+                    &InnerType::Empty => Some(x.cmp(&(x - 1))),
                     _ => panic!(),
                 }
             }
@@ -113,7 +126,14 @@ impl PartialOrd for InnerType {
                     _ => panic!(),
                 }
             }
-            &InnerType::Empty => panic!(),
+            &InnerType::Empty => {
+                match rhs {
+                    &InnerType::Float(y) => Some((y as i32).cmp(&(y as i32 - 1))),
+                    &InnerType::Int64(y) => Some(y.cmp(&(y - 1))),
+                    &InnerType::Int32(y) => Some(y.cmp(&(y - 1))),
+                    _ => panic!(),
+                }
+            }
         }
     }
 }
@@ -181,6 +201,9 @@ impl Div for InnerType {
             }
             InnerType::Empty => {
                 match rhs {
+                    InnerType::Float(y) => InnerType::Float(y),
+                    InnerType::Int32(y) => InnerType::Int32(y),
+                    InnerType::Int64(y) => InnerType::Int64(y),
                     _ => InnerType::Empty,
                 }
             }
@@ -218,6 +241,9 @@ impl Add for InnerType {
             }
             InnerType::Empty => {
                 match rhs {
+                    InnerType::Float(y) => InnerType::Float(y),
+                    InnerType::Int32(y) => InnerType::Int32(y),
+                    InnerType::Int64(y) => InnerType::Int64(y),
                     _ => InnerType::Empty,
                 }
             }
@@ -254,6 +280,9 @@ impl Sub for InnerType {
             }
             InnerType::Empty => {
                 match rhs {
+                    InnerType::Float(y) => InnerType::Float(y),
+                    InnerType::Int32(y) => InnerType::Int32(y),
+                    InnerType::Int64(y) => InnerType::Int64(y),
                     _ => InnerType::Empty,
                 }
             }

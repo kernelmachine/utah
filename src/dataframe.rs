@@ -7,7 +7,6 @@ use transform::*;
 use ndarray::Axis;
 use types::UtahAxis;
 use impute::*;
-
 /// Utah's core data structure.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame {
@@ -145,7 +144,7 @@ impl DataFrame {
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
     /// let df = DataFrame::new(a).index(&[1, 2]).columns(&["a", "b"]).unwrap();
     /// ```
-    pub fn df_iter<'a>(&'a self, axis: UtahAxis) -> DataFrameIterator<'a> {
+    pub fn df_iter<'a>(&'a mut self, axis: UtahAxis) -> DataFrameIterator<'a> {
         match axis {
             UtahAxis::Row => {
                 DataFrameIterator {
@@ -162,6 +161,22 @@ impl DataFrame {
         }
     }
 
+    pub fn df_iter_mut<'a>(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a> {
+        match axis {
+            UtahAxis::Row => {
+                MutableDataFrameIterator {
+                    names: self.index.iter(),
+                    data: self.data.axis_iter_mut(Axis(0)),
+                }
+            }
+            UtahAxis::Column => {
+                MutableDataFrameIterator {
+                    names: self.columns.iter(),
+                    data: self.data.axis_iter_mut(Axis(1)),
+                }
+            }
+        }
+    }
     /// Select rows or columns over the specified `UtahAxis`.
     ///
     /// The Select transform adaptor yields a mutable view of a row or column of the dataframe for
@@ -178,7 +193,7 @@ impl DataFrame {
     ///    }
     /// ```
 
-    pub fn select<'a, T>(&'a self,
+    pub fn select<'a, T>(&'a mut self,
                          names: &'a [T],
                          axis: UtahAxis)
                          -> Select<'a, DataFrameIterator<'a>>
@@ -208,7 +223,7 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn remove<'a, T>(&'a self,
+    pub fn remove<'a, T>(&'a mut self,
                          names: &'a [T],
                          axis: UtahAxis)
                          -> Remove<'a, DataFrameIterator<'a>>
@@ -238,7 +253,7 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn append<'a, T>(&'a self,
+    pub fn append<'a, T>(&'a mut self,
                          name: &'a T,
                          data: RowView<'a, InnerType>,
                          axis: UtahAxis)
@@ -268,8 +283,8 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn inner_left_join<'a>(&'a self,
-                               other: &'a DataFrame,
+    pub fn inner_left_join<'a>(&'a mut self,
+                               other: &'a mut DataFrame,
                                axis: UtahAxis)
                                -> InnerJoin<'a, DataFrameIterator<'a>> {
         match axis {
@@ -296,8 +311,8 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn outer_left_join<'a>(&'a self,
-                               other: &'a DataFrame,
+    pub fn outer_left_join<'a>(&'a mut self,
+                               other: &'a mut DataFrame,
                                axis: UtahAxis)
                                -> OuterJoin<'a, DataFrameIterator<'a>> {
         match axis {
@@ -326,8 +341,8 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn inner_right_join<'a>(&'a self,
-                                other: &'a DataFrame,
+    pub fn inner_right_join<'a>(&'a mut self,
+                                other: &'a mut DataFrame,
                                 axis: UtahAxis)
                                 -> InnerJoin<'a, DataFrameIterator<'a>> {
         match axis {
@@ -355,8 +370,8 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn outer_right_join<'a>(&'a self,
-                                other: &'a DataFrame,
+    pub fn outer_right_join<'a>(&'a mut self,
+                                other: &'a mut DataFrame,
                                 axis: UtahAxis)
                                 -> OuterJoin<'a, DataFrameIterator<'a>> {
         match axis {
@@ -385,7 +400,7 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn sumdf<'a>(&'a self, axis: UtahAxis) -> Sum<'a, DataFrameIterator<'a>> {
+    pub fn sumdf<'a>(&'a mut self, axis: UtahAxis) -> Sum<'a, DataFrameIterator<'a>> {
 
         match axis {
             UtahAxis::Row => Sum::new(self.df_iter(UtahAxis::Row)),
@@ -407,7 +422,10 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn map<'a, F, B>(&'a self, f: F, axis: UtahAxis) -> MapDF<'a, DataFrameIterator<'a>, F, B>
+    pub fn map<'a, F, B>(&'a mut self,
+                         f: F,
+                         axis: UtahAxis)
+                         -> MapDF<'a, DataFrameIterator<'a>, F, B>
         where F: Fn(&InnerType) -> B
     {
 
@@ -431,7 +449,7 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn mean<'a>(&'a self, axis: UtahAxis) -> Mean<'a, DataFrameIterator<'a>> {
+    pub fn mean<'a>(&'a mut self, axis: UtahAxis) -> Mean<'a, DataFrameIterator<'a>> {
 
         match axis {
             UtahAxis::Row => Mean::new(self.df_iter(UtahAxis::Row)),
@@ -453,7 +471,7 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn max<'a>(&'a self, axis: UtahAxis) -> Max<'a, DataFrameIterator<'a>> {
+    pub fn max<'a>(&'a mut self, axis: UtahAxis) -> Max<'a, DataFrameIterator<'a>> {
 
         match axis {
             UtahAxis::Row => Max::new(self.df_iter(UtahAxis::Row)),
@@ -475,7 +493,7 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn min<'a>(&'a self, axis: UtahAxis) -> Min<'a, DataFrameIterator<'a>> {
+    pub fn min<'a>(&'a mut self, axis: UtahAxis) -> Min<'a, DataFrameIterator<'a>> {
 
         match axis {
             UtahAxis::Row => Min::new(self.df_iter(UtahAxis::Row)),
@@ -497,13 +515,11 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn stdev<'a>(&'a self, axis: UtahAxis) -> Stdev<'a, DataFrameIterator<'a>> {
+    pub fn stdev<'a>(&'a mut self, axis: UtahAxis) -> Stdev<'a, DataFrameIterator<'a>> {
 
-        match axis {
-            UtahAxis::Row => Stdev::new(self.df_iter(UtahAxis::Row)),
-            UtahAxis::Column => Stdev::new(self.df_iter(UtahAxis::Column)),
+        Stdev::new(self.df_iter(axis))
 
-        }
+
     }
     /// Get the standard deviation along the specified `UtahAxis`.
     ///
@@ -518,16 +534,13 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn impute<'a>(&'a self,
+    pub fn impute<'a>(&'a mut self,
                       strategy: ImputeStrategy,
                       axis: UtahAxis)
-                      -> Impute<'a, DataFrameIterator<'a>> {
+                      -> Impute<'a, MutableDataFrameIterator<'a>> {
 
-        match axis {
-            UtahAxis::Row => Impute::new(self.df_iter(UtahAxis::Row), strategy),
-            UtahAxis::Column => Impute::new(self.df_iter(UtahAxis::Column), strategy),
 
-        }
+        Impute::new(self.df_iter_mut(axis), strategy)
     }
 }
 

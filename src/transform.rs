@@ -1,6 +1,6 @@
 use types::*;
 use std::iter::{Iterator, Chain};
-use ndarray::AxisIter;
+use ndarray::{AxisIterMut, AxisIter};
 use itertools::PutBack;
 use std::slice::Iter;
 use std::marker::Sized;
@@ -9,10 +9,14 @@ use aggregate::*;
 use traits::*;
 use impute::*;
 
-#[derive(Clone)]
 pub struct DataFrameIterator<'a> {
     pub names: Iter<'a, OuterType>,
     pub data: AxisIter<'a, InnerType, usize>,
+}
+
+pub struct MutableDataFrameIterator<'a> {
+    pub names: Iter<'a, OuterType>,
+    pub data: AxisIterMut<'a, InnerType, usize>,
 }
 
 
@@ -32,7 +36,20 @@ impl<'a> Iterator for DataFrameIterator<'a> {
     }
 }
 
-
+impl<'a> Iterator for MutableDataFrameIterator<'a> {
+    type Item = (OuterType, RowViewMut<'a, InnerType>);
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.names.next() {
+            Some(val) => {
+                match self.data.next() {
+                    Some(dat) => Some((val.clone(), dat)),
+                    None => None,
+                }
+            }
+            None => None,
+        }
+    }
+}
 #[derive(Clone)]
 pub struct MapDF<'a, I, F, B>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
@@ -71,6 +88,8 @@ impl<'a, I, F, B> Iterator for MapDF<'a, I, F, B>
         }
     }
 }
+
+
 
 
 
@@ -171,7 +190,6 @@ impl<'a, I> Iterator for Remove<'a, I>
         }
     }
 }
-#[derive(Clone)]
 
 pub struct Append<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -230,7 +248,7 @@ impl<'a, L> InnerJoin<'a, L>
 impl<'a, L> Iterator for InnerJoin<'a, L>
     where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
-    type Item = (OuterType, RowView<'a, InnerType>, RowView<'a, InnerType>);
+    type Item = (OuterType, Row<InnerType>, Row<InnerType>);
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -238,7 +256,7 @@ impl<'a, L> Iterator for InnerJoin<'a, L>
                 Some((k, lv)) => {
                     let rv = self.right.get(&k);
                     match rv {
-                        Some(&v) => return Some((k, lv, v)),
+                        Some(v) => return Some((k, lv.to_owned(), v.to_owned())),
                         None => continue,
                     }
                 }
@@ -275,7 +293,7 @@ impl<'a, L> OuterJoin<'a, L>
 impl<'a, L> Iterator for OuterJoin<'a, L>
     where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
-    type Item = (OuterType, RowView<'a, InnerType>, Option<RowView<'a, InnerType>>);
+    type Item = (OuterType, Row<InnerType>, Option<Row<InnerType>>);
 
     fn next(&mut self) -> Option<Self::Item> {
 
@@ -283,8 +301,8 @@ impl<'a, L> Iterator for OuterJoin<'a, L>
             Some((k, lv)) => {
                 let rv = self.right.get(&k);
                 match rv {
-                    Some(&v) => return Some((k, lv, Some(v))),
-                    None => Some((k, lv, None)),
+                    Some(v) => return Some((k, lv.to_owned(), Some(v.to_owned()))),
+                    None => Some((k, lv.to_owned(), None)),
                 }
 
             }
@@ -400,8 +418,9 @@ impl<'a> DFIter<'a> for DataFrameIterator<'a> {
     {
         Stdev::new(self)
     }
+
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
         Impute::new(self, strategy)
     }
@@ -507,8 +526,10 @@ impl<'a, I> DFIter<'a> for Select<'a, I>
     {
         Stdev::new(self)
     }
+
+
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
         Impute::new(self, strategy)
     }
@@ -613,7 +634,7 @@ impl<'a, I> DFIter<'a> for Remove<'a, I>
     }
 
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
         Impute::new(self, strategy)
     }
@@ -717,8 +738,10 @@ impl<'a, I> DFIter<'a> for Append<'a, I>
         Stdev::new(self)
     }
 
+
+
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
         Impute::new(self, strategy)
     }

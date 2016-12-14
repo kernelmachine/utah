@@ -4,17 +4,17 @@ use types::*;
 
 #[derive(Clone)]
 pub struct Impute<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
 {
     data: I,
     strategy: ImputeStrategy,
 }
 
 impl<'a, I> Impute<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
 {
     pub fn new(df: I, s: ImputeStrategy) -> Impute<'a, I>
-        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
 
         Impute {
@@ -25,15 +25,15 @@ impl<'a, I> Impute<'a, I>
 }
 
 impl<'a, I> Iterator for Impute<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
 {
-    type Item = (OuterType, Row<InnerType>);
+    type Item = (OuterType, RowViewMut<'a, InnerType>);
     fn next(&mut self) -> Option<Self::Item> {
 
         match self.data.next() {
 
             None => return None,
-            Some((val, dat)) => {
+            Some((val, mut dat)) => {
                 match self.strategy {
                     ImputeStrategy::Mean => unsafe {
                         let size = dat.len();
@@ -46,25 +46,24 @@ impl<'a, I> Iterator for Impute<'a, I>
                             &InnerType::Int64(_) => sum / InnerType::Int64(size as i64),
                             _ => InnerType::Empty,
                         };
-                        return Some((val,
-                                     dat.map(|x| {
+                        dat.mapv_inplace(|x| {
                             match x {
-                                &InnerType::Empty => mean.to_owned(),
+                                InnerType::Empty => mean.to_owned(),
                                 _ => x.to_owned(),
                             }
-
-                        })));
+                        });
+                        Some((val, dat))
                     },
                     ImputeStrategy::Mode => {
                         let max = dat.iter().max().map(|x| x.to_owned()).unwrap();
-                        return Some((val,
-                                     dat.map(|x| {
+                        dat.mapv_inplace(|x| {
                             match x {
-                                &InnerType::Empty => max.to_owned(),
+                                InnerType::Empty => max.to_owned(),
                                 _ => x.to_owned(),
                             }
 
-                        })));
+                        });
+                        return Some((val, dat));
                     }
                 }
             }

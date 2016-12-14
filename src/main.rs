@@ -26,14 +26,15 @@ pub mod impute;
 use ndarray::arr2;
 use dataframe::*;
 use types::*;
-use traits::DFIter;
+
+use std::f64::NAN;
 // use transform::*;
 
 fn main() {
-    let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
+    let a = arr2(&[[2.0, 7.0], [3.0, NAN], [2.0, 4.0]]);
     // let b = arr2(&[[2, 6], [3, 4]]);
     // let c = arr2(&[[2, 6], [3, 4]]);
-    let df = DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2"]).unwrap();
+    let mut df = DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2", "3"]).unwrap();
     // let df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap().index(&["1", "2"]).unwrap();
     // let new_data = c.row(1).mapv(InnerType::from);
     // let remove_idx = vec!["1"];
@@ -46,9 +47,8 @@ fn main() {
     //     .select(&select_idx[..])
     //     .append(&append_idx, new_data.view());
 
-    let res: Vec<_> = df.df_iter(UtahAxis::Column)
-        .sumdf()
-        .collect();
+    let res: Vec<_> = df.impute(ImputeStrategy::Mode, UtahAxis::Column).collect();
+
     println!("{:?}", res);
 
 
