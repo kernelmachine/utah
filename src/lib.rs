@@ -22,3 +22,6 @@ pub mod tests;
 pub mod error;
 pub mod from;
 pub mod types;
+pub mod aggregate;
+pub mod transform;
+pub mod traits;

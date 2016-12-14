@@ -1,5 +1,7 @@
 use chrono::*;
 use types::*;
+use std::str::FromStr;
+use error::ErrorKind;
 
 impl From<f64> for InnerType {
     fn from(f: f64) -> InnerType {
@@ -109,5 +111,25 @@ impl<'a> From<&'a i64> for OuterType {
 impl<'a> From<&'a i32> for OuterType {
     fn from(i: &'a i32) -> OuterType {
         OuterType::Int32(*i)
+    }
+}
+
+
+impl FromStr for InnerType {
+    type Err = ErrorKind;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Ok(x) = s.parse::<f64>() {
+            return Ok(InnerType::Float(x));
+        }
+        if let Ok(x) = s.parse::<i64>() {
+            return Ok(InnerType::Int64(x));
+        }
+        if let Ok(x) = s.parse::<i32>() {
+            return Ok(InnerType::Int32(x));
+        }
+        if let Ok(x) = s.parse::<String>() {
+            return Ok(InnerType::Str(x));
+        }
+        Err(ErrorKind::ParseError(s.into()))
     }
 }

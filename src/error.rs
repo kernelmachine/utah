@@ -40,5 +40,9 @@ error_chain! {
             description("No common values.")
             display("Join failed. No common values.")
         }
+        ParseError(t : String) {
+            description("Parsing Error.")
+            display("Read failed. Parsing Error. {}", t)
+        }
     }
 }

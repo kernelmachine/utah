@@ -110,7 +110,12 @@ impl PartialOrd for InnerType {
 impl PartialEq for InnerType {
     fn eq(&self, rhs: &Self) -> bool {
         match self {
-            &InnerType::Float(_) => panic!(),
+            &InnerType::Float(x) => {
+                match rhs {
+                    &InnerType::Float(y) => x == y,
+                    _ => panic!(),
+                }
+            }
             &InnerType::Int32(x) => {
                 match rhs {
                     &InnerType::Int32(y) => x == y,

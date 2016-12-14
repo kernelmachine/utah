@@ -17,11 +17,16 @@ pub mod dataframe;
 pub mod error;
 pub mod from;
 pub mod types;
+pub mod read;
+pub mod traits;
+pub mod transform;
+pub mod aggregate;
 
 use ndarray::{arr2, Axis};
 use dataframe::*;
 use types::*;
-use dataframe::DFIter;
+use traits::DFIter;
+use transform::*;
 
 fn main() {
     let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
@@ -39,7 +44,6 @@ fn main() {
         .remove(&remove_idx[..])
         .select(&select_idx[..])
         .append(&append_idx, new_data.view());
-    let res: InnerJoin<Append<Select<Remove<DataFrameIterator>>>> = j.inner_left_join(df_iter);
 
     let res: Vec<_> = df.df_iter(Axis(1))
         .sumdf()

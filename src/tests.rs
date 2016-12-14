@@ -16,6 +16,10 @@ pub mod tests {
     use types::*;
     use from::*;
     use error::*;
+    use aggregate::*;
+    use transform::*;
+    use traits::*;
+
     #[test]
     fn outer_left_join() {
         let a = arr2(&[["Alice"], ["Bob"]]);
@@ -67,6 +71,7 @@ pub mod tests {
                        UTC.ymd(2014, 10, 5).and_hms(2, 5, 7)]);
         assert!(df.is_ok())
     }
+
     #[test]
     fn dataframe_creation_mixed_types() {
         let a = arr2(&[[InnerType::Str("string".to_string()), InnerType::Int64(1)],
@@ -77,10 +82,10 @@ pub mod tests {
                        UTC.ymd(2014, 10, 5).and_hms(2, 5, 7)]);
         assert!(df.is_ok())
     }
+
     #[test]
     fn dataframe_index() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
-
         let df = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         let select_idx = vec!["a"];
         let z: Vec<_> = df.select(&select_idx[..], Axis(1)).collect();
