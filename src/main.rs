@@ -21,7 +21,7 @@ pub mod read;
 pub mod traits;
 pub mod transform;
 pub mod aggregate;
-pub mod impute;
+pub mod process;
 
 use ndarray::arr2;
 use dataframe::*;

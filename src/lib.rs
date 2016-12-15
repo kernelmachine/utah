@@ -49,4 +49,4 @@ pub mod types;
 pub mod aggregate;
 pub mod transform;
 pub mod traits;
-pub mod impute;
+pub mod process;

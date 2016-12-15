@@ -6,7 +6,7 @@ use aggregate::*;
 use transform::*;
 use ndarray::{Axis, Array};
 use types::UtahAxis;
-use impute::*;
+use process::*;
 use std::iter::FromIterator;
 
 /// A read-only dataframe.

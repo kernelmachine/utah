@@ -2,7 +2,7 @@ use types::*;
 use std::iter::{Iterator, Chain};
 use aggregate::*;
 use transform::*;
-use impute::*;
+use process::*;
 use dataframe::{DataFrame, MutableDataFrame};
 use ndarray::Array;
 
