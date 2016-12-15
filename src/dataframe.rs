@@ -4,10 +4,9 @@ use std::string::ToString;
 use std::iter::Iterator;
 use aggregate::*;
 use transform::*;
-use ndarray::{Axis, Array};
+use ndarray::Axis;
 use types::UtahAxis;
 use process::*;
-use std::iter::FromIterator;
 
 /// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
@@ -27,56 +26,56 @@ pub struct MutableDataFrame<'a> {
 
 
 
-// and we'll implement FromIterator
-impl<'a> FromIterator<(OuterType, RowView<'a, InnerType>)> for DataFrame {
-    fn from_iter<I>(iter: I) -> Self
-        where I: IntoIterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-        let mut c = Vec::new();
-        let mut n = Vec::new();
-        let mut nrows = 0;
-        let mut ncols = 0;
-        for (i, j) in iter {
-            nrows = j.len();
-            ncols += 1;
-            c.extend(j);
-            n.push(i);
-        }
-
-        let columns: Vec<OuterType> = (0..ncols).map(OuterType::from).collect();
-        let index: Vec<OuterType> = (0..nrows).map(OuterType::from).collect();
-
-        DataFrame {
-            columns: columns,
-            data: Array::from_shape_vec((nrows, ncols), c).unwrap().mapv(|x| x.to_owned()),
-            index: index,
-        }
-    }
-}
-
-impl<'a> FromIterator<(OuterType, RowViewMut<'a, InnerType>)> for MutableDataFrame<'a> {
-    fn from_iter<I>(iter: I) -> Self
-        where I: IntoIterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
-    {
-        let mut c = Vec::new();
-        let mut n = Vec::new();
-        let mut nrows = 0;
-        let mut ncols = 0;
-        for (i, j) in iter {
-            nrows = j.len();
-            ncols += 1;
-            c.extend(j);
-            n.push(i);
-        }
-        let index: Vec<OuterType> = (0..nrows).map(OuterType::from).collect();
-        let data = Array::from_shape_vec((nrows, ncols), c).unwrap();
-        MutableDataFrame {
-            columns: n.clone(),
-            data: data,
-            index: index,
-        }
-    }
-}
+// // and we'll implement FromIterator
+// impl<'a> FromIterator<(OuterType, RowView<'a, InnerType>)> for DataFrame {
+//     fn from_iter<I>(iter: I) -> Self
+//         where I: IntoIterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+//     {
+//         let mut c = Vec::new();
+//         let mut n = Vec::new();
+//         let mut nrows = 0;
+//         let mut ncols = 0;
+//         for (i, j) in iter {
+//             nrows = j.len();
+//             ncols += 1;
+//             c.extend(j);
+//             n.push(i);
+//         }
+//
+//         let columns: Vec<OuterType> = (0..ncols).map(OuterType::from).collect();
+//         let index: Vec<OuterType> = (0..nrows).map(OuterType::from).collect();
+//         // c
+//         DataFrame {
+//             columns: columns,
+//             data: Array::from_shape_vec((nrows, ncols), c).unwrap().mapv(|x| x.to_owned()),
+//             index: index,
+//         }
+//     }
+// }
+//
+// impl<'a> FromIterator<(OuterType, RowViewMut<'a, InnerType>)> for MutableDataFrame<'a> {
+//     fn from_iter<I>(iter: I) -> Self
+//         where I: IntoIterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone
+//     {
+//         let mut c = Vec::new();
+//         let mut n = Vec::new();
+//         let mut nrows = 0;
+//         let mut ncols = 0;
+//         for (i, j) in iter {
+//             nrows = j.len();
+//             ncols += 1;
+//             c.extend(j);
+//             n.push(i);
+//         }
+//         let index: Vec<OuterType> = (0..nrows).map(OuterType::from).collect();
+//         let data = Array::from_shape_vec((nrows, ncols), c).unwrap();
+//         MutableDataFrame {
+//             columns: n.clone(),
+//             data: data,
+//             index: index,
+//         }
+//     }
+// }
 
 impl DataFrame {
     /// Create a new dataframe. The only required argument is data to populate the dataframe. The data's elements can be any of `InnerType`.

@@ -47,9 +47,11 @@ fn main() {
         .select(&select_idx[..])
         .append(&append_idx, new_data.view())
         .to_df();
-
+    let res_1: DataFrame = df.df_iter(UtahAxis::Row)
+        .select(&select_idx[..])
+        .to_df();
     let res: MutableDataFrame = df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_mut_df();    // res.mapdf(|x| x.as_ref())
-    // println!("{:?}", res);
+    println!("{:?}", res_1);
     println!("{:?}", res);
 
 }

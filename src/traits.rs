@@ -1,3 +1,4 @@
+
 use types::*;
 use std::iter::{Iterator, Chain};
 use aggregate::*;
@@ -24,26 +25,26 @@ pub trait Aggregate<'a> {
 }
 pub trait Process<'a> {
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone;
     fn to_mut_df(self) -> MutableDataFrame<'a>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone;
     fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone;
 }
 pub trait Transform<'a> {
     fn to_df(self) -> DataFrame
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
 
     fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
               OuterType: From<&'a T>,
               T: 'a;
     fn remove<T>(self, names: &'a [T]) -> Remove<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
               OuterType: From<&'a T>,
               T: 'a;
     fn append<T>(self, name: &'a T, data: RowView<'a, InnerType>) -> Append<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
               OuterType: From<&'a T>,
               T: 'a;
     fn concat<I>(self, other: I) -> Chain<Self, I>
@@ -51,23 +52,23 @@ pub trait Transform<'a> {
               I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
 
     fn inner_left_join<I>(self, other: I) -> InnerJoin<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone;
 
     fn outer_left_join<I>(self, other: I) -> OuterJoin<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone;
 
     fn inner_right_join<I>(self, other: I) -> InnerJoin<'a, I>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone;
 
     fn outer_right_join<I>(self, other: I) -> OuterJoin<'a, I>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone;
 
     fn mapdf<F, B>(self, f: F) -> MapDF<'a, Self, F, B>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
               F: Fn(&InnerType) -> B;
 }
 
@@ -210,15 +211,15 @@ impl<'a> Transform<'a> for DataFrameIterator<'a> {
     }
 
     fn inner_right_join<I>(self, other: I) -> InnerJoin<'a, I>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
         InnerJoin::new(other, self)
     }
 
     fn outer_right_join<I>(self, other: I) -> OuterJoin<'a, I>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
         OuterJoin::new(other, self)
     }
@@ -235,7 +236,7 @@ impl<'a> Transform<'a> for DataFrameIterator<'a> {
 
 
 impl<'a, I> Aggregate<'a> for Select<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     fn sumdf(self) -> Sum<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -269,20 +270,20 @@ impl<'a, I> Aggregate<'a> for Select<'a, I>
 }
 
 impl<'a, I> Transform<'a> for Select<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + 'a
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     fn to_df(self) -> DataFrame {
-        let axis = self.axis;
-        let other = self.other;
-        let data = self.data;
+        let s = self.clone();
+        let axis = self.axis.clone();
+        let other = self.other.clone();
         let mut c = Vec::new();
         let mut n = Vec::new();
-
         let (mut ncols, mut nrows) = match axis {
-            UtahAxis::Row => (other.len(), 0),
-            UtahAxis::Column => (0, other.len()),
+            UtahAxis::Row => (s.other.len(), 0),
+            UtahAxis::Column => (0, s.other.len()),
         };
-        for (i, j) in data {
+
+        for (i, j) in s {
             match axis {
                 UtahAxis::Row => nrows += 1,
                 UtahAxis::Column => ncols += 1,
@@ -291,6 +292,7 @@ impl<'a, I> Transform<'a> for Select<'a, I>
             c.extend(j);
             n.push(i.to_owned());
         }
+
 
 
         match axis {
@@ -357,26 +359,26 @@ impl<'a, I> Transform<'a> for Select<'a, I>
     }
 
     fn inner_left_join<J>(self, other: J) -> InnerJoin<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
         InnerJoin::new(self, other)
     }
     fn outer_left_join<J>(self, other: J) -> OuterJoin<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
         OuterJoin::new(self, other)
     }
     fn inner_right_join<J>(self, other: J) -> InnerJoin<'a, J>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
         InnerJoin::new(other, self)
     }
     fn outer_right_join<J>(self, other: J) -> OuterJoin<'a, J>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
         OuterJoin::new(other, self)
     }
@@ -394,7 +396,7 @@ impl<'a, I> Transform<'a> for Select<'a, I>
 
 
 impl<'a, I> Aggregate<'a> for Remove<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     fn sumdf(self) -> Sum<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -428,20 +430,20 @@ impl<'a, I> Aggregate<'a> for Remove<'a, I>
 }
 
 impl<'a, I> Transform<'a> for Remove<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     fn to_df(self) -> DataFrame {
-        let axis = self.axis;
-        let other = self.other;
-        let data = self.data;
+        let s = self.clone();
+        let axis = self.axis.clone();
+        let other = self.other.clone();
         let mut c = Vec::new();
         let mut n = Vec::new();
-        let (mut ncols, mut nrows) = match self.axis {
-            UtahAxis::Row => (other.len(), 0),
-            UtahAxis::Column => (0, other.len()),
+        let (mut ncols, mut nrows) = match axis {
+            UtahAxis::Row => (s.other.len(), 0),
+            UtahAxis::Column => (0, s.other.len()),
         };
 
-        for (i, j) in data {
+        for (i, j) in s {
             match axis {
                 UtahAxis::Row => nrows += 1,
                 UtahAxis::Column => ncols += 1,
@@ -453,7 +455,7 @@ impl<'a, I> Transform<'a> for Remove<'a, I>
 
 
 
-        match self.axis {
+        match axis {
             UtahAxis::Row => {
                 DataFrame {
                     columns: other,
@@ -525,13 +527,13 @@ impl<'a, I> Transform<'a> for Remove<'a, I>
     }
     fn inner_right_join<J>(self, other: J) -> InnerJoin<'a, J>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
         InnerJoin::new(other, self)
     }
     fn outer_right_join<J>(self, other: J) -> OuterJoin<'a, J>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
         OuterJoin::new(other, self)
     }
@@ -547,7 +549,7 @@ impl<'a, I> Transform<'a> for Remove<'a, I>
 
 
 impl<'a, I> Aggregate<'a> for Append<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     fn sumdf(self) -> Sum<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -580,7 +582,7 @@ impl<'a, I> Aggregate<'a> for Append<'a, I>
     }
 }
 impl<'a, I> Transform<'a> for Append<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     fn to_df(self) -> DataFrame {
         let axis = self.axis;
@@ -588,7 +590,7 @@ impl<'a, I> Transform<'a> for Append<'a, I>
         let data = self.new_data;
         let mut c = Vec::new();
         let mut n = Vec::new();
-        let (mut ncols, mut nrows) = match self.axis {
+        let (mut ncols, mut nrows) = match axis {
             UtahAxis::Row => (other.len(), 0),
             UtahAxis::Column => (0, other.len()),
         };
@@ -604,7 +606,7 @@ impl<'a, I> Transform<'a> for Append<'a, I>
         }
 
 
-        match self.axis {
+        match axis {
             UtahAxis::Row => {
                 DataFrame {
                     columns: other,
@@ -624,7 +626,8 @@ impl<'a, I> Transform<'a> for Append<'a, I>
     }
 
     fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
-        where OuterType: From<&'a T>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              OuterType: From<&'a T>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -636,7 +639,8 @@ impl<'a, I> Transform<'a> for Append<'a, I>
 
 
     fn remove<T>(self, names: &'a [T]) -> Remove<'a, Self>
-        where OuterType: From<&'a T>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              OuterType: From<&'a T>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -648,7 +652,8 @@ impl<'a, I> Transform<'a> for Append<'a, I>
     }
 
     fn append<T>(self, name: &'a T, data: RowView<'a, InnerType>) -> Append<'a, Self>
-        where OuterType: From<&'a T>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              OuterType: From<&'a T>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -663,32 +668,33 @@ impl<'a, I> Transform<'a> for Append<'a, I>
     }
 
     fn inner_left_join<J>(self, other: J) -> InnerJoin<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
               J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
         InnerJoin::new(self, other)
     }
     fn outer_left_join<J>(self, other: J) -> OuterJoin<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
               J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
         OuterJoin::new(self, other)
     }
     fn inner_right_join<J>(self, other: J) -> InnerJoin<'a, J>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
         InnerJoin::new(other, self)
     }
     fn outer_right_join<J>(self, other: J) -> OuterJoin<'a, J>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
+              J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
         OuterJoin::new(other, self)
     }
 
     fn mapdf<F, B>(self, f: F) -> MapDF<'a, Self, F, B>
-        where F: Fn(&InnerType) -> B
+        where F: Fn(&InnerType) -> B,
+              Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
         let axis = self.axis.clone();
         MapDF::new(self, f, axis)
@@ -707,31 +713,32 @@ impl<'a, I> Process<'a> for Impute<'a, I>
     }
 
     fn to_mut_df(self) -> MutableDataFrame<'a>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone
     {
-        let axis = self.axis;
-        let other = self.other;
-        let data = self.data;
+
+        let s = self.clone();
+        let axis = self.axis.clone();
+        let other = self.other.clone();
         let mut c = Vec::new();
         let mut n = Vec::new();
-        let (mut ncols, mut nrows) = match self.axis {
-            UtahAxis::Row => (other.len(), 0),
-            UtahAxis::Column => (0, other.len()),
+        let (mut ncols, mut nrows) = match axis {
+            UtahAxis::Row => (s.other.len(), 0),
+            UtahAxis::Column => (0, s.other.len()),
         };
 
-        for (i, j) in data {
+        for (i, j) in s {
             match axis {
                 UtahAxis::Row => nrows += 1,
                 UtahAxis::Column => ncols += 1,
             };
-            println!("{:?}", j);
+
             c.extend(j);
             n.push(i.to_owned());
         }
 
 
 
-        match self.axis {
+        match axis {
             UtahAxis::Row => {
                 MutableDataFrame {
                     columns: other,
@@ -748,9 +755,10 @@ impl<'a, I> Process<'a> for Impute<'a, I>
             }
 
         }
+
     }
     fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone
     {
         self.to_mut_df().to_df()
     }
@@ -767,32 +775,31 @@ impl<'a> Process<'a> for MutableDataFrameIterator<'a> {
     }
 
     fn to_mut_df(self) -> MutableDataFrame<'a>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone
     {
-        let axis = self.axis;
-        let other = self.other;
-        let data = self.data;
-        let names = self.names;
+        let s = self.clone();
+        let axis = self.axis.clone();
+        let other = self.other.clone();
         let mut c = Vec::new();
         let mut n = Vec::new();
-        let (mut ncols, mut nrows) = match self.axis {
-            UtahAxis::Row => (other.len(), 0),
-            UtahAxis::Column => (0, other.len()),
+        let (mut ncols, mut nrows) = match axis {
+            UtahAxis::Row => (s.other.len(), 0),
+            UtahAxis::Column => (0, s.other.len()),
         };
 
-        for (i, j) in names.zip(data) {
+        for (i, j) in s {
             match axis {
                 UtahAxis::Row => nrows += 1,
                 UtahAxis::Column => ncols += 1,
             };
-            println!("{:?}", j);
+
             c.extend(j);
             n.push(i.to_owned());
         }
 
 
 
-        match self.axis {
+        match axis {
             UtahAxis::Row => {
                 MutableDataFrame {
                     columns: other,
@@ -811,7 +818,7 @@ impl<'a> Process<'a> for MutableDataFrameIterator<'a> {
         }
     }
     fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone
     {
         self.to_mut_df().to_df()
     }

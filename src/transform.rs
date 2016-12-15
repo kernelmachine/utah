@@ -1,3 +1,4 @@
+
 use types::*;
 use std::iter::Iterator;
 use ndarray::AxisIter;
@@ -6,6 +7,7 @@ use std::slice::Iter;
 use std::collections::HashMap;
 
 
+#[derive(Clone)]
 pub struct DataFrameIterator<'a> {
     pub names: Iter<'a, OuterType>,
     pub data: AxisIter<'a, InnerType, usize>,
@@ -33,7 +35,7 @@ impl<'a> Iterator for DataFrameIterator<'a> {
 
 #[derive(Clone)]
 pub struct MapDF<'a, I, F, B>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
           F: Fn(&InnerType) -> B
 {
     data: I,
@@ -42,7 +44,7 @@ pub struct MapDF<'a, I, F, B>
 }
 
 impl<'a, I, F, B> MapDF<'a, I, F, B>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
           F: Fn(&InnerType) -> B
 {
     pub fn new(df: I, f: F, axis: UtahAxis) -> MapDF<'a, I, F, B>
@@ -58,7 +60,7 @@ impl<'a, I, F, B> MapDF<'a, I, F, B>
 }
 
 impl<'a, I, F, B> Iterator for MapDF<'a, I, F, B>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
           F: Fn(&InnerType) -> B,
           B: 'a
 {
@@ -79,7 +81,7 @@ impl<'a, I, F, B> Iterator for MapDF<'a, I, F, B>
 #[derive(Clone)]
 
 pub struct Select<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     pub data: I,
     pub ind: Vec<OuterType>,
@@ -89,10 +91,10 @@ pub struct Select<'a, I>
 
 
 impl<'a, I> Select<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     pub fn new(df: I, ind: Vec<OuterType>, other: Vec<OuterType>, axis: UtahAxis) -> Select<'a, I>
-        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
 
         Select {
@@ -108,7 +110,7 @@ impl<'a, I> Select<'a, I>
 
 
 impl<'a, I> Iterator for Select<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     type Item = (OuterType, RowView<'a, InnerType>);
     fn next(&mut self) -> Option<Self::Item> {
@@ -131,9 +133,8 @@ impl<'a, I> Iterator for Select<'a, I>
 }
 
 #[derive(Clone)]
-
 pub struct Remove<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     pub data: I,
     pub ind: Vec<OuterType>,
@@ -143,10 +144,10 @@ pub struct Remove<'a, I>
 
 
 impl<'a, I> Remove<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     pub fn new(df: I, ind: Vec<OuterType>, other: Vec<OuterType>, axis: UtahAxis) -> Remove<'a, I>
-        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
 
         Remove {
@@ -161,7 +162,7 @@ impl<'a, I> Remove<'a, I>
 
 
 impl<'a, I> Iterator for Remove<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     type Item = (OuterType, RowView<'a, InnerType>);
     fn next(&mut self) -> Option<Self::Item> {
@@ -183,7 +184,7 @@ impl<'a, I> Iterator for Remove<'a, I>
 }
 
 pub struct Append<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     pub new_data: PutBack<I>,
     pub other: Vec<OuterType>,
@@ -194,7 +195,7 @@ pub struct Append<'a, I>
 
 
 impl<'a, I> Append<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     pub fn new(df: I,
                name: OuterType,
@@ -202,7 +203,7 @@ impl<'a, I> Append<'a, I>
                other: Vec<OuterType>,
                axis: UtahAxis)
                -> Append<'a, I>
-        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
         let name = OuterType::from(name);
         let mut it = PutBack::new(df);
@@ -217,7 +218,7 @@ impl<'a, I> Append<'a, I>
 
 
 impl<'a, I> Iterator for Append<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     type Item = (OuterType, RowView<'a, InnerType>);
     fn next(&mut self) -> Option<Self::Item> {
@@ -226,14 +227,14 @@ impl<'a, I> Iterator for Append<'a, I>
 }
 
 pub struct InnerJoin<'a, L>
-    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     left: L,
     right: HashMap<OuterType, RowView<'a, InnerType>>,
 }
 
 impl<'a, L> InnerJoin<'a, L>
-    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     pub fn new<RI>(left: L, right: RI) -> Self
         where RI: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -248,7 +249,7 @@ impl<'a, L> InnerJoin<'a, L>
 
 
 impl<'a, L> Iterator for InnerJoin<'a, L>
-    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     type Item = (OuterType, Row<InnerType>, Row<InnerType>);
 
@@ -271,7 +272,7 @@ impl<'a, L> Iterator for InnerJoin<'a, L>
 
 
 pub struct OuterJoin<'a, L>
-    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     left: L,
     right: HashMap<OuterType, RowView<'a, InnerType>>,
@@ -279,7 +280,7 @@ pub struct OuterJoin<'a, L>
 
 
 impl<'a, L> OuterJoin<'a, L>
-    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     pub fn new<RI>(left: L, right: RI) -> Self
         where RI: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
@@ -293,7 +294,7 @@ impl<'a, L> OuterJoin<'a, L>
 
 
 impl<'a, L> Iterator for OuterJoin<'a, L>
-    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     type Item = (OuterType, Row<InnerType>, Option<Row<InnerType>>);
 
