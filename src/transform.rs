@@ -1,6 +1,6 @@
 use types::*;
 use std::iter::Iterator;
-use ndarray::{AxisIterMut, AxisIter};
+use ndarray::AxisIter;
 use itertools::PutBack;
 use std::slice::Iter;
 use std::collections::HashMap;
@@ -13,10 +13,6 @@ pub struct DataFrameIterator<'a> {
     pub axis: UtahAxis,
 }
 
-pub struct MutableDataFrameIterator<'a> {
-    pub names: Iter<'a, OuterType>,
-    pub data: AxisIterMut<'a, InnerType, usize>,
-}
 
 
 
@@ -35,20 +31,6 @@ impl<'a> Iterator for DataFrameIterator<'a> {
     }
 }
 
-impl<'a> Iterator for MutableDataFrameIterator<'a> {
-    type Item = (OuterType, RowViewMut<'a, InnerType>);
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.names.next() {
-            Some(val) => {
-                match self.data.next() {
-                    Some(dat) => Some((val.clone(), dat)),
-                    None => None,
-                }
-            }
-            None => None,
-        }
-    }
-}
 #[derive(Clone)]
 pub struct MapDF<'a, I, F, B>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>,

@@ -9,7 +9,7 @@ use types::UtahAxis;
 use impute::*;
 use std::iter::FromIterator;
 
-/// Utah's core data structure.
+/// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame {
     pub columns: Vec<OuterType>,
@@ -17,6 +17,7 @@ pub struct DataFrame {
     pub index: Vec<OuterType>,
 }
 
+/// A read-write dataframe
 #[derive(Debug, PartialEq)]
 pub struct MutableDataFrame<'a> {
     pub columns: Vec<OuterType>,
@@ -231,12 +232,16 @@ impl DataFrame {
                 MutableDataFrameIterator {
                     names: self.index.iter(),
                     data: self.data.axis_iter_mut(Axis(0)),
+                    axis: UtahAxis::Row,
+                    other: self.columns.clone(),
                 }
             }
             UtahAxis::Column => {
                 MutableDataFrameIterator {
                     names: self.columns.iter(),
                     data: self.data.axis_iter_mut(Axis(1)),
+                    axis: UtahAxis::Row,
+                    other: self.index.clone(),
                 }
             }
         }
@@ -635,12 +640,60 @@ impl DataFrame {
                       axis: UtahAxis)
                       -> Impute<'a, MutableDataFrameIterator<'a>> {
 
+        let index = self.index.clone();
+        let columns = self.columns.clone();
+        match axis {
+            UtahAxis::Row => {
+                Impute::new(self.df_iter_mut(UtahAxis::Row),
+                            strategy,
+                            columns,
+                            UtahAxis::Row)
+            }
+            UtahAxis::Column => {
+                Impute::new(self.df_iter_mut(UtahAxis::Column),
+                            strategy,
+                            index,
+                            UtahAxis::Column)
+            }
 
-        Impute::new(self.df_iter_mut(axis), strategy)
+        }
     }
 }
 
 
+
+impl<'a> MutableDataFrame<'a> {
+    /// Create a new dataframe. The only required argument is data to populate the dataframe. The data's elements can be any of `InnerType`.
+    /// By default, the columns and index of the dataframe are `["1", "2", "3"..."N"]`, where *N* is
+    /// the number of columns (or rows) in the data.
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
+    /// let df = DataFrame::new(a);
+    /// ```
+    ///
+    /// When populating the dataframe with mixed-types, wrap the elements with `InnerType` enum:
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[InnerType::Float(2.0), InnerType::Str("ak".into())],
+    ///                [InnerType::Int32(6), InnerType::Int64(10)]]);
+    /// let df = DataFrame::new(a);
+    /// ```
+    pub fn to_df(self) -> DataFrame {
+        let d = self.data.map(|x| (x.as_ref().clone()));
+        DataFrame {
+            data: d,
+            columns: self.columns,
+            index: self.index,
+        }
+    }
+}
 // To implement....?
 // // parallelized join
 // // parallelized concatenation

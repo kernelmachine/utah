@@ -28,29 +28,28 @@ use dataframe::*;
 use types::*;
 
 use std::f64::NAN;
-use traits::DFIter;
+use traits::{Transform, Process};
 
 fn main() {
     let a = arr2(&[[2.0, 7.0], [3.0, NAN], [2.0, 4.0]]);
     // let b = arr2(&[[2, 6], [3, 4]]);
-    let c = arr2(&[[2, 6], [3, 4]]);
+    let c = arr2(&[[2.0, 6.0], [3.0, 4.0], [2.0, NAN]]);
     let mut df = DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2", "3"]).unwrap();
     // let mut df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap().index(&["1", "2"]).unwrap();
-    let new_data = c.row(1).mapv(InnerType::from);
+    let new_data = c.column(1).mapv(InnerType::from);
     let remove_idx = vec!["1"];
     let select_idx = vec!["2"];
-    let append_idx = "1";
+    let append_idx = "8";
 
     // let df_iter: DataFrameIterator = df_1.df_iter(UtahAxis::Row);
-    let j: DataFrame = df.df_iter(UtahAxis::Row)
+    let mut j = df.df_iter(UtahAxis::Column)
         .remove(&remove_idx[..])
         .select(&select_idx[..])
         .append(&append_idx, new_data.view())
-        .collect();
+        .to_df();
 
-    let res: MutableDataFrame = df.impute(ImputeStrategy::Mode, UtahAxis::Column).collect();
-
-    println!("{:?}", j);
+    let res: MutableDataFrame = df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_mut_df();    // res.mapdf(|x| x.as_ref())
+    // println!("{:?}", res);
     println!("{:?}", res);
 
 }

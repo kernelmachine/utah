@@ -3,12 +3,34 @@ use std::iter::{Iterator, Chain};
 use aggregate::*;
 use transform::*;
 use impute::*;
-use dataframe::DataFrame;
+use dataframe::{DataFrame, MutableDataFrame};
 use ndarray::Array;
 
-pub trait DFIter<'a> {
-    type DFItem;
+pub trait Aggregate<'a> {
+    fn sumdf(self) -> Sum<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
 
+    fn max(self) -> Max<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+
+    fn min(self) -> Min<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+
+    fn mean(self) -> Mean<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+
+    fn stdev(self) -> Stdev<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+}
+pub trait Process<'a> {
+    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
+    fn to_mut_df(self) -> MutableDataFrame<'a>
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
+    fn to_df(self) -> DataFrame
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
+}
+pub trait Transform<'a> {
     fn to_df(self) -> DataFrame
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
 
@@ -47,28 +69,43 @@ pub trait DFIter<'a> {
     fn mapdf<F, B>(self, f: F) -> MapDF<'a, Self, F, B>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
               F: Fn(&InnerType) -> B;
-    fn sumdf(self) -> Sum<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
-
-    fn max(self) -> Max<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
-
-    fn min(self) -> Min<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
-
-    fn mean(self) -> Mean<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
-
-    fn stdev(self) -> Stdev<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
-
-    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
 }
 
 
-impl<'a> DFIter<'a> for DataFrameIterator<'a> {
-    type DFItem = (OuterType, RowView<'a, InnerType>);
+impl<'a> Aggregate<'a> for DataFrameIterator<'a> {
+    fn sumdf(self) -> Sum<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Sum::new(self)
+    }
+
+    fn max(self) -> Max<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Max::new(self)
+    }
+
+    fn min(self) -> Min<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Min::new(self)
+    }
+
+    fn mean(self) -> Mean<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Mean::new(self)
+    }
+
+    fn stdev(self) -> Stdev<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    {
+        Stdev::new(self)
+    }
+}
+
+
+impl<'a> Transform<'a> for DataFrameIterator<'a> {
     fn to_df(self) -> DataFrame {
         let axis = self.axis;
         let other = self.other;
@@ -111,6 +148,8 @@ impl<'a> DFIter<'a> for DataFrameIterator<'a> {
 
         }
     }
+
+
     fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
         where OuterType: From<&'a T>,
               T: 'a
@@ -190,6 +229,14 @@ impl<'a> DFIter<'a> for DataFrameIterator<'a> {
         let axis = self.axis.clone();
         MapDF::new(self, f, axis)
     }
+}
+
+
+
+
+impl<'a, I> Aggregate<'a> for Select<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
     fn sumdf(self) -> Sum<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
@@ -219,18 +266,11 @@ impl<'a> DFIter<'a> for DataFrameIterator<'a> {
     {
         Stdev::new(self)
     }
-
-    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
-    {
-        Impute::new(self, strategy)
-    }
 }
 
-impl<'a, I> DFIter<'a> for Select<'a, I>
+impl<'a, I> Transform<'a> for Select<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + 'a
 {
-    type DFItem = (OuterType, RowView<'a, InnerType>);
     fn to_df(self) -> DataFrame {
         let axis = self.axis;
         let other = self.other;
@@ -271,6 +311,9 @@ impl<'a, I> DFIter<'a> for Select<'a, I>
 
         }
     }
+
+
+
     fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
         where OuterType: From<&'a T>,
               T: 'a
@@ -344,7 +387,15 @@ impl<'a, I> DFIter<'a> for Select<'a, I>
         let axis = self.axis.clone();
         MapDF::new(self, f, axis)
     }
+}
 
+
+
+
+
+impl<'a, I> Aggregate<'a> for Remove<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
     fn sumdf(self) -> Sum<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
@@ -374,19 +425,11 @@ impl<'a, I> DFIter<'a> for Select<'a, I>
     {
         Stdev::new(self)
     }
-
-
-    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
-    {
-        Impute::new(self, strategy)
-    }
 }
 
-impl<'a, I> DFIter<'a> for Remove<'a, I>
+impl<'a, I> Transform<'a> for Remove<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
-    type DFItem = (OuterType, RowView<'a, InnerType>);
     fn to_df(self) -> DataFrame {
         let axis = self.axis;
         let other = self.other;
@@ -428,6 +471,7 @@ impl<'a, I> DFIter<'a> for Remove<'a, I>
 
         }
     }
+
     fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
         where OuterType: From<&'a T>
     {
@@ -498,7 +542,13 @@ impl<'a, I> DFIter<'a> for Remove<'a, I>
         let axis = self.axis.clone();
         MapDF::new(self, f, axis)
     }
+}
 
+
+
+impl<'a, I> Aggregate<'a> for Append<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+{
     fn sumdf(self) -> Sum<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
@@ -528,46 +578,36 @@ impl<'a, I> DFIter<'a> for Remove<'a, I>
     {
         Stdev::new(self)
     }
-
-    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
-    {
-        Impute::new(self, strategy)
-    }
 }
-
-impl<'a, I> DFIter<'a> for Append<'a, I>
+impl<'a, I> Transform<'a> for Append<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
-    type DFItem = (OuterType, RowView<'a, InnerType>);
-    fn to_df(mut self) -> DataFrame {
+    fn to_df(self) -> DataFrame {
+        let axis = self.axis;
+        let other = self.other;
+        let data = self.new_data;
         let mut c = Vec::new();
         let mut n = Vec::new();
-
         let (mut ncols, mut nrows) = match self.axis {
-            UtahAxis::Row => (self.other.len(), 0),
-            UtahAxis::Column => (0, self.other.len()),
+            UtahAxis::Row => (other.len(), 0),
+            UtahAxis::Column => (0, other.len()),
         };
 
-        loop {
-            match self.new_data.next() {
-                Some((i, j)) => {
-                    match self.axis {
-                        UtahAxis::Row => nrows += 1,
-                        UtahAxis::Column => ncols += 1,
-                    };
+        for (i, j) in data {
+            match axis {
+                UtahAxis::Row => nrows += 1,
+                UtahAxis::Column => ncols += 1,
+            };
 
-                    c.extend(j);
-                    n.push(i.to_owned());
-                }
-                None => break,
-            }
+            c.extend(j);
+            n.push(i.to_owned());
         }
+
 
         match self.axis {
             UtahAxis::Row => {
                 DataFrame {
-                    columns: self.other.to_owned(),
+                    columns: other,
                     data: Array::from_shape_vec((nrows, ncols), c).unwrap().mapv(|x| x.to_owned()),
                     index: n,
                 }
@@ -576,12 +616,13 @@ impl<'a, I> DFIter<'a> for Append<'a, I>
                 DataFrame {
                     columns: n,
                     data: Array::from_shape_vec((nrows, ncols), c).unwrap().mapv(|x| x.to_owned()),
-                    index: self.other.to_owned(),
+                    index: other,
                 }
             }
 
         }
     }
+
     fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
         where OuterType: From<&'a T>
     {
@@ -652,42 +693,126 @@ impl<'a, I> DFIter<'a> for Append<'a, I>
         let axis = self.axis.clone();
         MapDF::new(self, f, axis)
     }
+}
 
-    fn sumdf(self) -> Sum<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-        Sum::new(self)
-    }
-
-    fn max(self) -> Max<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-        Max::new(self)
-    }
-
-    fn min(self) -> Min<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-        Min::new(self)
-    }
-
-    fn mean(self) -> Mean<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-        Mean::new(self)
-    }
-
-    fn stdev(self) -> Stdev<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-        Stdev::new(self)
-    }
-
-
-
+impl<'a, I> Process<'a> for Impute<'a, I>
+    where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+{
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
-        Impute::new(self, strategy)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Impute::new(self, strategy, other, axis)
+    }
+
+    fn to_mut_df(self) -> MutableDataFrame<'a>
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+    {
+        let axis = self.axis;
+        let other = self.other;
+        let data = self.data;
+        let mut c = Vec::new();
+        let mut n = Vec::new();
+        let (mut ncols, mut nrows) = match self.axis {
+            UtahAxis::Row => (other.len(), 0),
+            UtahAxis::Column => (0, other.len()),
+        };
+
+        for (i, j) in data {
+            match axis {
+                UtahAxis::Row => nrows += 1,
+                UtahAxis::Column => ncols += 1,
+            };
+            println!("{:?}", j);
+            c.extend(j);
+            n.push(i.to_owned());
+        }
+
+
+
+        match self.axis {
+            UtahAxis::Row => {
+                MutableDataFrame {
+                    columns: other,
+                    data: Array::from_shape_vec((nrows, ncols), c).unwrap(),
+                    index: n,
+                }
+            }
+            UtahAxis::Column => {
+                MutableDataFrame {
+                    columns: n,
+                    data: Array::from_shape_vec((nrows, ncols), c).unwrap(),
+                    index: other,
+                }
+            }
+
+        }
+    }
+    fn to_df(self) -> DataFrame
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+    {
+        self.to_mut_df().to_df()
+    }
+}
+
+impl<'a> Process<'a> for MutableDataFrameIterator<'a> {
+    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+    {
+
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Impute::new(self, strategy, other, axis)
+    }
+
+    fn to_mut_df(self) -> MutableDataFrame<'a>
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+    {
+        let axis = self.axis;
+        let other = self.other;
+        let data = self.data;
+        let names = self.names;
+        let mut c = Vec::new();
+        let mut n = Vec::new();
+        let (mut ncols, mut nrows) = match self.axis {
+            UtahAxis::Row => (other.len(), 0),
+            UtahAxis::Column => (0, other.len()),
+        };
+
+        for (i, j) in names.zip(data) {
+            match axis {
+                UtahAxis::Row => nrows += 1,
+                UtahAxis::Column => ncols += 1,
+            };
+            println!("{:?}", j);
+            c.extend(j);
+            n.push(i.to_owned());
+        }
+
+
+
+        match self.axis {
+            UtahAxis::Row => {
+                MutableDataFrame {
+                    columns: other,
+                    data: Array::from_shape_vec((nrows, ncols), c).unwrap(),
+                    index: n,
+                }
+            }
+            UtahAxis::Column => {
+                MutableDataFrame {
+                    columns: n,
+                    data: Array::from_shape_vec((nrows, ncols), c).unwrap(),
+                    index: other,
+                }
+            }
+
+        }
+    }
+    fn to_df(self) -> DataFrame
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+    {
+        self.to_mut_df().to_df()
     }
 }

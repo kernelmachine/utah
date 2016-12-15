@@ -12,7 +12,7 @@ pub enum OuterType {
     USize(usize),
 }
 
-#[derive( Clone, Debug)]
+#[derive(Clone, Debug)]
 pub enum InnerType {
     Float(f64),
     Int64(i64),
@@ -48,7 +48,17 @@ pub type MatrixView<'a, T> = ArrayView<'a, T, (Ix, Ix)>;
 
 
 
+impl AsRef<InnerType> for InnerType {
+    fn as_ref(&self) -> &InnerType {
+        &(*self)
+    }
+}
 
+impl AsMut<InnerType> for InnerType {
+    fn as_mut(&mut self) -> &mut InnerType {
+        &mut (*self)
+    }
+}
 
 impl Mul for InnerType {
     type Output = Self;
