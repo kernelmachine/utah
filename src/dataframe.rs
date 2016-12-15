@@ -42,10 +42,13 @@ impl<'a> FromIterator<(OuterType, RowView<'a, InnerType>)> for DataFrame {
             n.push(i);
         }
 
+        let columns: Vec<OuterType> = (0..ncols).map(OuterType::from).collect();
+        let index: Vec<OuterType> = (0..nrows).map(OuterType::from).collect();
+
         DataFrame {
-            columns: n.clone(),
+            columns: columns,
             data: Array::from_shape_vec((nrows, ncols), c).unwrap().mapv(|x| x.to_owned()),
-            index: n.clone(),
+            index: index,
         }
     }
 }
@@ -64,11 +67,12 @@ impl<'a> FromIterator<(OuterType, RowViewMut<'a, InnerType>)> for MutableDataFra
             c.extend(j);
             n.push(i);
         }
+        let index: Vec<OuterType> = (0..nrows).map(OuterType::from).collect();
         let data = Array::from_shape_vec((nrows, ncols), c).unwrap();
         MutableDataFrame {
             columns: n.clone(),
             data: data,
-            index: n.clone(),
+            index: index,
         }
     }
 }
@@ -200,18 +204,22 @@ impl DataFrame {
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
     /// let df = DataFrame::new(a).index(&[1, 2]).columns(&["a", "b"]).unwrap();
     /// ```
-    pub fn df_iter<'a>(&'a mut self, axis: UtahAxis) -> DataFrameIterator<'a> {
+    pub fn df_iter<'a>(&'a self, axis: UtahAxis) -> DataFrameIterator<'a> {
         match axis {
             UtahAxis::Row => {
                 DataFrameIterator {
                     names: self.index.iter(),
                     data: self.data.axis_iter(Axis(0)),
+                    other: self.columns.clone(),
+                    axis: UtahAxis::Row,
                 }
             }
             UtahAxis::Column => {
                 DataFrameIterator {
                     names: self.columns.iter(),
                     data: self.data.axis_iter(Axis(1)),
+                    other: self.index.to_owned(),
+                    axis: UtahAxis::Column,
                 }
             }
         }
@@ -249,7 +257,7 @@ impl DataFrame {
     ///    }
     /// ```
 
-    pub fn select<'a, T>(&'a mut self,
+    pub fn select<'a, T>(&'a self,
                          names: &'a [T],
                          axis: UtahAxis)
                          -> Select<'a, DataFrameIterator<'a>>
@@ -259,8 +267,18 @@ impl DataFrame {
             .map(|x| OuterType::from(x))
             .collect();
         match axis {
-            UtahAxis::Row => Select::new(self.df_iter(UtahAxis::Row), names),
-            UtahAxis::Column => Select::new(self.df_iter(UtahAxis::Column), names),
+            UtahAxis::Row => {
+                Select::new(self.df_iter(UtahAxis::Row),
+                            names,
+                            self.columns.clone(),
+                            UtahAxis::Row)
+            }
+            UtahAxis::Column => {
+                Select::new(self.df_iter(UtahAxis::Column),
+                            names,
+                            self.index.clone(),
+                            UtahAxis::Column)
+            }
         }
     }
 
@@ -289,8 +307,18 @@ impl DataFrame {
             .map(|x| OuterType::from(x))
             .collect();
         match axis {
-            UtahAxis::Row => Remove::new(self.df_iter(UtahAxis::Row), names),
-            UtahAxis::Column => Remove::new(self.df_iter(UtahAxis::Column), names),
+            UtahAxis::Row => {
+                Remove::new(self.df_iter(UtahAxis::Row),
+                            names,
+                            self.columns.clone(),
+                            UtahAxis::Row)
+            }
+            UtahAxis::Column => {
+                Remove::new(self.df_iter(UtahAxis::Column),
+                            names,
+                            self.index.clone(),
+                            UtahAxis::Column)
+            }
         }
     }
 
@@ -318,8 +346,20 @@ impl DataFrame {
     {
         let name = OuterType::from(name);
         match axis {
-            UtahAxis::Row => Append::new(self.df_iter(UtahAxis::Row), name, data),
-            UtahAxis::Column => Append::new(self.df_iter(UtahAxis::Column), name, data),
+            UtahAxis::Row => {
+                Append::new(self.df_iter(UtahAxis::Row),
+                            name,
+                            data,
+                            self.columns.clone(),
+                            UtahAxis::Row)
+            }
+            UtahAxis::Column => {
+                Append::new(self.df_iter(UtahAxis::Column),
+                            name,
+                            data,
+                            self.index.clone(),
+                            UtahAxis::Column)
+            }
 
         }
     }
@@ -486,8 +526,8 @@ impl DataFrame {
     {
 
         match axis {
-            UtahAxis::Row => MapDF::new(self.df_iter(UtahAxis::Row), f),
-            UtahAxis::Column => MapDF::new(self.df_iter(UtahAxis::Column), f),
+            UtahAxis::Row => MapDF::new(self.df_iter(UtahAxis::Row), f, UtahAxis::Row),
+            UtahAxis::Column => MapDF::new(self.df_iter(UtahAxis::Column), f, UtahAxis::Column),
 
         }
     }

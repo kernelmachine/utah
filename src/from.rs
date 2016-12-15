@@ -114,6 +114,11 @@ impl<'a> From<&'a i32> for OuterType {
     }
 }
 
+impl<'a> From<usize> for OuterType {
+    fn from(i: usize) -> OuterType {
+        OuterType::USize(i)
+    }
+}
 
 impl FromStr for InnerType {
     type Err = ErrorKind;

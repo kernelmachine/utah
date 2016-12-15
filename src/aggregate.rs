@@ -4,7 +4,7 @@ use types::*;
 
 #[derive(Clone)]
 pub struct Sum<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + 'a
 {
     data: I,
 }
@@ -38,7 +38,7 @@ impl<'a, I> Iterator for Sum<'a, I>
 
 #[derive(Clone)]
 pub struct Mean<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + 'a
 {
     data: I,
 }
@@ -82,7 +82,7 @@ impl<'a, I> Iterator for Mean<'a, I>
 
 #[derive(Clone)]
 pub struct Max<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + 'a
 {
     data: I,
 }
@@ -116,7 +116,7 @@ impl<'a, I> Iterator for Max<'a, I>
 
 #[derive(Clone)]
 pub struct Min<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + 'a
 {
     data: I,
 }
@@ -149,7 +149,7 @@ impl<'a, I> Iterator for Min<'a, I>
 
 #[derive(Clone)]
 pub struct Stdev<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + 'a
 {
     data: I,
 }

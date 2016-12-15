@@ -1,5 +1,5 @@
 use chrono::*;
-use ndarray::{Array, RcArray, ArrayView, ArrayViewMut, Ix};
+use ndarray::{Array, ArrayView, ArrayViewMut, Ix};
 use std::ops::{Mul, Add, Sub, Div};
 use std::cmp::Ordering;
 
@@ -9,6 +9,7 @@ pub enum OuterType {
     Date(DateTime<UTC>),
     Int64(i64),
     Int32(i32),
+    USize(usize),
 }
 
 #[derive( Clone, Debug)]
@@ -20,7 +21,7 @@ pub enum InnerType {
     Empty,
 }
 
-#[derive( Clone, Debug)]
+#[derive( Clone, Debug, Copy)]
 pub enum UtahAxis {
     Row,
     Column,

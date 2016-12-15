@@ -4,7 +4,7 @@ use types::*;
 
 #[derive(Clone)]
 pub struct Impute<'a, I>
-    where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+    where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + 'a
 {
     data: I,
     strategy: ImputeStrategy,
