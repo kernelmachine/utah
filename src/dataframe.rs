@@ -7,7 +7,7 @@ use transform::*;
 use ndarray::Axis;
 use types::UtahAxis;
 use process::*;
-
+use join::*;
 /// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame {
@@ -383,19 +383,13 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn inner_left_join<'a>(&'a mut self,
-                               other: &'a mut DataFrame,
-                               axis: UtahAxis)
+    pub fn inner_left_join<'a>(&'a self,
+                               other: &'a DataFrame)
                                -> InnerJoin<'a, DataFrameIterator<'a>> {
-        match axis {
-            UtahAxis::Row => {
-                InnerJoin::new(self.df_iter(UtahAxis::Row), other.df_iter(UtahAxis::Row))
-            }
-            UtahAxis::Column => {
-                InnerJoin::new(self.df_iter(UtahAxis::Column),
-                               other.df_iter(UtahAxis::Column))
-            }
-        }
+        InnerJoin::new(self.df_iter(UtahAxis::Row),
+                       other.df_iter(UtahAxis::Row),
+                       self.columns.clone(),
+                       other.columns.clone())
     }
 
     /// Perform an outer left join between two dataframes along the specified `UtahAxis`.
@@ -411,20 +405,17 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn outer_left_join<'a>(&'a mut self,
-                               other: &'a mut DataFrame,
-                               axis: UtahAxis)
+    pub fn outer_left_join<'a>(&'a self,
+                               other: &'a DataFrame)
                                -> OuterJoin<'a, DataFrameIterator<'a>> {
-        match axis {
-            UtahAxis::Row => {
-                OuterJoin::new(self.df_iter(UtahAxis::Row), other.df_iter(UtahAxis::Row))
-            }
-            UtahAxis::Column => {
-                OuterJoin::new(self.df_iter(UtahAxis::Column),
-                               other.df_iter(UtahAxis::Column))
-            }
 
-        }
+        OuterJoin::new(self.df_iter(UtahAxis::Row),
+                       other.df_iter(UtahAxis::Row),
+                       self.columns.clone(),
+                       other.columns.clone())
+
+
+
 
     }
 
@@ -441,20 +432,14 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn inner_right_join<'a>(&'a mut self,
-                                other: &'a mut DataFrame,
-                                axis: UtahAxis)
+    pub fn inner_right_join<'a>(&'a self,
+                                other: &'a DataFrame)
                                 -> InnerJoin<'a, DataFrameIterator<'a>> {
-        match axis {
-            UtahAxis::Row => {
-                InnerJoin::new(other.df_iter(UtahAxis::Row), self.df_iter(UtahAxis::Row))
-            }
-            UtahAxis::Column => {
-                InnerJoin::new(other.df_iter(UtahAxis::Column),
-                               self.df_iter(UtahAxis::Column))
-            }
+        InnerJoin::new(other.df_iter(UtahAxis::Row),
+                       self.df_iter(UtahAxis::Row),
+                       other.columns.clone(),
+                       self.columns.clone())
 
-        }
     }
 
     /// Perform an outer right join between two dataframes along the specified `UtahAxis`.
@@ -470,20 +455,14 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn outer_right_join<'a>(&'a mut self,
-                                other: &'a mut DataFrame,
-                                axis: UtahAxis)
+    pub fn outer_right_join<'a>(&'a self,
+                                other: &'a DataFrame)
                                 -> OuterJoin<'a, DataFrameIterator<'a>> {
-        match axis {
-            UtahAxis::Row => {
-                OuterJoin::new(other.df_iter(UtahAxis::Row), self.df_iter(UtahAxis::Row))
-            }
-            UtahAxis::Column => {
-                OuterJoin::new(other.df_iter(UtahAxis::Column),
-                               self.df_iter(UtahAxis::Column))
-            }
+        OuterJoin::new(other.df_iter(UtahAxis::Row),
+                       self.df_iter(UtahAxis::Row),
+                       other.columns.clone(),
+                       self.columns.clone())
 
-        }
     }
 
 

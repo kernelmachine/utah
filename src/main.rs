@@ -22,20 +22,21 @@ pub mod traits;
 pub mod transform;
 pub mod aggregate;
 pub mod process;
+pub mod join;
 
 use ndarray::arr2;
 use dataframe::*;
 use types::*;
 
 use std::f64::NAN;
-use traits::{Transform, Process};
+use traits::{Transform, Process, Join};
 
 fn main() {
     let a = arr2(&[[2.0, 7.0], [3.0, NAN], [2.0, 4.0]]);
-    // let b = arr2(&[[2, 6], [3, 4]]);
+    let b = arr2(&[[2, 6], [3, 4]]);
     let c = arr2(&[[2.0, 6.0], [3.0, 4.0], [2.0, NAN]]);
     let mut df = DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2", "3"]).unwrap();
-    // let mut df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap().index(&["1", "2"]).unwrap();
+    let df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap().index(&["1", "2"]).unwrap();
     let new_data = c.column(1).mapv(InnerType::from);
     let remove_idx = vec!["1"];
     let select_idx = vec!["2"];
@@ -47,11 +48,11 @@ fn main() {
         .select(&select_idx[..])
         .append(&append_idx, new_data.view())
         .to_df();
-    let res_1: DataFrame = df.df_iter(UtahAxis::Row)
-        .select(&select_idx[..])
-        .to_df();
-    let res: DataFrame = df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_df();    // res.mapdf(|x| x.as_ref())
-    println!("{:?}", res_1);
-    println!("{:?}", res);
+    println!("{:?}", j);
+    // let res: DataFrame = df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_df();    // res.mapdf(|x| x.as_ref())
+    // println!("{:?}", res);
+    df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_df();
+    let res_1: DataFrame = df.inner_left_join(&df_1).to_df();
+    println!("join result - {:?}", res_1);
 
 }
