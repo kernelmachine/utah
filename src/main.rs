@@ -50,7 +50,7 @@ fn main() {
     let res_1: DataFrame = df.df_iter(UtahAxis::Row)
         .select(&select_idx[..])
         .to_df();
-    let res: MutableDataFrame = df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_mut_df();    // res.mapdf(|x| x.as_ref())
+    let res: DataFrame = df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_df();    // res.mapdf(|x| x.as_ref())
     println!("{:?}", res_1);
     println!("{:?}", res);
 

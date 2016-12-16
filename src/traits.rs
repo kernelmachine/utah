@@ -25,11 +25,11 @@ pub trait Aggregate<'a> {
 }
 pub trait Process<'a> {
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone;
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
     fn to_mut_df(self) -> MutableDataFrame<'a>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone;
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
     fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone;
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
 }
 pub trait Transform<'a> {
     fn to_df(self) -> DataFrame
@@ -713,20 +713,20 @@ impl<'a, I> Process<'a> for Impute<'a, I>
     }
 
     fn to_mut_df(self) -> MutableDataFrame<'a>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
 
-        let s = self.clone();
+        // let s = self.clone();
         let axis = self.axis.clone();
         let other = self.other.clone();
         let mut c = Vec::new();
         let mut n = Vec::new();
         let (mut ncols, mut nrows) = match axis {
-            UtahAxis::Row => (s.other.len(), 0),
-            UtahAxis::Column => (0, s.other.len()),
+            UtahAxis::Row => (other.len(), 0),
+            UtahAxis::Column => (0, other.len()),
         };
 
-        for (i, j) in s {
+        for (i, j) in self {
             match axis {
                 UtahAxis::Row => nrows += 1,
                 UtahAxis::Column => ncols += 1,
@@ -758,7 +758,7 @@ impl<'a, I> Process<'a> for Impute<'a, I>
 
     }
     fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
         self.to_mut_df().to_df()
     }
@@ -775,19 +775,19 @@ impl<'a> Process<'a> for MutableDataFrameIterator<'a> {
     }
 
     fn to_mut_df(self) -> MutableDataFrame<'a>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
-        let s = self.clone();
+        // let s = self.clone();
         let axis = self.axis.clone();
         let other = self.other.clone();
         let mut c = Vec::new();
         let mut n = Vec::new();
         let (mut ncols, mut nrows) = match axis {
-            UtahAxis::Row => (s.other.len(), 0),
-            UtahAxis::Column => (0, s.other.len()),
+            UtahAxis::Row => (other.len(), 0),
+            UtahAxis::Column => (0, other.len()),
         };
 
-        for (i, j) in s {
+        for (i, j) in self {
             match axis {
                 UtahAxis::Row => nrows += 1,
                 UtahAxis::Column => ncols += 1,
@@ -818,7 +818,7 @@ impl<'a> Process<'a> for MutableDataFrameIterator<'a> {
         }
     }
     fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + Clone
+        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
         self.to_mut_df().to_df()
     }

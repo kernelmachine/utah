@@ -3,7 +3,6 @@ use std::iter::Iterator;
 use ndarray::AxisIterMut;
 use std::slice::Iter;
 
-
 pub struct MutableDataFrameIterator<'a> {
     pub names: Iter<'a, OuterType>,
     pub data: AxisIterMut<'a, InnerType, usize>,
@@ -14,6 +13,8 @@ pub struct MutableDataFrameIterator<'a> {
 
 impl<'a> Iterator for MutableDataFrameIterator<'a> {
     type Item = (OuterType, RowViewMut<'a, InnerType>);
+
+
     fn next(&mut self) -> Option<Self::Item> {
         match self.names.next() {
             Some(val) => {
@@ -26,6 +27,8 @@ impl<'a> Iterator for MutableDataFrameIterator<'a> {
         }
     }
 }
+
+
 
 #[derive(Clone)]
 pub struct Impute<'a, I>
