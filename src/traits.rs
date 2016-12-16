@@ -6,14 +6,18 @@ use transform::*;
 use process::*;
 use dataframe::{DataFrame, MutableDataFrame};
 
+
+pub trait ToDataFrame<'a> {
+    fn to_df(self) -> DataFrame where Self: Sized + Iterator<Item = InnerType>;
+}
 pub trait Aggregate<'a> {
     fn sumdf(self) -> Sum<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
 
-    fn max(self) -> Max<'a, Self>
+    fn maxdf(self) -> Max<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
 
-    fn min(self) -> Min<'a, Self>
+    fn mindf(self) -> Min<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
 
     fn mean(self) -> Mean<'a, Self>

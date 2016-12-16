@@ -1,22 +1,30 @@
 
 use types::*;
-
+use traits::*;
+use dataframe::*;
+use ndarray::Array;
 
 #[derive(Clone)]
 pub struct Sum<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + 'a
 {
     data: I,
+    other: Vec<OuterType>,
+    axis: UtahAxis,
 }
 
 impl<'a, I> Sum<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
-    pub fn new(df: I) -> Sum<'a, I>
+    pub fn new(df: I, other: Vec<OuterType>, axis: UtahAxis) -> Sum<'a, I>
         where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
 
-        Sum { data: df }
+        Sum {
+            data: df,
+            other: other,
+            axis: axis,
+        }
     }
 }
 
@@ -41,16 +49,22 @@ pub struct Mean<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + 'a
 {
     data: I,
+    other: Vec<OuterType>,
+    axis: UtahAxis,
 }
 
 impl<'a, I> Mean<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
-    pub fn new(df: I) -> Mean<'a, I>
+    pub fn new(df: I, other: Vec<OuterType>, axis: UtahAxis) -> Mean<'a, I>
         where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
 
-        Mean { data: df }
+        Mean {
+            data: df,
+            other: other,
+            axis: axis,
+        }
     }
 }
 
@@ -85,16 +99,22 @@ pub struct Max<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + 'a
 {
     data: I,
+    other: Vec<OuterType>,
+    axis: UtahAxis,
 }
 
 impl<'a, I> Max<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
-    pub fn new(df: I) -> Max<'a, I>
+    pub fn new(df: I, other: Vec<OuterType>, axis: UtahAxis) -> Max<'a, I>
         where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
 
-        Max { data: df }
+        Max {
+            data: df,
+            other: other,
+            axis: axis,
+        }
     }
 }
 
@@ -119,16 +139,22 @@ pub struct Min<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + 'a
 {
     data: I,
+    other: Vec<OuterType>,
+    axis: UtahAxis,
 }
 
 impl<'a, I> Min<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
-    pub fn new(df: I) -> Min<'a, I>
+    pub fn new(df: I, other: Vec<OuterType>, axis: UtahAxis) -> Min<'a, I>
         where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
 
-        Min { data: df }
+        Min {
+            data: df,
+            other: other,
+            axis: axis,
+        }
     }
 }
 
@@ -152,16 +178,22 @@ pub struct Stdev<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + 'a
 {
     data: I,
+    other: Vec<OuterType>,
+    axis: UtahAxis,
 }
 
 impl<'a, I> Stdev<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
 {
-    pub fn new(df: I) -> Stdev<'a, I>
+    pub fn new(df: I, other: Vec<OuterType>, axis: UtahAxis) -> Stdev<'a, I>
         where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
 
-        Stdev { data: df }
+        Stdev {
+            data: df,
+            other: other,
+            axis: axis,
+        }
     }
 }
 
@@ -200,5 +232,191 @@ impl<'a, I> Iterator for Stdev<'a, I>
 
 
 
+    }
+}
+
+
+impl<'a, I> ToDataFrame<'a> for Stdev<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+{
+    fn to_df(self) -> DataFrame
+        where Self: Sized + Iterator<Item = InnerType>
+    {
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        let c: Vec<_> = self.collect();
+        let res_dim = match axis {
+            UtahAxis::Row => (1, other.len()),
+            UtahAxis::Column => (other.len(), 1),
+        };
+
+
+
+        match axis {
+            UtahAxis::Row => {
+                DataFrame {
+                    columns: other,
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: vec![OuterType::Int32(1)],
+                }
+            }
+            UtahAxis::Column => {
+                DataFrame {
+                    columns: vec![OuterType::Int32(1)],
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: other,
+                }
+            }
+
+        }
+    }
+}
+
+
+impl<'a, I> ToDataFrame<'a> for Mean<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+{
+    fn to_df(self) -> DataFrame
+        where Self: Sized + Iterator<Item = InnerType>
+    {
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        let c: Vec<_> = self.collect();
+        let res_dim = match axis {
+            UtahAxis::Row => (1, other.len()),
+            UtahAxis::Column => (other.len(), 1),
+        };
+
+
+
+        match axis {
+            UtahAxis::Row => {
+                DataFrame {
+                    columns: other,
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: vec![OuterType::Int32(1)],
+                }
+            }
+            UtahAxis::Column => {
+                DataFrame {
+                    columns: vec![OuterType::Int32(1)],
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: other,
+                }
+            }
+
+        }
+    }
+}
+
+
+
+impl<'a, I> ToDataFrame<'a> for Max<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+{
+    fn to_df(self) -> DataFrame
+        where Self: Sized + Iterator<Item = InnerType>
+    {
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        let c: Vec<_> = self.collect();
+        let res_dim = match axis {
+            UtahAxis::Row => (1, other.len()),
+            UtahAxis::Column => (other.len(), 1),
+        };
+
+
+
+        match axis {
+            UtahAxis::Row => {
+                DataFrame {
+                    columns: other,
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: vec![OuterType::Int32(1)],
+                }
+            }
+            UtahAxis::Column => {
+                DataFrame {
+                    columns: vec![OuterType::Int32(1)],
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: other,
+                }
+            }
+
+        }
+    }
+}
+
+
+impl<'a, I> ToDataFrame<'a> for Min<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+{
+    fn to_df(self) -> DataFrame
+        where Self: Sized + Iterator<Item = InnerType>
+    {
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        let c: Vec<_> = self.collect();
+        let res_dim = match axis {
+            UtahAxis::Row => (1, other.len()),
+            UtahAxis::Column => (other.len(), 1),
+        };
+
+
+
+        match axis {
+            UtahAxis::Row => {
+                DataFrame {
+                    columns: other,
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: vec![OuterType::Int32(1)],
+                }
+            }
+            UtahAxis::Column => {
+                DataFrame {
+                    columns: vec![OuterType::Int32(1)],
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: other,
+                }
+            }
+
+        }
+    }
+}
+
+
+impl<'a, I> ToDataFrame<'a> for Sum<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+{
+    fn to_df(self) -> DataFrame
+        where Self: Sized + Iterator<Item = InnerType>
+    {
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        let c: Vec<_> = self.collect();
+        let res_dim = match axis {
+            UtahAxis::Row => (1, other.len()),
+            UtahAxis::Column => (other.len(), 1),
+        };
+
+
+
+        match axis {
+            UtahAxis::Row => {
+                DataFrame {
+                    columns: other,
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: vec![OuterType::Int32(1)],
+                }
+            }
+            UtahAxis::Column => {
+                DataFrame {
+                    columns: vec![OuterType::Int32(1)],
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: other,
+                }
+            }
+
+        }
     }
 }

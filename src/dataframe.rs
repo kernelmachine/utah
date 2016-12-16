@@ -480,10 +480,11 @@ impl DataFrame {
     ///    }
     /// ```
     pub fn sumdf<'a>(&'a mut self, axis: UtahAxis) -> Sum<'a, DataFrameIterator<'a>> {
-
+        let columns = self.columns.clone();
+        let index = self.index.clone();
         match axis {
-            UtahAxis::Row => Sum::new(self.df_iter(UtahAxis::Row)),
-            UtahAxis::Column => Sum::new(self.df_iter(UtahAxis::Column)),
+            UtahAxis::Row => Sum::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
+            UtahAxis::Column => Sum::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Column),
 
         }
     }
@@ -530,9 +531,11 @@ impl DataFrame {
     /// ```
     pub fn mean<'a>(&'a mut self, axis: UtahAxis) -> Mean<'a, DataFrameIterator<'a>> {
 
+        let columns = self.columns.clone();
+        let index = self.index.clone();
         match axis {
-            UtahAxis::Row => Mean::new(self.df_iter(UtahAxis::Row)),
-            UtahAxis::Column => Mean::new(self.df_iter(UtahAxis::Column)),
+            UtahAxis::Row => Mean::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
+            UtahAxis::Column => Mean::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Row),
 
         }
     }
@@ -550,11 +553,13 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn max<'a>(&'a mut self, axis: UtahAxis) -> Max<'a, DataFrameIterator<'a>> {
+    pub fn maxdf<'a>(&'a mut self, axis: UtahAxis) -> Max<'a, DataFrameIterator<'a>> {
 
+        let columns = self.columns.clone();
+        let index = self.index.clone();
         match axis {
-            UtahAxis::Row => Max::new(self.df_iter(UtahAxis::Row)),
-            UtahAxis::Column => Max::new(self.df_iter(UtahAxis::Column)),
+            UtahAxis::Row => Max::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
+            UtahAxis::Column => Max::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Row),
 
         }
     }
@@ -574,11 +579,14 @@ impl DataFrame {
     /// ```
     pub fn min<'a>(&'a mut self, axis: UtahAxis) -> Min<'a, DataFrameIterator<'a>> {
 
+        let columns = self.columns.clone();
+        let index = self.index.clone();
         match axis {
-            UtahAxis::Row => Min::new(self.df_iter(UtahAxis::Row)),
-            UtahAxis::Column => Min::new(self.df_iter(UtahAxis::Column)),
+            UtahAxis::Row => Min::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
+            UtahAxis::Column => Min::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Row),
 
         }
+
     }
 
     /// Get the standard deviation along the specified `UtahAxis`.
@@ -594,9 +602,14 @@ impl DataFrame {
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    pub fn stdev<'a>(&'a mut self, axis: UtahAxis) -> Stdev<'a, DataFrameIterator<'a>> {
+    pub fn stdev<'a>(&'a self, axis: UtahAxis) -> Stdev<'a, DataFrameIterator<'a>> {
+        let columns = self.columns.clone();
+        let index = self.index.clone();
+        match axis {
+            UtahAxis::Row => Stdev::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
+            UtahAxis::Column => Stdev::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Row),
 
-        Stdev::new(self.df_iter(axis))
+        }
 
 
     }

@@ -9,7 +9,7 @@ use aggregate::*;
 use traits::*;
 use std::iter::Chain;
 use dataframe::*;
-use join::*;
+
 #[derive(Clone)]
 pub struct DataFrameIterator<'a> {
     pub names: Iter<'a, OuterType>,
@@ -236,31 +236,41 @@ impl<'a> Aggregate<'a> for DataFrameIterator<'a> {
     fn sumdf(self) -> Sum<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Sum::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Sum::new(self, other, axis)
     }
 
-    fn max(self) -> Max<'a, Self>
+    fn maxdf(self) -> Max<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Max::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Max::new(self, other, axis)
     }
 
-    fn min(self) -> Min<'a, Self>
+    fn mindf(self) -> Min<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Min::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Min::new(self, other, axis)
     }
 
     fn mean(self) -> Mean<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Mean::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Mean::new(self, other, axis)
     }
 
     fn stdev(self) -> Stdev<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Stdev::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Stdev::new(self, other, axis)
     }
 }
 
@@ -358,39 +368,6 @@ impl<'a> Transform<'a> for DataFrameIterator<'a> {
 }
 
 
-impl<'a, L> Aggregate<'a> for InnerJoin<'a, L>
-    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
-{
-    fn sumdf(self) -> Sum<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-        Sum::new(self)
-    }
-
-    fn max(self) -> Max<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-        Max::new(self)
-    }
-
-    fn min(self) -> Min<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-        Min::new(self)
-    }
-
-    fn mean(self) -> Mean<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-        Mean::new(self)
-    }
-
-    fn stdev(self) -> Stdev<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
-    {
-        Stdev::new(self)
-    }
-}
 
 
 
@@ -399,33 +376,43 @@ impl<'a, I> Aggregate<'a> for Select<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     fn sumdf(self) -> Sum<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
-        Sum::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Sum::new(self, other, axis)
     }
 
-    fn max(self) -> Max<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn maxdf(self) -> Max<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
-        Max::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Max::new(self, other, axis)
     }
 
-    fn min(self) -> Min<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn mindf(self) -> Min<'a, Self>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
-        Min::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Min::new(self, other, axis)
     }
 
     fn mean(self) -> Mean<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
-        Mean::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Mean::new(self, other, axis)
     }
 
     fn stdev(self) -> Stdev<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
     {
-        Stdev::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Stdev::new(self, other, axis)
     }
 }
 
@@ -531,31 +518,41 @@ impl<'a, I> Aggregate<'a> for Remove<'a, I>
     fn sumdf(self) -> Sum<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Sum::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Sum::new(self, other, axis)
     }
 
-    fn max(self) -> Max<'a, Self>
+    fn maxdf(self) -> Max<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Max::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Max::new(self, other, axis)
     }
 
-    fn min(self) -> Min<'a, Self>
+    fn mindf(self) -> Min<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Min::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Min::new(self, other, axis)
     }
 
     fn mean(self) -> Mean<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Mean::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Mean::new(self, other, axis)
     }
 
     fn stdev(self) -> Stdev<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Stdev::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Stdev::new(self, other, axis)
     }
 }
 
@@ -654,31 +651,41 @@ impl<'a, I> Aggregate<'a> for Append<'a, I>
     fn sumdf(self) -> Sum<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Sum::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Sum::new(self, other, axis)
     }
 
-    fn max(self) -> Max<'a, Self>
+    fn maxdf(self) -> Max<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Max::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Max::new(self, other, axis)
     }
 
-    fn min(self) -> Min<'a, Self>
+    fn mindf(self) -> Min<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Min::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Min::new(self, other, axis)
     }
 
     fn mean(self) -> Mean<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Mean::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Mean::new(self, other, axis)
     }
 
     fn stdev(self) -> Stdev<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
     {
-        Stdev::new(self)
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Stdev::new(self, other, axis)
     }
 }
 impl<'a, I> Transform<'a> for Append<'a, I>

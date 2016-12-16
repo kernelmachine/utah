@@ -11,10 +11,10 @@ use dataframe::*;
 pub struct InnerJoin<'a, L>
     where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
-    left: L,
-    right: HashMap<OuterType, RowView<'a, InnerType>>,
-    left_columns: Vec<OuterType>,
-    right_columns: Vec<OuterType>,
+    pub left: L,
+    pub right: HashMap<OuterType, RowView<'a, InnerType>>,
+    pub left_columns: Vec<OuterType>,
+    pub right_columns: Vec<OuterType>,
 }
 
 impl<'a, L> InnerJoin<'a, L>
