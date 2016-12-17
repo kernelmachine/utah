@@ -39,7 +39,7 @@ impl<'a, I, T, S> Iterator for Sum<'a, I, T, S>
           T: Clone + Debug + 'a,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    type Item = InnerType;
+    type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
         match self.data.next() {
 
@@ -94,7 +94,7 @@ impl<'a, I, T, S> Iterator for Mean<'a, I, T, S>
                 let size = dat.len();
                 let first_element = dat.uget(0).to_owned();
                 let sum = (0..size).fold(first_element, |x, y| x + dat.uget(y).to_owned() / size);
-
+                Some(sum)
                 // match dat.uget(0) {
                 //     &InnerType::Float(_) => return Some(sum / InnerType::Float(size as f64)),
                 //     &InnerType::Int32(_) => return Some(sum / InnerType::Int32(size as i32)),
@@ -136,7 +136,7 @@ impl<'a, I, T, S> Max<'a, I, T, S>
 
 impl<'a, I, T, S> Iterator for Max<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a,
+          T: Clone + Debug + 'a + Ord,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     type Item = T;

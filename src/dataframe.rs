@@ -60,6 +60,7 @@ impl<'a> DataframeOps<'a, f64, String> for DataFrame<f64, String> {
         where f64: From<U>
     {
 
+        let data: Matrix<f64> = data.mapv(f64::from);
         let columns: Vec<String> = (0..data.shape()[1])
             .map(|x| x.to_string())
             .collect();
@@ -82,26 +83,14 @@ impl<'a> DataframeOps<'a, f64, String> for DataFrame<f64, String> {
             UtahAxis::Column => (data.len(), 1),
             UtahAxis::Row => (1, data.len()),
         };
-        let data: Matrix<InnerType> = data.into_shape(res_dim).unwrap().mapv(InnerType::from);
-        let data: Matrix<InnerType> = data.mapv_into(|x| {
-            match x {
-                InnerType::Float(y) => {
-                    if y.is_nan() {
-                        return InnerType::Empty;
-                    } else {
-                        return x;
-                    }
-                }
-                _ => return x,
-            }
+        let data: Matrix<f64> = data.into_shape(res_dim).unwrap().mapv(f64::from);
 
-        });
-        let columns: Vec<OuterType> = (0..res_dim.1)
-            .map(|x| OuterType::Str(x.to_string()))
+        let columns: Vec<String> = (0..res_dim.1)
+            .map(|x| x.to_string())
             .collect();
 
-        let index: Vec<OuterType> = (0..res_dim.0)
-            .map(|x| OuterType::Str(x.to_string()))
+        let index: Vec<String> = (0..res_dim.0)
+            .map(|x| x.to_string())
             .collect();
 
         DataFrame {
@@ -127,7 +116,7 @@ impl<'a> DataframeOps<'a, f64, String> for DataFrame<f64, String> {
             return Err(ErrorKind::ColumnShapeMismatch.into());
         }
         self.columns = columns.iter()
-            .map(|x| OuterType::from(x))
+            .map(|x| String::from(x))
             .collect();
         Ok(self)
     }
@@ -159,7 +148,7 @@ impl<'a> DataframeOps<'a, f64, String> for DataFrame<f64, String> {
             return Err(ErrorKind::RowShapeMismatch.into());
         }
         self.index = index.iter()
-            .map(|x| OuterType::from(x))
+            .map(|x| String::from(x))
             .collect();
         Ok(self)
     }
@@ -245,7 +234,7 @@ impl<'a> DataframeOps<'a, f64, String> for DataFrame<f64, String> {
                  -> Select<'a, f64, String, DataFrameIterator<'a, f64, String>>
         where String: From<&'a U>
     {
-
+        let names: Vec<String> = names.iter().map(|x| String::from(x)).collect();
         match axis {
             UtahAxis::Row => {
                 Select::new(self.df_iter(UtahAxis::Row),
@@ -283,7 +272,7 @@ impl<'a> DataframeOps<'a, f64, String> for DataFrame<f64, String> {
                  -> Remove<'a, DataFrameIterator<'a, f64, String>, f64, String>
         where String: From<&'a U>
     {
-
+        let names: Vec<String> = names.iter().map(|x| String::from(x)).collect();
         match axis {
             UtahAxis::Row => {
                 Remove::new(self.df_iter(UtahAxis::Row),
@@ -322,6 +311,7 @@ impl<'a> DataframeOps<'a, f64, String> for DataFrame<f64, String> {
                  -> Append<'a, DataFrameIterator<'a, f64, String>, f64, String>
         where String: From<&'a U>
     {
+        let name: String = String::from(name);
         match axis {
             UtahAxis::Row => {
                 Append::new(self.df_iter(UtahAxis::Row),
