@@ -105,63 +105,60 @@ pub mod tests {
             .unwrap();
         assert_eq!(z, expected);
     }
-    // #[test]
-    // fn dataframe_creation_failure() {
-    //     let a = Array::random((2, 5), Range::new(0., 10.));
-    //     let df = DataFrame::new(a).columns(&["1", "2"]);
-    //     assert!(df.is_err())
-    // }
-    //
-    //
-    //
-    // #[bench]
-    // fn bench_creation(b: &mut Bencher) {
-    //     let a = Array::random((10, 5), Range::new(0., 10.));
-    //     b.iter(|| DataFrame::new(a.clone()).columns(&["1", "2", "3", "4", "5"]));
-    // }
-    //
-    //
-    //
-    // #[bench]
-    // fn test_inner_join(b: &mut Bencher) {
-    //     let c = Array::random((20, 10), Range::new(0., 10.));
-    //     let e = Array::random((20, 10), Range::new(0., 10.));
-    //
-    //
-    //     let mut c_names: Vec<String> = vec![];
-    //     for i in 0..10 {
-    //         c_names.push(i.to_string());
-    //     }
-    //
-    //     let mut e_names: Vec<String> = vec![];
-    //     for i in 0..10 {
-    //         e_names.push(i.to_string());
-    //     }
-    //
-    //     let mut c_index: Vec<String> = vec![];
-    //     for i in 0..20 {
-    //         c_index.push(i.to_string());
-    //     }
-    //
-    //     let mut e_index: Vec<String> = vec![];
-    //     for i in 1..21 {
-    //         e_index.push(i.to_string());
-    //     }
-    //
-    //     let c_df = DataFrame::new(c)
-    //         .columns(&c_names[..])
-    //         .unwrap()
-    //         .index(&c_index[..])
-    //         .unwrap();
-    //     let e_df = DataFrame::new(e)
-    //         .columns(&e_names[..])
-    //         .unwrap()
-    //         .index(&e_index[..])
-    //         .unwrap();
-    //     b.iter(|| {
-    //         let _: Vec<_> = c_df.inner_left_join(&e_df, Axis::Row).collect();
-    //     });
-    // }
+    #[test]
+    fn dataframe_creation_failure() {
+        let a = Array::random((2, 5), Range::new(0., 10.));
+        let df = DataFrame::new(a).columns(&["1", "2"]);
+        assert!(df.is_err())
+    }
+    #[bench]
+    fn bench_creation(b: &mut Bencher) {
+        let a = Array::random((10, 5), Range::new(0., 10.));
+        b.iter(|| DataFrame::new(a.clone()).columns(&["1", "2", "3", "4", "5"]));
+    }
+
+
+
+    #[bench]
+    fn test_inner_join(b: &mut Bencher) {
+        let c = Array::random((20000, 100), Range::new(0., 10.));
+        let e = Array::random((20000, 100), Range::new(0., 10.));
+
+
+        let mut c_names: Vec<String> = vec![];
+        for i in 0..100 {
+            c_names.push(i.to_string());
+        }
+
+        let mut e_names: Vec<String> = vec![];
+        for i in 0..100 {
+            e_names.push(i.to_string());
+        }
+
+        let mut c_index: Vec<String> = vec![];
+        for i in 0..20000 {
+            c_index.push(i.to_string());
+        }
+
+        let mut e_index: Vec<String> = vec![];
+        for i in 1..20001 {
+            e_index.push(i.to_string());
+        }
+
+        let mut c_df = DataFrame::new(c)
+            .columns(&c_names[..])
+            .unwrap()
+            .index(&c_index[..])
+            .unwrap();
+        let e_df = DataFrame::new(e)
+            .columns(&e_names[..])
+            .unwrap()
+            .index(&e_index[..])
+            .unwrap();
+        b.iter(|| {
+            let _: Vec<_> = c_df.sumdf(UtahAxis::Column).collect();
+        });
+    }
 
 
 }

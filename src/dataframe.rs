@@ -518,8 +518,8 @@ impl DataFrame {
         let columns = self.columns.clone();
         let index = self.index.clone();
         match axis {
-            UtahAxis::Row => Sum::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
-            UtahAxis::Column => Sum::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Column),
+            UtahAxis::Row => Sum::new(self.df_iter(UtahAxis::Column), columns, UtahAxis::Column),
+            UtahAxis::Column => Sum::new(self.df_iter(UtahAxis::Row), index, UtahAxis::Row),
 
         }
     }

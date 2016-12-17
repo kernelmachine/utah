@@ -128,8 +128,8 @@ impl<'a, L> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>, RowView<'a, Inne
 
 
         for (i, j, k) in self {
-            c.extend(j.iter().map(|x| x.to_owned()));
-            c.extend(k.iter().map(|x| x.to_owned()));
+            let p = j.iter().chain(k.iter()).map(|x| x.to_owned());
+            c.extend(p);
 
             n.push(i.to_owned());
         }
@@ -162,12 +162,12 @@ impl<'a, L> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>, Option<RowView<'
         let mut n = Vec::new();
         let res_dim = (s.fold(0, |acc, _| acc + 1), left_columns.len() + right_columns.len());
 
-
+        let r = repeat(InnerType::Empty).take(right_columns.len());
         for (i, j, k) in self {
             c.extend(j.iter().map(|x| x.to_owned()));
             match k {
                 Some(z) => c.extend(z.iter().map(|x| x.to_owned())),
-                None => c.extend(repeat(InnerType::Empty).take(right_columns.len())),
+                None => c.extend(r.clone()),
             }
 
 
