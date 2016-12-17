@@ -9,20 +9,28 @@ use aggregate::*;
 use traits::*;
 use std::iter::Chain;
 use dataframe::*;
+use std::hash::Hash;
+use std::fmt::Debug;
 
 #[derive(Clone)]
-pub struct DataFrameIterator<'a> {
-    pub names: Iter<'a, OuterType>,
-    pub data: AxisIter<'a, InnerType, usize>,
-    pub other: Vec<OuterType>,
+pub struct DataFrameIterator<'a, T, S>
+    where T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + 'a
+{
+    pub names: Iter<'a, S>,
+    pub data: AxisIter<'a, T, usize>,
+    pub other: Vec<S>,
     pub axis: UtahAxis,
 }
 
 
 
 
-impl<'a> Iterator for DataFrameIterator<'a> {
-    type Item = (OuterType, RowView<'a, InnerType>);
+impl<'a, T, S> Iterator for DataFrameIterator<'a, T, S>
+    where T: Clone + Debug,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+{
+    type Item = (S, RowView<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         match self.names.next() {
             Some(val) => {
@@ -37,21 +45,25 @@ impl<'a> Iterator for DataFrameIterator<'a> {
 }
 
 #[derive(Clone)]
-pub struct MapDF<'a, I, F, B>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
-          F: Fn(&InnerType) -> B
+pub struct MapDF<'a, T, S, I, F, B>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          F: Fn(&T) -> B,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     data: I,
     func: F,
     axis: UtahAxis,
 }
 
-impl<'a, I, F, B> MapDF<'a, I, F, B>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
-          F: Fn(&InnerType) -> B
+impl<'a, T, S, I, F, B> MapDF<'a, T, S, I, F, B>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          F: Fn(&T) -> B,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    pub fn new(df: I, f: F, axis: UtahAxis) -> MapDF<'a, I, F, B>
-        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    pub fn new(df: I, f: F, axis: UtahAxis) -> MapDF<'a, T, S, I, F, B>
+        where I: Iterator<Item = (S, RowView<'a, T>)>
     {
 
         MapDF {
@@ -62,12 +74,14 @@ impl<'a, I, F, B> MapDF<'a, I, F, B>
     }
 }
 
-impl<'a, I, F, B> Iterator for MapDF<'a, I, F, B>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
-          F: Fn(&InnerType) -> B,
-          B: 'a
+impl<'a, T, S, I, F, B> Iterator for MapDF<'a, T, S, I, F, B>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          F: Fn(&T) -> B,
+          B: 'a,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    type Item = (OuterType, Row<B>);
+    type Item = (S, Row<B>);
     fn next(&mut self) -> Option<Self::Item> {
         match self.data.next() {
 
@@ -83,21 +97,25 @@ impl<'a, I, F, B> Iterator for MapDF<'a, I, F, B>
 
 #[derive(Clone)]
 
-pub struct Select<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+pub struct Select<'a, T, S, I>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     pub data: I,
-    pub ind: Vec<OuterType>,
-    pub other: Vec<OuterType>,
+    pub ind: Vec<S>,
+    pub other: Vec<S>,
     pub axis: UtahAxis,
 }
 
 
-impl<'a, I> Select<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, T, S, I> Select<'a, T, S, I>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    pub fn new(df: I, ind: Vec<OuterType>, other: Vec<OuterType>, axis: UtahAxis) -> Select<'a, I>
-        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+    pub fn new(df: I, ind: Vec<S>, other: Vec<S>, axis: UtahAxis) -> Select<'a, T, S, I>
+        where I: Iterator<Item = (S, RowView<'a, T>)> + Clone
     {
 
         Select {
@@ -112,10 +130,12 @@ impl<'a, I> Select<'a, I>
 
 
 
-impl<'a, I> Iterator for Select<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> Iterator for Select<'a, T, S, I>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    type Item = (OuterType, RowView<'a, InnerType>);
+    type Item = (S, RowView<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.data.next() {
@@ -136,21 +156,25 @@ impl<'a, I> Iterator for Select<'a, I>
 }
 
 #[derive(Clone)]
-pub struct Remove<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+pub struct Remove<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     pub data: I,
-    pub ind: Vec<OuterType>,
-    pub other: Vec<OuterType>,
+    pub ind: Vec<S>,
+    pub other: Vec<S>,
     pub axis: UtahAxis,
 }
 
 
-impl<'a, I> Remove<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> Remove<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    pub fn new(df: I, ind: Vec<OuterType>, other: Vec<OuterType>, axis: UtahAxis) -> Remove<'a, I>
-        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+    pub fn new(df: I, ind: Vec<S>, other: Vec<S>, axis: UtahAxis) -> Remove<'a, I, T, S>
+        where I: Iterator<Item = (S, RowView<'a, T>)> + Clone
     {
 
         Remove {
@@ -164,10 +188,12 @@ impl<'a, I> Remove<'a, I>
 
 
 
-impl<'a, I> Iterator for Remove<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> Iterator for Remove<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    type Item = (OuterType, RowView<'a, InnerType>);
+    type Item = (S, RowView<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.data.next() {
@@ -187,29 +213,33 @@ impl<'a, I> Iterator for Remove<'a, I>
 }
 
 #[derive(Clone)]
-pub struct Append<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+pub struct Append<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     pub new_data: PutBack<I>,
-    pub other: Vec<OuterType>,
+    pub other: Vec<S>,
     pub axis: UtahAxis,
 }
 
 
 
 
-impl<'a, I> Append<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> Append<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     pub fn new(df: I,
-               name: OuterType,
-               data: RowView<'a, InnerType>,
-               other: Vec<OuterType>,
+               name: S,
+               data: RowView<'a, T>,
+               other: Vec<S>,
                axis: UtahAxis)
-               -> Append<'a, I>
-        where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+               -> Append<'a, I, T, S>
+        where I: Iterator<Item = (S, RowView<'a, T>)> + Clone
     {
-        let name = OuterType::from(name);
+        let name = S::from(name);
         let mut it = PutBack::new(df);
         it.put_back((name, data));
         Append {
@@ -221,10 +251,12 @@ impl<'a, I> Append<'a, I>
 }
 
 
-impl<'a, I> Iterator for Append<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> Iterator for Append<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    type Item = (OuterType, RowView<'a, InnerType>);
+    type Item = (S, RowView<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         self.new_data.next()
     }
@@ -232,41 +264,44 @@ impl<'a, I> Iterator for Append<'a, I>
 
 
 
-impl<'a> Aggregate<'a> for DataFrameIterator<'a> {
-    fn sumdf(self) -> Sum<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+impl<'a, T, S> Aggregate<'a, T, S> for DataFrameIterator<'a, T, S>
+    where T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+{
+    fn sumdf(self) -> Sum<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Sum::new(self, other, axis)
     }
 
-    fn maxdf(self) -> Max<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn maxdf(self) -> Max<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Max::new(self, other, axis)
     }
 
-    fn mindf(self) -> Min<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn mindf(self) -> Min<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Min::new(self, other, axis)
     }
 
-    fn mean(self) -> Mean<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn mean(self) -> Mean<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Mean::new(self, other, axis)
     }
 
-    fn stdev(self) -> Stdev<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn stdev(self) -> Stdev<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -275,46 +310,49 @@ impl<'a> Aggregate<'a> for DataFrameIterator<'a> {
 }
 
 
-impl<'a> Transform<'a> for DataFrameIterator<'a> {
-    fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
-        where OuterType: From<&'a T>,
+impl<'a, T, S> Transform<'a, T, S> for DataFrameIterator<'a, T, S>
+    where T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+{
+    fn select<U>(self, names: &'a [U]) -> Select<'a, T, S, Self>
+        where S: From<&'a U>,
               T: 'a
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
-        let names: Vec<OuterType> = names.iter()
-            .map(|x| OuterType::from(x))
+        let names: Vec<S> = names.iter()
+            .map(|x| S::from(x))
             .collect();
         Select::new(self, names, other, axis)
     }
 
 
-    fn remove<T>(self, names: &'a [T]) -> Remove<'a, Self>
-        where OuterType: From<&'a T>,
+    fn remove<U>(self, names: &'a [U]) -> Remove<'a, Self, T, S>
+        where S: From<&'a U>,
               T: 'a
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
-        let names: Vec<OuterType> = names.iter()
-            .map(|x| OuterType::from(x))
+        let names: Vec<S> = names.iter()
+            .map(|x| S::from(x))
             .collect();
         Remove::new(self, names, other, axis)
 
     }
 
-    fn append<T>(self, name: &'a T, data: RowView<'a, InnerType>) -> Append<'a, Self>
-        where OuterType: From<&'a T>,
+    fn append<U>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
+        where S: From<&'a U>,
               T: 'a
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
-        let name = OuterType::from(name);
+        let name = S::from(name);
         Append::new(self, name, data, other, axis)
 
     }
 
     fn concat<I>(self, other: I) -> Chain<Self, I>
-        where I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where I: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         self.chain(other)
     }
@@ -322,8 +360,8 @@ impl<'a> Transform<'a> for DataFrameIterator<'a> {
 
 
 
-    fn mapdf<F, B>(self, f: F) -> MapDF<'a, Self, F, B>
-        where F: Fn(&InnerType) -> B
+    fn mapdf<F, B>(self, f: F) -> MapDF<'a, T, S, Self, F, B>
+        where F: Fn(&T) -> B
     {
         let axis = self.axis.clone();
         MapDF::new(self, f, axis)
@@ -335,43 +373,45 @@ impl<'a> Transform<'a> for DataFrameIterator<'a> {
 
 
 
-impl<'a, I> Aggregate<'a> for Select<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> Aggregate<'a, T, S> for Select<'a, T, S, I>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    fn sumdf(self) -> Sum<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+    fn sumdf(self) -> Sum<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Sum::new(self, other, axis)
     }
 
-    fn maxdf(self) -> Max<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+    fn maxdf(self) -> Max<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Max::new(self, other, axis)
     }
 
-    fn mindf(self) -> Min<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+    fn mindf(self) -> Min<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Min::new(self, other, axis)
     }
 
-    fn mean(self) -> Mean<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+    fn mean(self) -> Mean<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Mean::new(self, other, axis)
     }
 
-    fn stdev(self) -> Stdev<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+    fn stdev(self) -> Stdev<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -379,54 +419,55 @@ impl<'a, I> Aggregate<'a> for Select<'a, I>
     }
 }
 
-impl<'a, I> Transform<'a> for Select<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> Transform<'a, T, S> for Select<'a, T, S, I>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
-        where OuterType: From<&'a T>,
+    fn select<U>(self, names: &'a [U]) -> Select<'a, T, S, Self>
+        where S: From<&'a U>,
               T: 'a
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let names = names.iter()
-            .map(|x| OuterType::from(x))
+            .map(|x| S::from(x))
             .collect();
         Select::new(self, names, other.clone(), axis)
     }
 
 
-    fn remove<T>(self, names: &'a [T]) -> Remove<'a, Self>
-        where OuterType: From<&'a T>,
-              T: 'a
+    fn remove<U>(self, names: &'a [U]) -> Remove<'a, Self, T, S>
+        where S: From<&'a U>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let names = names.iter()
-            .map(|x| OuterType::from(x))
+            .map(|x| S::from(x))
             .collect();
         Remove::new(self, names, other.clone(), axis)
 
     }
 
-    fn append<T>(self, name: &'a T, data: RowView<'a, InnerType>) -> Append<'a, Self>
-        where OuterType: From<&'a T>,
+    fn append<U>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
+        where S: From<&'a U>,
               T: 'a
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
-        let name = OuterType::from(name);
+        let name = S::from(name);
         Append::new(self, name, data, other, axis)
 
     }
     fn concat<J>(self, other: J) -> Chain<Self, J>
-        where J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where J: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         self.chain(other)
     }
 
 
-    fn mapdf<F, B>(self, f: F) -> MapDF<'a, Self, F, B>
-        where F: Fn(&InnerType) -> B
+    fn mapdf<F, B>(self, f: F) -> MapDF<'a, T, S, Self, F, B>
+        where F: Fn(&T) -> B
     {
         let axis = self.axis.clone();
         MapDF::new(self, f, axis)
@@ -437,43 +478,45 @@ impl<'a, I> Transform<'a> for Select<'a, I>
 
 
 
-impl<'a, I> Aggregate<'a> for Remove<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> Aggregate<'a, T, S> for Remove<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    fn sumdf(self) -> Sum<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn sumdf(self) -> Sum<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Sum::new(self, other, axis)
     }
 
-    fn maxdf(self) -> Max<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn maxdf(self) -> Max<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Max::new(self, other, axis)
     }
 
-    fn mindf(self) -> Min<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn mindf(self) -> Min<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Min::new(self, other, axis)
     }
 
-    fn mean(self) -> Mean<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn mean(self) -> Mean<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Mean::new(self, other, axis)
     }
 
-    fn stdev(self) -> Stdev<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn stdev(self) -> Stdev<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -481,52 +524,54 @@ impl<'a, I> Aggregate<'a> for Remove<'a, I>
     }
 }
 
-impl<'a, I> Transform<'a> for Remove<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> Transform<'a, T, S> for Remove<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
-        where OuterType: From<&'a T>
+    fn select<U>(self, names: &'a [U]) -> Select<'a, T, S, Self>
+        where S: From<&'a U>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let names = names.iter()
-            .map(|x| OuterType::from(x))
+            .map(|x| S::from(x))
             .collect();
         Select::new(self, names, other, axis)
     }
 
 
-    fn remove<T>(self, names: &'a [T]) -> Remove<'a, Self>
-        where OuterType: From<&'a T>
+    fn remove<U>(self, names: &'a [U]) -> Remove<'a, Self, T, S>
+        where S: From<&'a U>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let names = names.iter()
-            .map(|x| OuterType::from(x))
+            .map(|x| S::from(x))
             .collect();
         Remove::new(self, names, other, axis)
 
     }
 
-    fn append<T>(self, name: &'a T, data: RowView<'a, InnerType>) -> Append<'a, Self>
-        where OuterType: From<&'a T>
+    fn append<U>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
+        where S: From<&'a U>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
-        let name = OuterType::from(name);
+        let name = S::from(name);
         Append::new(self, name, data, other, axis)
 
     }
     fn concat<J>(self, other: J) -> Chain<Self, J>
-        where J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where J: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         self.chain(other)
     }
 
 
 
-    fn mapdf<F, B>(self, f: F) -> MapDF<'a, Self, F, B>
-        where F: Fn(&InnerType) -> B
+    fn mapdf<F, B>(self, f: F) -> MapDF<'a, T, S, Self, F, B>
+        where F: Fn(&T) -> B
     {
         let axis = self.axis.clone();
         MapDF::new(self, f, axis)
@@ -535,108 +580,114 @@ impl<'a, I> Transform<'a> for Remove<'a, I>
 
 
 
-impl<'a, I> Aggregate<'a> for Append<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> Aggregate<'a, T, S> for Append<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    fn sumdf(self) -> Sum<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn sumdf(self) -> Sum<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Sum::new(self, other, axis)
     }
 
-    fn maxdf(self) -> Max<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn maxdf(self) -> Max<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Max::new(self, other, axis)
     }
 
-    fn mindf(self) -> Min<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn mindf(self) -> Min<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Min::new(self, other, axis)
     }
 
-    fn mean(self) -> Mean<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn mean(self) -> Mean<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Mean::new(self, other, axis)
     }
 
-    fn stdev(self) -> Stdev<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+    fn stdev(self) -> Stdev<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Stdev::new(self, other, axis)
     }
 }
-impl<'a, I> Transform<'a> for Append<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> Transform<'a, T, S> for Append<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
-              OuterType: From<&'a T>
+    fn select<U>(self, names: &'a [U]) -> Select<'a, T, S, Self>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
+              S: From<&'a U>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let names = names.iter()
-            .map(|x| OuterType::from(x))
+            .map(|x| S::from(x))
             .collect();
         Select::new(self, names, other, axis)
     }
 
 
-    fn remove<T>(self, names: &'a [T]) -> Remove<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
-              OuterType: From<&'a T>
+    fn remove<U>(self, names: &'a [U]) -> Remove<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
+              S: From<&'a U>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let names = names.iter()
-            .map(|x| OuterType::from(x))
+            .map(|x| S::from(x))
             .collect();
         Remove::new(self, names, other, axis)
 
     }
 
-    fn append<T>(self, name: &'a T, data: RowView<'a, InnerType>) -> Append<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
-              OuterType: From<&'a T>
+    fn append<U>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
+              S: From<&'a U>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
-        let name = OuterType::from(name);
+        let name = S::from(name);
         Append::new(self, name, data, other, axis)
 
     }
     fn concat<J>(self, other: J) -> Chain<Self, J>
-        where J: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>
+        where J: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         self.chain(other)
     }
 
 
-    fn mapdf<F, B>(self, f: F) -> MapDF<'a, Self, F, B>
-        where F: Fn(&InnerType) -> B,
-              Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+    fn mapdf<F, B>(self, f: F) -> MapDF<'a, T, S, Self, F, B>
+        where F: Fn(&T) -> B,
+              Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone
     {
         let axis = self.axis.clone();
         MapDF::new(self, f, axis)
     }
 }
 
-impl<'a, I> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>)> for Remove<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Remove<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    fn to_df(self) -> DataFrame {
+    fn to_df(self) -> DataFrame<T, S> {
         let s = self.clone();
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -674,10 +725,12 @@ impl<'a, I> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>)> for Remove<'a, 
 
 
 
-impl<'a, I> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>)> for Append<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Append<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    fn to_df(self) -> DataFrame {
+    fn to_df(self) -> DataFrame<T, S> {
         let s = self.clone();
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -714,10 +767,12 @@ impl<'a, I> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>)> for Append<'a, 
 }
 
 
-impl<'a, I> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>)> for Select<'a, I>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Select<'a, T, S, I>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+          T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    fn to_df(self) -> DataFrame {
+    fn to_df(self) -> DataFrame<T, S> {
         let s = self.clone();
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -754,8 +809,11 @@ impl<'a, I> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>)> for Select<'a, 
 }
 
 
-impl<'a> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>)> for DataFrameIterator<'a> {
-    fn to_df(self) -> DataFrame {
+impl<'a, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for DataFrameIterator<'a, T, S>
+    where T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+{
+    fn to_df(self) -> DataFrame<T, S> {
         let s = self.clone();
         let other = self.other.clone();
         let axis = self.axis.clone();

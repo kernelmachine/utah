@@ -108,7 +108,7 @@ impl<'a, I> Iterator for Impute<'a, I>
 }
 
 
-impl<'a, I> Process<'a> for Impute<'a, I>
+impl<'a, I> Process<'a, InnerType, OuterType> for Impute<'a, I>
     where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
 {
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
@@ -119,7 +119,7 @@ impl<'a, I> Process<'a> for Impute<'a, I>
         Impute::new(self, strategy, other, axis)
     }
 
-    fn to_mut_df(self) -> MutableDataFrame<'a>
+    fn to_mut_df(self) -> MutableDataFrame<'a, InnerType, OuterType>
         where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
 
@@ -166,7 +166,7 @@ impl<'a, I> Process<'a> for Impute<'a, I>
     }
 }
 
-impl<'a> Process<'a> for MutableDataFrameIterator<'a> {
+impl<'a> Process<'a, InnerType, OuterType> for MutableDataFrameIterator<'a> {
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
@@ -176,7 +176,7 @@ impl<'a> Process<'a> for MutableDataFrameIterator<'a> {
         Impute::new(self, strategy, other, axis)
     }
 
-    fn to_mut_df(self) -> MutableDataFrame<'a>
+    fn to_mut_df(self) -> MutableDataFrame<'a, InnerType, OuterType>
         where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
         // let s = self.clone();
@@ -221,16 +221,17 @@ impl<'a> Process<'a> for MutableDataFrameIterator<'a> {
     }
 }
 
-impl<'a> ToDataFrame<'a, (OuterType, RowViewMut<'a, InnerType>)> for MutableDataFrameIterator<'a> {
-    fn to_df(self) -> DataFrame {
+impl<'a> ToDataFrame<'a, (OuterType, RowViewMut<'a, InnerType>), InnerType, OuterType> for MutableDataFrameIterator<'a>
+{
+    fn to_df(self) -> DataFrame<InnerType, OuterType> {
         self.to_mut_df().to_df()
     }
 }
 
-impl<'a, I> ToDataFrame<'a, (OuterType, RowViewMut<'a, InnerType>)> for Impute<'a, I>
+impl<'a, I> ToDataFrame<'a, (OuterType, RowViewMut<'a, InnerType>), InnerType, OuterType> for Impute<'a, I>
     where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
 {
-    fn to_df(self) -> DataFrame {
+    fn to_df(self) -> DataFrame<InnerType, OuterType> {
         self.to_mut_df().to_df()
     }
 }

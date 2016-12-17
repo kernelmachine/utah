@@ -5,55 +5,119 @@ use aggregate::*;
 use transform::*;
 use process::*;
 use dataframe::{DataFrame, MutableDataFrame};
+use std::hash::Hash;
+use std::fmt::Debug;
+use error::*;
+use join::*;
 
-
-
-pub trait Aggregate<'a> {
-    fn sumdf(self) -> Sum<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
-
-    fn maxdf(self) -> Max<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
-
-    fn mindf(self) -> Min<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
-
-    fn mean(self) -> Mean<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
-
-    fn stdev(self) -> Stdev<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+pub trait DataframeOps<'a, T, S>
+    where T: Clone + Debug,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+{
+    fn new<U: Clone + Debug>(data: Matrix<U>) -> DataFrame<T, S> where T: From<U>;
+    fn from_array<U: Clone>(data: Row<U>, axis: UtahAxis) -> DataFrame<T, S> where T: From<U>;
+    fn columns<U>(self, columns: &'a [U]) -> Result<DataFrame<T, S>> where S: From<&'a U>;
+    fn index<U>(self, index: &'a [U]) -> Result<DataFrame<T, S>> where S: From<&'a U>;
+    fn shape(self) -> (usize, usize);
+    fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, T, S>;
+    fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a>;
+    fn select<U>(&'a self,
+                 names: &'a [U],
+                 axis: UtahAxis)
+                 -> Select<'a, T, S, DataFrameIterator<'a, T, S>>
+        where S: From<&'a U>;
+    fn remove<U>(&'a self,
+                 names: &'a [U],
+                 axis: UtahAxis)
+                 -> Remove<'a, DataFrameIterator<'a, T, S>, T, S>
+        where S: From<&'a U>;
+    fn append<U>(&'a mut self,
+                 name: &'a U,
+                 data: RowView<'a, T>,
+                 axis: UtahAxis)
+                 -> Append<'a, DataFrameIterator<'a, T, S>, T, S>
+        where S: From<&'a U>;
+    fn inner_left_join(&'a self,
+                       other: &'a DataFrame<T, S>)
+                       -> InnerJoin<'a, DataFrameIterator<'a, T, S>, T, S>;
+    fn outer_left_join(&'a self,
+                       other: &'a DataFrame<T, S>)
+                       -> OuterJoin<'a, DataFrameIterator<'a, T, S>, T, S>;
+    fn inner_right_join(&'a self,
+                        other: &'a DataFrame<T, S>)
+                        -> InnerJoin<'a, DataFrameIterator<'a, T, S>, T, S>;
+    fn outer_right_join(&'a self,
+                        other: &'a DataFrame<T, S>)
+                        -> OuterJoin<'a, DataFrameIterator<'a, T, S>, T, S>;
+    fn sumdf(&'a mut self, axis: UtahAxis) -> Sum<'a, DataFrameIterator<'a, T, S>, T, S>;
+    fn map<F, B>(&'a mut self,
+                 f: F,
+                 axis: UtahAxis)
+                 -> MapDF<'a, T, S, DataFrameIterator<'a, T, S>, F, B>
+        where F: Fn(&T) -> B,
+              for<'r> F: Fn(&InnerType) -> B;
+    fn mean(&'a mut self, axis: UtahAxis) -> Mean<'a, DataFrameIterator<'a, T, S>, T, S>;
+    fn maxdf(&'a mut self, axis: UtahAxis) -> Max<'a, DataFrameIterator<'a, T, S>, T, S>;
+    fn min(&'a mut self, axis: UtahAxis) -> Min<'a, DataFrameIterator<'a, T, S>, T, S>;
+    fn stdev(&'a self, axis: UtahAxis) -> Stdev<'a, DataFrameIterator<'a, T, S>, T, S>;
+    fn impute(&'a mut self,
+              strategy: ImputeStrategy,
+              axis: UtahAxis)
+              -> Impute<'a, MutableDataFrameIterator<'a>>;
 }
-pub trait Process<'a> {
+pub trait Aggregate<'a, T, S>
+    where T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+{
+    fn sumdf(self) -> Sum<'a, Self, T, S> where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>;
+
+    fn maxdf(self) -> Max<'a, Self, T, S> where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>;
+
+    fn mindf(self) -> Min<'a, Self, T, S> where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>;
+
+    fn mean(self) -> Mean<'a, Self, T, S> where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>;
+
+    fn stdev(self) -> Stdev<'a, Self, T, S> where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>;
+}
+pub trait Process<'a, T, S>
+    where T: Clone + Debug,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+{
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
-    fn to_mut_df(self) -> MutableDataFrame<'a>
+    fn to_mut_df(self) -> MutableDataFrame<'a, T, S>
         where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
 }
-pub trait Transform<'a> {
-    fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
-              OuterType: From<&'a T>,
+pub trait Transform<'a, T, S>
+    where T: Clone + Debug + 'a,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+{
+    fn select<U>(self, names: &'a [U]) -> Select<'a, T, S, Self>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
+              S: From<&'a U>,
               T: 'a;
-    fn remove<T>(self, names: &'a [T]) -> Remove<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
-              OuterType: From<&'a T>,
+    fn remove<U>(self, names: &'a [U]) -> Remove<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
+              S: From<&'a U>,
               T: 'a;
-    fn append<T>(self, name: &'a T, data: RowView<'a, InnerType>) -> Append<'a, Self>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
-              OuterType: From<&'a T>,
+    fn append<U>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
+              S: From<&'a U>,
               T: 'a;
     fn concat<I>(self, other: I) -> Chain<Self, I>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>,
-              I: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>,
+              I: Sized + Iterator<Item = (S, RowView<'a, T>)>;
 
-    fn mapdf<F, B>(self, f: F) -> MapDF<'a, Self, F, B>
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
-              F: Fn(&InnerType) -> B;
+    fn mapdf<F, B>(self, f: F) -> MapDF<'a, T, S, Self, F, B>
+        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
+              F: Fn(&T) -> B;
 }
 
 
 
-pub trait ToDataFrame<'a, I> {
-    fn to_df(self) -> DataFrame where Self: Sized + Iterator<Item = I>;
+pub trait ToDataFrame<'a, I, T, S>
+    where T: Clone + Debug,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+{
+    fn to_df(self) -> DataFrame<T, S> where Self: Sized + Iterator<Item = I>;
 }

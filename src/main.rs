@@ -30,7 +30,7 @@ use dataframe::*;
 use types::*;
 
 use std::f64::NAN;
-use traits::{Transform, Process, Aggregate, ToDataFrame};
+use traits::{Transform, DataframeOps, Process, Aggregate, ToDataFrame};
 
 fn main() {
     let a = arr2(&[[2.0, 7.0], [3.0, NAN], [2.0, 4.0]]);
@@ -52,10 +52,11 @@ fn main() {
         .sumdf()
         .to_df();
     println!("{:?}", j);
-    // let res: DataFrame = df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_df();    // res.mapdf(|x| x.as_ref())
-    // println!("{:?}", res);
+    let res: DataFrame<InnerType, OuterType> = df.impute(ImputeStrategy::Mean, UtahAxis::Column)
+        .to_df();    // res.mapdf(|x| x.as_ref())
+    println!("{:?}", res);
     df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_df();
-    let res_1: DataFrame = df.inner_left_join(&df_1).to_df();
+    let res_1: DataFrame<InnerType, OuterType> = df.inner_left_join(&df_1).to_df();
     println!("join result - {:?}", res_1);
 
 }
