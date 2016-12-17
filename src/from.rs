@@ -52,6 +52,8 @@ impl From<String> for InnerType {
     }
 }
 
+
+
 impl<'a> From<&'a String> for InnerType {
     fn from(s: &'a String) -> InnerType {
         InnerType::Str(s.to_owned())

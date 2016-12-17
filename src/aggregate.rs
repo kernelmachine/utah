@@ -5,6 +5,8 @@ use dataframe::*;
 use ndarray::Array;
 use std::hash::Hash;
 use std::fmt::Debug;
+use std::ops::{Add, Div, Sub, Mul};
+use num::traits::One;
 
 #[derive(Clone)]
 pub struct Sum<'a, I, T, S>
@@ -36,7 +38,7 @@ impl<'a, I, T, S> Sum<'a, I, T, S>
 
 impl<'a, I, T, S> Iterator for Sum<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a,
+          T: Clone + Debug + 'a + Add<Output = T>,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     type Item = T;
@@ -82,7 +84,7 @@ impl<'a, I, T, S> Mean<'a, I, T, S>
 
 impl<'a, I, T, S> Iterator for Mean<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a,
+          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T>,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     type Item = T;
@@ -93,8 +95,8 @@ impl<'a, I, T, S> Iterator for Mean<'a, I, T, S>
             Some((_, dat)) => unsafe {
                 let size = dat.len();
                 let first_element = dat.uget(0).to_owned();
-                let sum = (0..size).fold(first_element, |x, y| x + dat.uget(y).to_owned() / size);
-                Some(sum)
+                let mean = (0..size).fold(first_element, |x, y| x + dat.uget(y).to_owned());
+                Some(mean)
                 // match dat.uget(0) {
                 //     &InnerType::Float(_) => return Some(sum / InnerType::Float(size as f64)),
                 //     &InnerType::Int32(_) => return Some(sum / InnerType::Int32(size as i32)),
@@ -184,7 +186,7 @@ impl<'a, I, T, S> Min<'a, I, T, S>
 
 impl<'a, I, T, S> Iterator for Min<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a,
+          T: Clone + Debug + 'a + Ord,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     type Item = T;
@@ -229,7 +231,7 @@ impl<'a, I, T, S> Stdev<'a, I, T, S>
 
 impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a,
+          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     type Item = T;
@@ -240,14 +242,14 @@ impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
             Some((_, dat)) => unsafe {
                 let size = dat.len();
                 let first_element = dat.uget(0).to_owned();
-                let mean = (0..size).fold(first_element, |x, y| x + dat.uget(y).to_owned() / size);
+                let mean = (0..size).fold(first_element, |x, y| x + dat.uget(y).to_owned());
 
-                // let mean = match dat.uget(0) {
-                //     &InnerType::Float(_) => sum / InnerType::Float(size as f64),
-                //     &InnerType::Int32(_) => sum / InnerType::Int32(size as i32),
-                //     &InnerType::Int64(_) => sum / InnerType::Int64(size as i64),
-                //     _ => InnerType::Empty,
-                // };
+// let mean = match dat.uget(0) {
+//     &InnerType::Float(_) => sum / InnerType::Float(size as f64),
+//     &InnerType::Int32(_) => sum / InnerType::Int32(size as i32),
+//     &InnerType::Int64(_) => sum / InnerType::Int64(size as i64),
+//     _ => InnerType::Empty,
+// };
 
                 let stdev = (0..size).fold(dat.uget(0).to_owned(), |x, y| {
                     x +
@@ -270,8 +272,8 @@ impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Stdev<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + One
 {
     fn to_df(self) -> DataFrame<T, S> {
         let other = self.other.clone();
@@ -289,12 +291,12 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Stdev<'a, I, T, S>
                 DataFrame {
                     columns: other,
                     data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-                    index: vec![OuterType::Int32(1)],
+                    index: vec![S::one()],
                 }
             }
             UtahAxis::Column => {
                 DataFrame {
-                    columns: vec![OuterType::Int32(1)],
+                    columns: vec![S::one()],
                     data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
                     index: other,
                 }

@@ -11,10 +11,12 @@ use join::*;
 use std::fmt::Debug;
 use std::hash::Hash;
 use traits::*;
+use std::ops::{Add, Sub, Mul, Div};
+
 /// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame<T, S>
-    where T: Clone + Debug,
+    where T: Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     pub columns: Vec<S>,
@@ -25,7 +27,7 @@ pub struct DataFrame<T, S>
 /// A read-write dataframe
 #[derive(Debug, PartialEq)]
 pub struct MutableDataFrame<'a, T, S>
-    where T: Clone + Debug + 'a,
+    where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     pub columns: Vec<S>,
@@ -192,7 +194,7 @@ impl<'a> DataframeOps<'a, f64, String> for DataFrame<f64, String> {
         }
     }
 
-    fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a> {
+    fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a, f64, String> {
         match axis {
             UtahAxis::Row => {
                 MutableDataFrameIterator {
@@ -602,7 +604,7 @@ impl<'a> DataframeOps<'a, f64, String> for DataFrame<f64, String> {
     fn impute(&'a mut self,
               strategy: ImputeStrategy,
               axis: UtahAxis)
-              -> Impute<'a, MutableDataFrameIterator<'a>> {
+              -> Impute<'a, MutableDataFrameIterator<'a, f64, String>, f64, String> {
 
         let index = self.index.clone();
         let columns = self.columns.clone();
@@ -841,7 +843,9 @@ impl<'a> DataframeOps<'a, InnerType, OuterType> for DataFrame<InnerType, OuterTy
         }
     }
 
-    fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a> {
+    fn df_iter_mut(&'a mut self,
+                   axis: UtahAxis)
+                   -> MutableDataFrameIterator<'a, InnerType, OuterType> {
         match axis {
             UtahAxis::Row => {
                 MutableDataFrameIterator {
@@ -1256,10 +1260,11 @@ impl<'a> DataframeOps<'a, InnerType, OuterType> for DataFrame<InnerType, OuterTy
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    fn impute(&'a mut self,
-              strategy: ImputeStrategy,
-              axis: UtahAxis)
-              -> Impute<'a, MutableDataFrameIterator<'a>> {
+    fn impute
+        (&'a mut self,
+         strategy: ImputeStrategy,
+         axis: UtahAxis)
+         -> Impute<'a, MutableDataFrameIterator<'a, InnerType, OuterType>, InnerType, OuterType> {
 
         let index = self.index.clone();
         let columns = self.columns.clone();
@@ -1280,7 +1285,6 @@ impl<'a> DataframeOps<'a, InnerType, OuterType> for DataFrame<InnerType, OuterTy
         }
     }
 }
-
 
 
 // To implement....?

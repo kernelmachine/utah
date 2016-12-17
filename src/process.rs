@@ -5,17 +5,25 @@ use std::slice::Iter;
 use dataframe::{DataFrame, MutableDataFrame};
 use traits::*;
 use ndarray::Array;
+use std::fmt::Debug;
+use std::hash::Hash;
+use std::ops::{Add, Sub, Mul, Div};
+use traits::Empty;
 
-pub struct MutableDataFrameIterator<'a> {
-    pub names: Iter<'a, OuterType>,
-    pub data: AxisIterMut<'a, InnerType, usize>,
-    pub other: Vec<OuterType>,
+pub struct MutableDataFrameIterator<'a, T, S>
+where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>,
+      S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a {
+    pub names: Iter<'a, S>,
+    pub data: AxisIterMut<'a, T, usize>,
+    pub other: Vec<S>,
     pub axis: UtahAxis,
 }
 
 
-impl<'a> Iterator for MutableDataFrameIterator<'a> {
-    type Item = (OuterType, RowViewMut<'a, InnerType>);
+impl<'a, T, S> Iterator for MutableDataFrameIterator<'a, T, S>
+where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>,
+      S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a{
+    type Item = (S, RowViewMut<'a, T>);
 
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -34,8 +42,10 @@ impl<'a> Iterator for MutableDataFrameIterator<'a> {
 
 
 #[derive(Clone)]
-pub struct Impute<'a, I>
-    where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)> + 'a
+pub struct Impute<'a, I, T, S>
+    where I: Iterator<Item = (S, RowViewMut<'a, T>)> + 'a,
+        T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     pub data: I,
     pub strategy: ImputeStrategy,
@@ -43,11 +53,13 @@ pub struct Impute<'a, I>
     pub axis: UtahAxis,
 }
 
-impl<'a, I> Impute<'a, I>
-    where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+impl<'a, I, T, S> Impute<'a, I,T,S>
+    where I: Iterator<Item = (S, RowViewMut<'a, T>)>,
+            T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    pub fn new(df: I, s: ImputeStrategy, other: Vec<OuterType>, axis: UtahAxis) -> Impute<'a, I>
-        where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+    pub fn new(df: I, s: ImputeStrategy, other: Vec<S>, axis: UtahAxis) -> Impute<'a, I, T, S>
+        where I: Iterator<Item = (S, RowViewMut<'a, T>)>
     {
 
         Impute {
@@ -59,10 +71,12 @@ impl<'a, I> Impute<'a, I>
     }
 }
 
-impl<'a, I> Iterator for Impute<'a, I>
-    where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+impl<'a, I, T, S> Iterator for Impute<'a, I, T, S>
+    where I: Iterator<Item = (S, RowViewMut<'a, T>)>,
+    T: Clone + Debug + 'a + Ord + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>,
+  S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    type Item = (OuterType, RowViewMut<'a, InnerType>);
+    type Item = (S, RowViewMut<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
 
         match self.data.next() {
@@ -73,18 +87,17 @@ impl<'a, I> Iterator for Impute<'a, I>
                     ImputeStrategy::Mean => unsafe {
                         let size = dat.len();
                         let first_element = dat.uget(0).to_owned();
-                        let sum = (0..size).fold(first_element, |x, y| x + dat.uget(y).to_owned());
+                        let mean = (0..size).fold(first_element, |x, y| x + dat.uget(y).to_owned());
 
-                        let mean = match dat.uget(0) {
-                            &InnerType::Float(_) => sum / InnerType::Float(size as f64),
-                            &InnerType::Int32(_) => sum / InnerType::Int32(size as i32),
-                            &InnerType::Int64(_) => sum / InnerType::Int64(size as i64),
-                            _ => InnerType::Empty,
-                        };
-                        println!("{:?}", mean);
+                        // let mean = match dat.uget(0) {
+                        //     &InnerType::Float(_) => sum / InnerType::Float(size as f64),
+                        //     &InnerType::Int32(_) => sum / InnerType::Int32(size as i32),
+                        //     &InnerType::Int64(_) => sum / InnerType::Int64(size as i64),
+                        //     _ => InnerType::Empty,
+                        // };
                         dat.mapv_inplace(|x| {
                             match x {
-                                InnerType::Empty => mean.to_owned(),
+                                Empty::<T>::empty => mean.to_owned(),
                                 _ => x.to_owned(),
                             }
                         });
@@ -94,7 +107,7 @@ impl<'a, I> Iterator for Impute<'a, I>
                         let max = dat.iter().max().map(|x| x.to_owned()).unwrap();
                         dat.mapv_inplace(|x| {
                             match x {
-                                InnerType::Empty => max.to_owned(),
+                                Empty::<T>::empty => max.to_owned(),
                                 _ => x.to_owned(),
                             }
 
@@ -108,10 +121,10 @@ impl<'a, I> Iterator for Impute<'a, I>
 }
 
 
-impl<'a, I> Process<'a, InnerType, OuterType> for Impute<'a, I>
+impl<'a, I> Process<'a, InnerType, OuterType> for Impute<'a, I, InnerType, OuterType>
     where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
 {
-    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
+    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, InnerType, OuterType>
         where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
         let other = self.other.clone();
@@ -166,8 +179,8 @@ impl<'a, I> Process<'a, InnerType, OuterType> for Impute<'a, I>
     }
 }
 
-impl<'a> Process<'a, InnerType, OuterType> for MutableDataFrameIterator<'a> {
-    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self>
+impl<'a> Process<'a, InnerType, OuterType> for MutableDataFrameIterator<'a, InnerType, OuterType> {
+    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, InnerType, OuterType>
         where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
     {
 
@@ -221,14 +234,14 @@ impl<'a> Process<'a, InnerType, OuterType> for MutableDataFrameIterator<'a> {
     }
 }
 
-impl<'a> ToDataFrame<'a, (OuterType, RowViewMut<'a, InnerType>), InnerType, OuterType> for MutableDataFrameIterator<'a>
+impl<'a> ToDataFrame<'a, (OuterType, RowViewMut<'a, InnerType>), InnerType, OuterType> for MutableDataFrameIterator<'a, InnerType, OuterType>
 {
     fn to_df(self) -> DataFrame<InnerType, OuterType> {
         self.to_mut_df().to_df()
     }
 }
 
-impl<'a, I> ToDataFrame<'a, (OuterType, RowViewMut<'a, InnerType>), InnerType, OuterType> for Impute<'a, I>
+impl<'a, I> ToDataFrame<'a, (OuterType, RowViewMut<'a, InnerType>), InnerType, OuterType> for Impute<'a, I, InnerType, OuterType>
     where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
 {
     fn to_df(self) -> DataFrame<InnerType, OuterType> {

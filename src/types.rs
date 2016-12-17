@@ -2,6 +2,8 @@ use chrono::*;
 use ndarray::{Array, ArrayView, ArrayViewMut, Ix};
 use std::ops::{Mul, Add, Sub, Div};
 use std::cmp::Ordering;
+use traits::Empty;
+use std::f64::NAN;
 
 #[derive(Hash, PartialOrd, PartialEq, Eq , Ord , Clone,  Debug)]
 pub enum OuterType {
@@ -305,5 +307,18 @@ impl Sub for InnerType {
                 }
             }
         }
+    }
+}
+
+
+impl Empty<InnerType> for InnerType {
+    fn empty(self) -> InnerType {
+        InnerType::Empty
+    }
+}
+
+impl Empty<f64> for f64 {
+    fn empty() -> f64 {
+        NAN
     }
 }

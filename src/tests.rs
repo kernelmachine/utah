@@ -58,7 +58,7 @@ pub mod tests {
     #[test]
     fn dataframe_creation() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
-        let df = DataFrame::new(a).columns(&["a", "b"]);
+        let df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]);
         assert!(df.is_ok())
     }
 
@@ -67,7 +67,7 @@ pub mod tests {
     fn dataframe_creation_datetime_index() {
         let a = arr2(&[[2., 3.], [3., 4.]]);
 
-        let df: Result<DataFrame> = DataFrame::new(a)
+        let df: Result<DataFrame<f64, String>> = DataFrame::new(a)
             .columns(&[UTC.ymd(2014, 7, 8).and_hms(9, 10, 11),
                        UTC.ymd(2014, 10, 5).and_hms(2, 5, 7)]);
         assert!(df.is_ok())
@@ -77,7 +77,7 @@ pub mod tests {
         let a = arr2(&[[InnerType::Str("string".to_string()), InnerType::Int64(1)],
                        [InnerType::Float(4.), InnerType::Int32(4)]]);
 
-        let df: Result<DataFrame> = DataFrame::new(a)
+        let df: Result<DataFrame<f64, String>> = DataFrame::new(a)
             .columns(&[UTC.ymd(2014, 7, 8).and_hms(9, 10, 11),
                        UTC.ymd(2014, 10, 5).and_hms(2, 5, 7)]);
         assert!(df.is_ok())
@@ -145,12 +145,12 @@ pub mod tests {
             e_index.push(i.to_string());
         }
 
-        let mut c_df = DataFrame::new(c)
+        let mut c_df: DataFrame<f64, String> = DataFrame::new(c)
             .columns(&c_names[..])
             .unwrap()
             .index(&c_index[..])
             .unwrap();
-        let e_df = DataFrame::new(e)
+        let e_df: DataFrame<f64, String> = DataFrame::new(e)
             .columns(&e_names[..])
             .unwrap()
             .index(&e_index[..])
