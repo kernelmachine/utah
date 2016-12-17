@@ -132,6 +132,41 @@ impl DataFrame {
         }
     }
 
+    pub fn from_array<'a, T: Clone>(data: Row<T>, axis: UtahAxis) -> DataFrame
+        where InnerType: From<T>
+    {
+        let res_dim = match axis {
+            UtahAxis::Column => (data.len(), 1),
+            UtahAxis::Row => (1, data.len()),
+        };
+        let data: Matrix<InnerType> = data.into_shape(res_dim).unwrap().mapv(InnerType::from);
+        let data: Matrix<InnerType> = data.mapv_into(|x| {
+            match x {
+                InnerType::Float(y) => {
+                    if y.is_nan() {
+                        return InnerType::Empty;
+                    } else {
+                        return x;
+                    }
+                }
+                _ => return x,
+            }
+
+        });
+        let columns: Vec<OuterType> = (0..res_dim.1)
+            .map(|x| OuterType::Str(x.to_string()))
+            .collect();
+
+        let index: Vec<OuterType> = (0..res_dim.0)
+            .map(|x| OuterType::Str(x.to_string()))
+            .collect();
+
+        DataFrame {
+            data: data,
+            columns: columns,
+            index: index,
+        }
+    }
     /// Populate the dataframe with a set of columns. The column elements can be any of `OuterType`. Example:
     ///
     /// ```
@@ -543,7 +578,7 @@ impl DataFrame {
     /// Get the maximum of entries along the specified `UtahAxis`.
     ///
     ///
-    /// ```
+    /// ```no_run
     /// use ndarray::arr2;
     /// use dataframe::DataFrame;
     ///

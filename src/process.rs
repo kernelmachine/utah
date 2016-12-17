@@ -164,11 +164,6 @@ impl<'a, I> Process<'a> for Impute<'a, I>
         }
 
     }
-    fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
-    {
-        self.to_mut_df().to_df()
-    }
 }
 
 impl<'a> Process<'a> for MutableDataFrameIterator<'a> {
@@ -224,9 +219,18 @@ impl<'a> Process<'a> for MutableDataFrameIterator<'a> {
 
         }
     }
-    fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
-    {
+}
+
+impl<'a> ToDataFrame<'a, (OuterType, RowViewMut<'a, InnerType>)> for MutableDataFrameIterator<'a> {
+    fn to_df(self) -> DataFrame {
+        self.to_mut_df().to_df()
+    }
+}
+
+impl<'a, I> ToDataFrame<'a, (OuterType, RowViewMut<'a, InnerType>)> for Impute<'a, I>
+    where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+{
+    fn to_df(self) -> DataFrame {
         self.to_mut_df().to_df()
     }
 }

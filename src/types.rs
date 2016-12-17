@@ -158,28 +158,33 @@ impl PartialEq for InnerType {
             &InnerType::Float(x) => {
                 match rhs {
                     &InnerType::Float(y) => x == y,
-                    _ => panic!(),
+                    _ => false,
                 }
             }
             &InnerType::Int32(x) => {
                 match rhs {
                     &InnerType::Int32(y) => x == y,
-                    _ => panic!(),
+                    _ => false,
                 }
             }
             &InnerType::Int64(ref x) => {
                 match rhs {
                     &InnerType::Int64(y) => x.to_owned() == y,
-                    _ => panic!(),
+                    _ => false,
                 }
             }
             &InnerType::Str(ref x) => {
                 match rhs {
                     &InnerType::Str(ref y) => x.to_owned() == y.to_owned(),
-                    _ => panic!(),
+                    _ => false,
                 }
             }
-            &InnerType::Empty => panic!(),
+            &InnerType::Empty => {
+                match rhs {
+                    &InnerType::Empty => true,
+                    _ => false,
+                }
+            }
         }
     }
 }

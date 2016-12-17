@@ -7,9 +7,7 @@ use process::*;
 use dataframe::{DataFrame, MutableDataFrame};
 
 
-pub trait ToDataFrame<'a> {
-    fn to_df(self) -> DataFrame where Self: Sized + Iterator<Item = InnerType>;
-}
+
 pub trait Aggregate<'a> {
     fn sumdf(self) -> Sum<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
@@ -31,13 +29,8 @@ pub trait Process<'a> {
         where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
     fn to_mut_df(self) -> MutableDataFrame<'a>
         where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
-    fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>;
 }
 pub trait Transform<'a> {
-    fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)>;
-
     fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
               OuterType: From<&'a T>,
@@ -59,7 +52,8 @@ pub trait Transform<'a> {
               F: Fn(&InnerType) -> B;
 }
 
-pub trait Join<'a> {
-    fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>, RowView<'a, InnerType>)>;
+
+
+pub trait ToDataFrame<'a, I> {
+    fn to_df(self) -> DataFrame where Self: Sized + Iterator<Item = I>;
 }

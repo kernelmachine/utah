@@ -236,12 +236,10 @@ impl<'a, I> Iterator for Stdev<'a, I>
 }
 
 
-impl<'a, I> ToDataFrame<'a> for Stdev<'a, I>
+impl<'a, I> ToDataFrame<'a, InnerType> for Stdev<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
-    fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = InnerType>
-    {
+    fn to_df(self) -> DataFrame {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
@@ -273,12 +271,10 @@ impl<'a, I> ToDataFrame<'a> for Stdev<'a, I>
 }
 
 
-impl<'a, I> ToDataFrame<'a> for Mean<'a, I>
+impl<'a, I> ToDataFrame<'a, InnerType> for Mean<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
-    fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = InnerType>
-    {
+    fn to_df(self) -> DataFrame {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
@@ -311,12 +307,10 @@ impl<'a, I> ToDataFrame<'a> for Mean<'a, I>
 
 
 
-impl<'a, I> ToDataFrame<'a> for Max<'a, I>
+impl<'a, I> ToDataFrame<'a, InnerType> for Max<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
-    fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = InnerType>
-    {
+    fn to_df(self) -> DataFrame {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
@@ -348,12 +342,10 @@ impl<'a, I> ToDataFrame<'a> for Max<'a, I>
 }
 
 
-impl<'a, I> ToDataFrame<'a> for Min<'a, I>
+impl<'a, I> ToDataFrame<'a, InnerType> for Min<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
-    fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = InnerType>
-    {
+    fn to_df(self) -> DataFrame {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
@@ -385,12 +377,10 @@ impl<'a, I> ToDataFrame<'a> for Min<'a, I>
 }
 
 
-impl<'a, I> ToDataFrame<'a> for Sum<'a, I>
+impl<'a, I> ToDataFrame<'a, InnerType> for Sum<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
-    fn to_df(self) -> DataFrame
-        where Self: Sized + Iterator<Item = InnerType>
-    {
+    fn to_df(self) -> DataFrame {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();

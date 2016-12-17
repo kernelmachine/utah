@@ -1,4 +1,4 @@
-use traits::Join;
+use traits::ToDataFrame;
 use types::*;
 use std::iter::Iterator;
 use std::iter::repeat;
@@ -94,7 +94,7 @@ impl<'a, L> OuterJoin<'a, L>
 impl<'a, L> Iterator for OuterJoin<'a, L>
     where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
-    type Item = (OuterType, Row<InnerType>, Option<Row<InnerType>>);
+    type Item = (OuterType, RowView<'a, InnerType>, Option<RowView<'a, InnerType>>);
 
     fn next(&mut self) -> Option<Self::Item> {
 
@@ -102,8 +102,8 @@ impl<'a, L> Iterator for OuterJoin<'a, L>
             Some((k, lv)) => {
                 let rv = self.right.get(&k);
                 match rv {
-                    Some(v) => return Some((k, lv.to_owned(), Some(v.to_owned()))),
-                    None => Some((k, lv.to_owned(), None)),
+                    Some(v) => return Some((k, lv, Some(*v))),
+                    None => Some((k, lv, None)),
                 }
 
             }
@@ -114,7 +114,7 @@ impl<'a, L> Iterator for OuterJoin<'a, L>
 }
 
 
-impl<'a, L> Join<'a> for InnerJoin<'a, L>
+impl<'a, L> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>, RowView<'a, InnerType>)>  for InnerJoin<'a, L>
     where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     fn to_df(self) -> DataFrame {
@@ -124,7 +124,7 @@ impl<'a, L> Join<'a> for InnerJoin<'a, L>
         let left_columns = self.left_columns.clone();
         let mut c = Vec::new();
         let mut n = Vec::new();
-        let res_dim = (s.fold(0, |acc, _| acc + 1), right_columns.len() + left_columns.len());
+        let res_dim = (s.fold(0, |acc, _| acc + 1), left_columns.len() + right_columns.len());
 
 
         for (i, j, k) in self {
@@ -134,8 +134,8 @@ impl<'a, L> Join<'a> for InnerJoin<'a, L>
             n.push(i.to_owned());
         }
 
-        let columns: Vec<_> = right_columns.iter()
-            .chain(left_columns.iter())
+        let columns: Vec<_> = left_columns.iter()
+            .chain(right_columns.iter())
             .map(|x| x.to_owned())
             .collect();
 
@@ -150,7 +150,7 @@ impl<'a, L> Join<'a> for InnerJoin<'a, L>
 }
 
 
-impl<'a, L> Join<'a> for OuterJoin<'a, L>
+impl<'a, L> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>, Option<RowView<'a, InnerType>>)> for OuterJoin<'a, L>
     where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
     fn to_df(self) -> DataFrame {
@@ -160,7 +160,7 @@ impl<'a, L> Join<'a> for OuterJoin<'a, L>
         let left_columns = self.left_columns.clone();
         let mut c = Vec::new();
         let mut n = Vec::new();
-        let res_dim = (s.fold(0, |acc, _| acc + 1), right_columns.len() + left_columns.len());
+        let res_dim = (s.fold(0, |acc, _| acc + 1), left_columns.len() + right_columns.len());
 
 
         for (i, j, k) in self {
@@ -173,9 +173,8 @@ impl<'a, L> Join<'a> for OuterJoin<'a, L>
 
             n.push(i.to_owned());
         }
-
-        let columns: Vec<_> = right_columns.iter()
-            .chain(left_columns.iter())
+        let columns: Vec<_> = left_columns.iter()
+            .chain(right_columns.iter())
             .map(|x| x.to_owned())
             .collect();
 

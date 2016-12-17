@@ -1,6 +1,7 @@
 
 #![feature(test)]
 #![feature(conservative_impl_trait)]
+#![feature(specialization)]
 
 #[macro_use]
 
@@ -29,7 +30,7 @@ use dataframe::*;
 use types::*;
 
 use std::f64::NAN;
-use traits::{Transform, Process, Join, Aggregate, ToDataFrame};
+use traits::{Transform, Process, Aggregate, ToDataFrame};
 
 fn main() {
     let a = arr2(&[[2.0, 7.0], [3.0, NAN], [2.0, 4.0]]);

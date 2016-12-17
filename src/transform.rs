@@ -276,43 +276,6 @@ impl<'a> Aggregate<'a> for DataFrameIterator<'a> {
 
 
 impl<'a> Transform<'a> for DataFrameIterator<'a> {
-    fn to_df(self) -> DataFrame {
-        let s = self.clone();
-        let other = self.other.clone();
-        let axis = self.axis.clone();
-        let mut c = Vec::new();
-        let mut n = Vec::new();
-        let res_dim = match axis {
-            UtahAxis::Row => (s.fold(0, |acc, _| acc + 1), other.len()),
-            UtahAxis::Column => (other.len(), s.fold(0, |acc, _| acc + 1)),
-        };
-
-        for (i, j) in self {
-            c.extend(j.iter().map(|x| x.to_owned()));
-            n.push(i.to_owned());
-        }
-
-
-        match axis {
-            UtahAxis::Row => {
-                DataFrame {
-                    columns: other,
-                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-                    index: n,
-                }
-            }
-            UtahAxis::Column => {
-                DataFrame {
-                    columns: n,
-                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-                    index: other,
-                }
-            }
-
-        }
-    }
-
-
     fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
         where OuterType: From<&'a T>,
               T: 'a
@@ -419,44 +382,6 @@ impl<'a, I> Aggregate<'a> for Select<'a, I>
 impl<'a, I> Transform<'a> for Select<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
-    fn to_df(self) -> DataFrame {
-        let s = self.clone();
-        let other = self.other.clone();
-        let axis = self.axis.clone();
-        let mut c = Vec::new();
-        let mut n = Vec::new();
-        let res_dim = match axis {
-            UtahAxis::Row => (s.fold(0, |acc, _| acc + 1), other.len()),
-            UtahAxis::Column => (other.len(), s.fold(0, |acc, _| acc + 1)),
-        };
-
-        for (i, j) in self {
-            c.extend(j.iter().map(|x| x.to_owned()));
-            n.push(i.to_owned());
-        }
-
-
-        match axis {
-            UtahAxis::Row => {
-                DataFrame {
-                    columns: other,
-                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-                    index: n,
-                }
-            }
-            UtahAxis::Column => {
-                DataFrame {
-                    columns: n,
-                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-                    index: other,
-                }
-            }
-
-        }
-    }
-
-
-
     fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
         where OuterType: From<&'a T>,
               T: 'a
@@ -559,41 +484,6 @@ impl<'a, I> Aggregate<'a> for Remove<'a, I>
 impl<'a, I> Transform<'a> for Remove<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
-    fn to_df(self) -> DataFrame {
-        let s = self.clone();
-        let other = self.other.clone();
-        let axis = self.axis.clone();
-        let mut c = Vec::new();
-        let mut n = Vec::new();
-        let res_dim = match axis {
-            UtahAxis::Row => (s.fold(0, |acc, _| acc + 1), other.len()),
-            UtahAxis::Column => (other.len(), s.fold(0, |acc, _| acc + 1)),
-        };
-
-        for (i, j) in self {
-            c.extend(j.iter().map(|x| x.to_owned()));
-            n.push(i.to_owned());
-        }
-
-        match axis {
-            UtahAxis::Row => {
-                DataFrame {
-                    columns: other,
-                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-                    index: n,
-                }
-            }
-            UtahAxis::Column => {
-                DataFrame {
-                    columns: n,
-                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-                    index: other,
-                }
-            }
-
-        }
-    }
-
     fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
         where OuterType: From<&'a T>
     {
@@ -691,42 +581,6 @@ impl<'a, I> Aggregate<'a> for Append<'a, I>
 impl<'a, I> Transform<'a> for Append<'a, I>
     where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
 {
-    fn to_df(self) -> DataFrame {
-        let s = self.clone();
-        let other = self.other.clone();
-        let axis = self.axis.clone();
-        let mut c = Vec::new();
-        let mut n = Vec::new();
-        let res_dim = match axis {
-            UtahAxis::Row => (s.fold(0, |acc, _| acc + 1), other.len()),
-            UtahAxis::Column => (other.len(), s.fold(0, |acc, _| acc + 1)),
-        };
-
-        for (i, j) in self {
-            c.extend(j.iter().map(|x| x.to_owned()));
-            n.push(i.to_owned());
-        }
-
-
-        match axis {
-            UtahAxis::Row => {
-                DataFrame {
-                    columns: other,
-                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-                    index: n,
-                }
-            }
-            UtahAxis::Column => {
-                DataFrame {
-                    columns: n,
-                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-                    index: other,
-                }
-            }
-
-        }
-    }
-
     fn select<T>(self, names: &'a [T]) -> Select<'a, Self>
         where Self: Sized + Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone,
               OuterType: From<&'a T>
@@ -776,5 +630,163 @@ impl<'a, I> Transform<'a> for Append<'a, I>
     {
         let axis = self.axis.clone();
         MapDF::new(self, f, axis)
+    }
+}
+
+impl<'a, I> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>)> for Remove<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+{
+    fn to_df(self) -> DataFrame {
+        let s = self.clone();
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        let mut c = Vec::new();
+        let mut n = Vec::new();
+        let res_dim = match axis {
+            UtahAxis::Row => (s.fold(0, |acc, _| acc + 1), other.len()),
+            UtahAxis::Column => (other.len(), s.fold(0, |acc, _| acc + 1)),
+        };
+
+        for (i, j) in self {
+            c.extend(j.iter().map(|x| x.to_owned()));
+            n.push(i.to_owned());
+        }
+
+        match axis {
+            UtahAxis::Row => {
+                DataFrame {
+                    columns: other,
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: n,
+                }
+            }
+            UtahAxis::Column => {
+                DataFrame {
+                    columns: n,
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: other,
+                }
+            }
+
+        }
+    }
+}
+
+
+
+impl<'a, I> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>)> for Append<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+{
+    fn to_df(self) -> DataFrame {
+        let s = self.clone();
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        let mut c = Vec::new();
+        let mut n = Vec::new();
+        let res_dim = match axis {
+            UtahAxis::Row => (s.fold(0, |acc, _| acc + 1), other.len()),
+            UtahAxis::Column => (other.len(), s.fold(0, |acc, _| acc + 1)),
+        };
+
+        for (i, j) in self {
+            c.extend(j.iter().map(|x| x.to_owned()));
+            n.push(i.to_owned());
+        }
+
+        match axis {
+            UtahAxis::Row => {
+                DataFrame {
+                    columns: other,
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: n,
+                }
+            }
+            UtahAxis::Column => {
+                DataFrame {
+                    columns: n,
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: other,
+                }
+            }
+
+        }
+    }
+}
+
+
+impl<'a, I> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>)> for Select<'a, I>
+    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+{
+    fn to_df(self) -> DataFrame {
+        let s = self.clone();
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        let mut c = Vec::new();
+        let mut n = Vec::new();
+        let res_dim = match axis {
+            UtahAxis::Row => (s.fold(0, |acc, _| acc + 1), other.len()),
+            UtahAxis::Column => (other.len(), s.fold(0, |acc, _| acc + 1)),
+        };
+
+        for (i, j) in self {
+            c.extend(j.iter().map(|x| x.to_owned()));
+            n.push(i.to_owned());
+        }
+
+        match axis {
+            UtahAxis::Row => {
+                DataFrame {
+                    columns: other,
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: n,
+                }
+            }
+            UtahAxis::Column => {
+                DataFrame {
+                    columns: n,
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: other,
+                }
+            }
+
+        }
+    }
+}
+
+
+impl<'a> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>)> for DataFrameIterator<'a> {
+    fn to_df(self) -> DataFrame {
+        let s = self.clone();
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        let mut c = Vec::new();
+        let mut n = Vec::new();
+        let res_dim = match axis {
+            UtahAxis::Row => (s.fold(0, |acc, _| acc + 1), other.len()),
+            UtahAxis::Column => (other.len(), s.fold(0, |acc, _| acc + 1)),
+        };
+
+        for (i, j) in self {
+            c.extend(j.iter().map(|x| x.to_owned()));
+            n.push(i.to_owned());
+        }
+
+        match axis {
+            UtahAxis::Row => {
+                DataFrame {
+                    columns: other,
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: n,
+                }
+            }
+            UtahAxis::Column => {
+                DataFrame {
+                    columns: n,
+                    data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+                    index: other,
+                }
+            }
+
+        }
     }
 }
