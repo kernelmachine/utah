@@ -4,6 +4,7 @@ use std::ops::{Mul, Add, Sub, Div};
 use std::cmp::Ordering;
 use traits::Empty;
 use std::f64::NAN;
+use std::default::Default;
 
 #[derive(Hash, PartialOrd, PartialEq, Eq , Ord , Clone,  Debug)]
 pub enum OuterType {
@@ -309,16 +310,51 @@ impl Sub for InnerType {
         }
     }
 }
-
+// impl One for InnerType {
+//     fn one() -> InnerType {
+//         InnerType::Float(1.0)
+//     }
+// }
+//
+// impl Zero for InnerType {
+//     fn zero() -> InnerType {
+//         InnerType::Float(0.0)
+//     }
+//     fn is_zero(&self) -> bool {
+//         *self == InnerType::Float(0.0)
+//     }
+// }
 
 impl Empty<InnerType> for InnerType {
-    fn empty(self) -> InnerType {
+    fn empty() -> InnerType {
         InnerType::Empty
+    }
+    fn is_empty(&self) -> bool {
+        match *self {
+            InnerType::Float(x) => x == NAN,
+            InnerType::Empty => true,
+            _ => false,
+        }
     }
 }
 
 impl Empty<f64> for f64 {
     fn empty() -> f64 {
         NAN
+    }
+    fn is_empty(&self) -> bool {
+        *self == NAN
+    }
+}
+
+impl Default for OuterType {
+    fn default() -> OuterType {
+        OuterType::Int32(1)
+    }
+}
+
+impl Default for InnerType {
+    fn default() -> InnerType {
+        InnerType::Int32(1)
     }
 }

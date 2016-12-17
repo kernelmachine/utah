@@ -30,7 +30,7 @@ use dataframe::*;
 use types::*;
 
 use std::f64::NAN;
-use traits::{Transform, DataframeOps, Process, Aggregate, ToDataFrame};
+use traits::{Transform, DataframeOps, Aggregate, ToDataFrame};
 
 fn main() {
     let a = arr2(&[[2.0, 7.0], [3.0, NAN], [2.0, 4.0]]);
@@ -45,7 +45,7 @@ fn main() {
 
     // let df_iter: DataFrameIterator = df_1.df_iter(UtahAxis::Row);
     df.impute(ImputeStrategy::Mode, UtahAxis::Column).to_df();
-    let mut j = df.df_iter(UtahAxis::Row)
+    let j = df.df_iter(UtahAxis::Row)
         .remove(&remove_idx[..])
         .select(&select_idx[..])
         .append(&append_idx, new_data.view())
@@ -53,9 +53,10 @@ fn main() {
         .to_df();
     println!("{:?}", j);
     let res: DataFrame<InnerType, OuterType> = df.impute(ImputeStrategy::Mean, UtahAxis::Column)
-        .to_df();    // res.mapdf(|x| x.as_ref())
+        .to_df();
+    // .to_df();    // res.mapdf(|x| x.as_ref())
     println!("{:?}", res);
-    df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_df();
+    // df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_df();
     let res_1: DataFrame<InnerType, OuterType> = df.inner_left_join(&df_1).to_df();
     println!("join result - {:?}", res_1);
 

@@ -6,7 +6,7 @@ use ndarray::Array;
 use std::hash::Hash;
 use std::fmt::Debug;
 use std::ops::{Add, Div, Sub, Mul};
-use num::traits::One;
+use std::default::Default;
 
 #[derive(Clone)]
 pub struct Sum<'a, I, T, S>
@@ -272,8 +272,8 @@ impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Stdev<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + One
+          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default+ From<String>
 {
     fn to_df(self) -> DataFrame<T, S> {
         let other = self.other.clone();
@@ -291,12 +291,12 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Stdev<'a, I, T, S>
                 DataFrame {
                     columns: other,
                     data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-                    index: vec![S::one()],
+                    index: vec![S::default()],
                 }
             }
             UtahAxis::Column => {
                 DataFrame {
-                    columns: vec![S::one()],
+                    columns: vec![S::default()],
                     data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
                     index: other,
                 }
@@ -307,10 +307,11 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Stdev<'a, I, T, S>
 }
 
 
-impl<'a, I> ToDataFrame<'a, InnerType, InnerType, OuterType> for Mean<'a, I, InnerType, OuterType>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I,T,S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>,
+    S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default+ From<String>
 {
-    fn to_df(self) -> DataFrame<InnerType, OuterType> {
+    fn to_df(self) -> DataFrame<T, S> {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
@@ -326,12 +327,12 @@ impl<'a, I> ToDataFrame<'a, InnerType, InnerType, OuterType> for Mean<'a, I, Inn
                 DataFrame {
                     columns: other,
                     data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-                    index: vec![OuterType::Int32(1)],
+                    index: vec![S::default()],
                 }
             }
             UtahAxis::Column => {
                 DataFrame {
-                    columns: vec![OuterType::Int32(1)],
+                    columns: vec![S::default()],
                     data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
                     index: other,
                 }
@@ -343,10 +344,11 @@ impl<'a, I> ToDataFrame<'a, InnerType, InnerType, OuterType> for Mean<'a, I, Inn
 
 
 
-impl<'a, I> ToDataFrame<'a, InnerType, InnerType, OuterType> for Max<'a, I, InnerType, OuterType>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Max<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,T: Clone + Debug + Ord + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>,
+    S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default+ From<String>
 {
-    fn to_df(self) -> DataFrame<InnerType, OuterType> {
+    fn to_df(self) -> DataFrame<T, S> {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
@@ -362,12 +364,12 @@ impl<'a, I> ToDataFrame<'a, InnerType, InnerType, OuterType> for Max<'a, I, Inne
                 DataFrame {
                     columns: other,
                     data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-                    index: vec![OuterType::Int32(1)],
+                    index: vec![S::default()],
                 }
             }
             UtahAxis::Column => {
                 DataFrame {
-                    columns: vec![OuterType::Int32(1)],
+                    columns: vec![S::default()],
                     data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
                     index: other,
                 }
@@ -413,10 +415,12 @@ impl<'a, I> ToDataFrame<'a, InnerType, InnerType, OuterType> for Min<'a, I, Inne
 }
 
 
-impl<'a, I> ToDataFrame<'a, InnerType, InnerType, OuterType> for Sum<'a, I, InnerType, OuterType>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Sum<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+    T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>,
+    S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default + From<String>
 {
-    fn to_df(self) -> DataFrame<InnerType, OuterType> {
+    fn to_df(self) -> DataFrame<T, S> {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
@@ -432,12 +436,12 @@ impl<'a, I> ToDataFrame<'a, InnerType, InnerType, OuterType> for Sum<'a, I, Inne
                 DataFrame {
                     columns: other,
                     data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-                    index: vec![OuterType::Int32(1)],
+                    index: vec![S::default()],
                 }
             }
             UtahAxis::Column => {
                 DataFrame {
-                    columns: vec![OuterType::Int32(1)],
+                    columns: vec![S::default()],
                     data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
                     index: other,
                 }

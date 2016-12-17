@@ -84,8 +84,8 @@ impl<'a> From<&'a String> for OuterType {
     }
 }
 
-impl<'a> From<&'a DateTime<UTC>> for OuterType {
-    fn from(d: &'a DateTime<UTC>) -> OuterType {
+impl<'a> From<DateTime<UTC>> for OuterType {
+    fn from(d: DateTime<UTC>) -> OuterType {
         OuterType::Date(d.to_owned())
     }
 }

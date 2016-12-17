@@ -8,7 +8,6 @@ use ndarray::Array;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::{Add, Sub, Mul, Div};
-use traits::Empty;
 
 pub struct MutableDataFrameIterator<'a, T, S>
 where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>,
@@ -49,7 +48,7 @@ pub struct Impute<'a, I, T, S>
 {
     pub data: I,
     pub strategy: ImputeStrategy,
-    pub other: Vec<OuterType>,
+    pub other: Vec<S>,
     pub axis: UtahAxis,
 }
 
@@ -78,7 +77,7 @@ impl<'a, I, T, S> Iterator for Impute<'a, I, T, S>
 {
     type Item = (S, RowViewMut<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
-
+        let emp : T = T::empty();
         match self.data.next() {
 
             None => return None,
@@ -86,6 +85,7 @@ impl<'a, I, T, S> Iterator for Impute<'a, I, T, S>
                 match self.strategy {
                     ImputeStrategy::Mean => unsafe {
                         let size = dat.len();
+
                         let first_element = dat.uget(0).to_owned();
                         let mean = (0..size).fold(first_element, |x, y| x + dat.uget(y).to_owned());
 
@@ -96,19 +96,25 @@ impl<'a, I, T, S> Iterator for Impute<'a, I, T, S>
                         //     _ => InnerType::Empty,
                         // };
                         dat.mapv_inplace(|x| {
-                            match x {
-                                Empty::<T>::empty => mean.to_owned(),
-                                _ => x.to_owned(),
+                            if x == emp {
+                                mean.to_owned()
                             }
+                            else{
+                                x.to_owned()
+                            }
+
                         });
                         Some((val, dat))
                     },
+
                     ImputeStrategy::Mode => {
                         let max = dat.iter().max().map(|x| x.to_owned()).unwrap();
                         dat.mapv_inplace(|x| {
-                            match x {
-                                Empty::<T>::empty => max.to_owned(),
-                                _ => x.to_owned(),
+                            if x == emp {
+                                max.to_owned()
+                            }
+                            else{
+                                x.to_owned()
                             }
 
                         });
