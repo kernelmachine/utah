@@ -62,19 +62,19 @@ pub mod tests {
         assert!(df.is_ok())
     }
 
-    // #[test]
-    // fn dataframe_creation_datetime_index() {
-    //     let a = arr2(&[[2., 3.], [3., 4.]]);
-    //
-    //     let df: Result<DataFrame<f64, DateTime<UTC>>> = DataFrame::new(a)
-    //         .columns(&[UTC.ymd(2014, 7, 8).and_hms(9, 10, 11),
-    //                    UTC.ymd(2014, 10, 5).and_hms(2, 5, 7)]);
-    //     assert!(df.is_ok())
-    // }
+    #[test]
+    fn dataframe_creation_datetime_index() {
+        let a = arr2(&[[2., 3.], [3., 4.]]);
+
+        let df: Result<DataFrame<f64, DateTime<UTC>>> = DataFrame::new(a)
+            .columns(&[UTC.ymd(2014, 7, 8).and_hms(9, 10, 11),
+                       UTC.ymd(2014, 10, 5).and_hms(2, 5, 7)]);
+        assert!(df.is_ok())
+    }
     #[test]
     fn dataframe_creation_mixed_types() {
-        let a = arr2(&[[InnerType::Str("string".to_string()), InnerType::Int64(1)],
-                       [InnerType::Float(4.), InnerType::Int32(4)]]);
+        let a = arr2(&[[InnerType::Str("string".into()), InnerType::Float(14.)],
+                       [InnerType::Float(4.), InnerType::Str("foo".into())]]);
 
         let df: Result<DataFrame<InnerType, OuterType>> = DataFrame::new(a)
             .columns(&[UTC.ymd(2014, 7, 8).and_hms(9, 10, 11),

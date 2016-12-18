@@ -30,12 +30,12 @@ use dataframe::*;
 use types::*;
 
 use std::f64::NAN;
-use traits::{Transform, DataframeOps, Aggregate, ToDataFrame};
+use traits::{Transform, DataframeOps, DataframeConstructor, Aggregate, ToDataFrame};
 
 fn main() {
-    let a = arr2(&[[2.0, 7.0], [3.0, NAN], [2.0, 4.0]]);
-    let b = arr2(&[[2, 6], [3, 4]]);
-    let c = arr2(&[[2.0, 6.0], [3.0, 4.0], [2.0, 1.0]]);
+    let a = arr2(&[[2., 7.], [3., NAN], [2., 4.]]);
+    let b = arr2(&[[2., 6.], [3., 4.]]);
+    let c = arr2(&[[2., 6.], [3., 4.], [2., 1.]]);
     let mut df = DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2", "3"]).unwrap();
     let df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap().index(&["1", "2"]).unwrap();
     let new_data = c.column(1).mapv(InnerType::from);

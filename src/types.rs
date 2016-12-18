@@ -5,6 +5,7 @@ use std::cmp::Ordering;
 use traits::Empty;
 use std::f64::NAN;
 use std::default::Default;
+use num::traits::One;
 
 #[derive(Hash, PartialOrd, PartialEq, Eq , Ord , Clone,  Debug)]
 pub enum OuterType {
@@ -18,8 +19,6 @@ pub enum OuterType {
 #[derive(Clone, Debug)]
 pub enum InnerType {
     Float(f64),
-    Int64(i64),
-    Int32(i32),
     Str(String),
     Empty,
 }
@@ -73,18 +72,7 @@ impl Mul for InnerType {
                     _ => InnerType::Empty,
                 }
             }
-            InnerType::Int32(x) => {
-                match rhs {
-                    InnerType::Int32(y) => InnerType::Int32(x * y),
-                    _ => InnerType::Empty,
-                }
-            }
-            InnerType::Int64(x) => {
-                match rhs {
-                    InnerType::Int64(y) => InnerType::Int64(x * y),
-                    _ => InnerType::Empty,
-                }
-            }
+
             InnerType::Str(_) => {
                 match rhs {
                     _ => InnerType::Empty,
@@ -93,8 +81,7 @@ impl Mul for InnerType {
             InnerType::Empty => {
                 match rhs {
                     InnerType::Float(y) => InnerType::Float(y),
-                    InnerType::Int32(y) => InnerType::Int32(y),
-                    InnerType::Int64(y) => InnerType::Int64(y),
+
                     _ => InnerType::Empty,
                 }
             }
@@ -122,20 +109,7 @@ impl PartialOrd for InnerType {
                     _ => panic!(),
                 }
             }
-            &InnerType::Int32(x) => {
-                match rhs {
-                    &InnerType::Int32(y) => Some(x.cmp(&y)),
-                    &InnerType::Empty => Some(x.cmp(&(x - 1))),
-                    _ => panic!(),
-                }
-            }
-            &InnerType::Int64(x) => {
-                match rhs {
-                    &InnerType::Int64(y) => Some(x.cmp(&y)),
-                    &InnerType::Empty => Some(x.cmp(&(x - 1))),
-                    _ => panic!(),
-                }
-            }
+
             &InnerType::Str(ref x) => {
                 match rhs {
                     &InnerType::Str(ref y) => Some(x.cmp(&y)),
@@ -145,8 +119,7 @@ impl PartialOrd for InnerType {
             &InnerType::Empty => {
                 match rhs {
                     &InnerType::Float(y) => Some((y as i32).cmp(&(y as i32 - 1))),
-                    &InnerType::Int64(y) => Some(y.cmp(&(y - 1))),
-                    &InnerType::Int32(y) => Some(y.cmp(&(y - 1))),
+
                     _ => panic!(),
                 }
             }
@@ -164,18 +137,7 @@ impl PartialEq for InnerType {
                     _ => false,
                 }
             }
-            &InnerType::Int32(x) => {
-                match rhs {
-                    &InnerType::Int32(y) => x == y,
-                    _ => false,
-                }
-            }
-            &InnerType::Int64(ref x) => {
-                match rhs {
-                    &InnerType::Int64(y) => x.to_owned() == y,
-                    _ => false,
-                }
-            }
+
             &InnerType::Str(ref x) => {
                 match rhs {
                     &InnerType::Str(ref y) => x.to_owned() == y.to_owned(),
@@ -203,18 +165,7 @@ impl Div for InnerType {
                     _ => InnerType::Empty,
                 }
             }
-            InnerType::Int32(x) => {
-                match rhs {
-                    InnerType::Int32(y) => InnerType::Int32(x / y),
-                    _ => InnerType::Empty,
-                }
-            }
-            InnerType::Int64(x) => {
-                match rhs {
-                    InnerType::Int64(y) => InnerType::Int64(x / y),
-                    _ => InnerType::Empty,
-                }
-            }
+
             InnerType::Str(_) => {
                 match rhs {
                     _ => InnerType::Empty,
@@ -223,8 +174,6 @@ impl Div for InnerType {
             InnerType::Empty => {
                 match rhs {
                     InnerType::Float(y) => InnerType::Float(y),
-                    InnerType::Int32(y) => InnerType::Int32(y),
-                    InnerType::Int64(y) => InnerType::Int64(y),
                     _ => InnerType::Empty,
                 }
             }
@@ -243,18 +192,7 @@ impl Add for InnerType {
                     _ => InnerType::Empty,
                 }
             }
-            InnerType::Int32(x) => {
-                match rhs {
-                    InnerType::Int32(y) => InnerType::Int32(x + y),
-                    _ => InnerType::Empty,
-                }
-            }
-            InnerType::Int64(x) => {
-                match rhs {
-                    InnerType::Int64(y) => InnerType::Int64(x + y),
-                    _ => InnerType::Empty,
-                }
-            }
+
             InnerType::Str(_) => {
                 match rhs {
                     _ => InnerType::Empty,
@@ -263,8 +201,7 @@ impl Add for InnerType {
             InnerType::Empty => {
                 match rhs {
                     InnerType::Float(y) => InnerType::Float(y),
-                    InnerType::Int32(y) => InnerType::Int32(y),
-                    InnerType::Int64(y) => InnerType::Int64(y),
+
                     _ => InnerType::Empty,
                 }
             }
@@ -282,18 +219,7 @@ impl Sub for InnerType {
                     _ => InnerType::Empty,
                 }
             }
-            InnerType::Int32(x) => {
-                match rhs {
-                    InnerType::Int32(y) => InnerType::Int32(x - y),
-                    _ => InnerType::Empty,
-                }
-            }
-            InnerType::Int64(x) => {
-                match rhs {
-                    InnerType::Int64(y) => InnerType::Int64(x - y),
-                    _ => InnerType::Empty,
-                }
-            }
+
             InnerType::Str(_) => {
                 match rhs {
                     _ => InnerType::Empty,
@@ -302,8 +228,7 @@ impl Sub for InnerType {
             InnerType::Empty => {
                 match rhs {
                     InnerType::Float(y) => InnerType::Float(y),
-                    InnerType::Int32(y) => InnerType::Int32(y),
-                    InnerType::Int64(y) => InnerType::Int64(y),
+
                     _ => InnerType::Empty,
                 }
             }
@@ -347,14 +272,20 @@ impl Empty<f64> for f64 {
     }
 }
 
+impl One for InnerType {
+    fn one() -> InnerType {
+        InnerType::Float(1.0)
+    }
+}
+
 impl Default for OuterType {
     fn default() -> OuterType {
-        OuterType::Int32(1)
+        OuterType::Str("1".into())
     }
 }
 
 impl Default for InnerType {
     fn default() -> InnerType {
-        InnerType::Int32(1)
+        InnerType::Float(1.0)
     }
 }

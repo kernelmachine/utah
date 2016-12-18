@@ -10,23 +10,38 @@ use std::fmt::Debug;
 use error::*;
 use join::*;
 use std::ops::{Add, Sub, Mul, Div};
-
-
+use num::traits::One;
 pub trait Empty<T> {
     fn empty() -> T;
     fn is_empty(&self) -> bool;
 }
-pub trait DataframeOps<'a, T, S>
-    where T: Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>
+
+
+pub trait DataframeConstructor<'a, T, S>
+    where T: Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+One,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>,
+          Self : Sized
 {
-    fn new<U: Clone + Debug>(data: Matrix<U>) -> DataFrame<T, S> where T: From<U>;
-    fn from_array<U: Clone>(data: Row<U>, axis: UtahAxis) -> DataFrame<T, S> where T: From<U>;
-    fn columns<U: Clone>(self, columns: &'a [U]) -> Result<DataFrame<T, S>> where S: From<U>;
-    fn index<U: Clone>(self, index: &'a [U]) -> Result<DataFrame<T, S>> where S: From<U>;
-    fn shape(self) -> (usize, usize);
+    fn new<U: Clone + Debug>(data: Matrix<U>) -> Self where T: From<U>;
+    fn index<U: Clone>(self, index: &'a [U]) -> Result<Self> where S: From<U>;
+    fn columns<U: Clone>(self, columns: &'a [U]) -> Result<Self> where S: From<U>;
+    fn from_array<U: Clone>(data: Row<U>, axis: UtahAxis) -> Self where T: From<U>;
     fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, T, S>;
     fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a, T, S>;
+}
+
+
+pub trait DataframeOps<'a, T, S>
+    where T: Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>
+{
+    // fn new<U: Clone + Debug>(data: Matrix<U>) -> DataFrame<T, S> where T: From<U>;
+    // fn from_array<U: Clone>(data: Row<U>, axis: UtahAxis) -> DataFrame<T, S> where T: From<U>;
+    // fn columns<U: Clone>(self, columns: &'a [U]) -> Result<DataFrame<T, S>> where S: From<U>;
+// fn index<U: Clone>(self, index: &'a [U]) -> Result<DataFrame<T, S>> where S: From<U>;
+    fn shape(self) -> (usize, usize);
+// fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, T, S>;
+// fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a, T, S>;
     fn select<U: ?Sized>(&'a self,
                          names: &'a [&'a U],
                          axis: UtahAxis)
@@ -86,7 +101,7 @@ pub trait Aggregate<'a, T, S>
     fn stdev(self) -> Stdev<'a, Self, T, S> where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>;
 }
 pub trait Process<'a, T, S>
-    where T: Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>,
+    where T: Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T, S>
@@ -122,7 +137,7 @@ pub trait Transform<'a, T, S>
 
 
 pub trait ToDataFrame<'a, I, T, S>
-    where T: Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>,
+    where T: Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>
 {
     fn to_df(self) -> DataFrame<T, S> where Self: Sized + Iterator<Item = I>;

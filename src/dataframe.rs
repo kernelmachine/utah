@@ -12,11 +12,12 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use traits::*;
 use std::ops::{Add, Sub, Mul, Div};
-
+use std::collections::BTreeMap;
+use num::traits::One;
 /// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame<T, S>
-    where T: Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>,
+    where T: Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
     pub columns: Vec<S>,
@@ -27,7 +28,7 @@ pub struct DataFrame<T, S>
 /// A read-write dataframe
 #[derive(Debug, PartialEq)]
 pub struct MutableDataFrame<'a, T, S>
-    where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>,
+    where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>
 {
     pub columns: Vec<S>,
@@ -35,9 +36,202 @@ pub struct MutableDataFrame<'a, T, S>
     pub index: Vec<S>,
 }
 
-impl<'a,T,S> DataframeOps<'a, T, S> for DataFrame<T, S>
-where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>,
+
+pub struct MixedDataFrame<T,S>
+where T: Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+      S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
+{
+    pub data : BTreeMap<S, T>,
+    pub index : BTreeMap<S, usize>
+}
+
+
+impl<'a,T,S> DataframeConstructor<'a, T, S> for DataFrame<T, S>
+where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
       S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>{
+          fn new<U: Clone>(data: Matrix<U>) -> DataFrame<T, S>
+              where T: From<U>
+          {
+              let data: Matrix<T> = data.mapv(T::from);
+              let data: Matrix<T> = data.mapv_into(|x| {
+                  if x.is_empty(){
+                       return T::empty();
+                  }
+                  else{
+                      return x;
+                  }
+              });
+              let columns: Vec<S> = (0..data.shape()[1])
+                  .map(|x| x.to_string().into())
+                  .collect();
+
+              let index: Vec<S> = (0..data.shape()[0])
+                  .map(|x| x.to_string().into())
+                  .collect();
+
+              DataFrame {
+                  data: data,
+                  columns: columns,
+                  index: index,
+              }
+          }
+
+          fn from_array<U: Clone>(data: Row<U>, axis: UtahAxis) -> DataFrame<T, S>
+              where T: From<U>
+          {
+              let res_dim = match axis {
+                  UtahAxis::Column => (data.len(), 1),
+                  UtahAxis::Row => (1, data.len()),
+              };
+              let data: Matrix<T> = data.into_shape(res_dim).unwrap().mapv(T::from);
+              let data: Matrix<T> = data.mapv_into(|x| {
+                  if x.is_empty() {
+                       return T::empty();
+                  }
+                  else{
+                      return x;
+                  }
+
+
+              });
+              let columns: Vec<S> = (0..res_dim.1)
+                  .map(|x| x.to_string().into())
+                  .collect();
+
+              let index: Vec<S> = (0..res_dim.0)
+                  .map(|x| x.to_string().into())
+                  .collect();
+
+              DataFrame {
+                  data: data,
+                  columns: columns,
+                  index: index,
+              }
+          }
+          /// Populate the dataframe with a set of columns. The column elements can be any of `OuterType`. Example:
+          ///
+          /// ```
+          /// use ndarray::arr2;
+          /// use dataframe::DataFrame;
+          ///
+          /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
+          /// let df = DataFrame::new(a).columns(&["a", "b"]);
+          /// df.is_ok();
+          /// ```
+          fn columns<U: Clone>(mut self, columns: &'a [U]) -> Result<DataFrame<T, S>>
+              where S: From<U>
+          {
+              if columns.len() != self.data.shape()[1] {
+                  return Err(ErrorKind::ColumnShapeMismatch.into());
+              }
+              let new_columns : Vec<S> = columns.iter()
+                  .map(|x| x.clone().into())
+                  .collect();
+              self.columns = new_columns;
+              Ok(self)
+          }
+
+/// Populate the dataframe with an index. The index elements can be any of `OuterType`. Example:
+///
+/// ```
+/// use ndarray::arr2;
+/// use dataframe::DataFrame;
+///
+/// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
+/// let df = DataFrame::new(a).index(&[1, 2]);
+/// df.is_ok();
+/// ```
+///
+/// You can also populate the dataframe with both column names and index names, like so:
+///
+/// ```
+/// use ndarray::arr2;
+/// use dataframe::DataFrame;
+///
+/// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
+/// let df = DataFrame::new(a).index(&[1, 2]).columns(&["a", "b"]).unwrap();
+/// ```
+          fn index<U: Clone>(mut self, index: &'a [U]) -> Result<DataFrame<T, S>>
+              where S: From<U>
+          {
+              if index.len() != self.data.shape()[0] {
+                  return Err(ErrorKind::RowShapeMismatch.into());
+              }
+              let new_index : Vec<S> =  index.iter()
+                  .map(|x| x.clone().into())
+                  .collect();
+              self.index = new_index;
+              Ok(self)
+          }
+
+
+          /// Return a dataframe iterator over the specified `UtahAxis`.
+          ///
+          /// The dataframe iterator yields a mutable view of a row or column of the dataframe for
+          /// computation. Example:
+          ///
+          /// ```
+          /// use ndarray::arr2;
+          /// use dataframe::DataFrame;
+          ///
+          /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
+          /// let df = DataFrame::new(a).index(&[1, 2]).columns(&["a", "b"]).unwrap();
+          /// ```
+          fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, T, S> {
+              match axis {
+                  UtahAxis::Row => {
+                      DataFrameIterator {
+                          names: self.index.iter(),
+                          data: self.data.axis_iter(Axis(0)),
+                          other: self.columns.clone(),
+                          axis: UtahAxis::Row,
+                      }
+                  }
+                  UtahAxis::Column => {
+                      DataFrameIterator {
+                          names: self.columns.iter(),
+                          data: self.data.axis_iter(Axis(1)),
+                          other: self.index.to_owned(),
+                          axis: UtahAxis::Column,
+                      }
+                  }
+              }
+          }
+
+          fn df_iter_mut(&'a mut self,
+                         axis: UtahAxis)
+                         -> MutableDataFrameIterator<'a, T, S> {
+              match axis {
+                  UtahAxis::Row => {
+                      MutableDataFrameIterator {
+                          names: self.index.iter(),
+                          data: self.data.axis_iter_mut(Axis(0)),
+                          axis: UtahAxis::Row,
+                          other: self.columns.clone(),
+                      }
+                  }
+                  UtahAxis::Column => {
+                      MutableDataFrameIterator {
+                          names: self.columns.iter(),
+                          data: self.data.axis_iter_mut(Axis(1)),
+                          axis: UtahAxis::Row,
+                          other: self.index.clone(),
+                      }
+                  }
+              }
+          }
+
+      }
+
+impl<'a,T,S> DataframeOps<'a, T, S> for DataFrame<T, S>
+where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+      S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>{
+
+                    /// Get the dimensions of the dataframe.
+                    fn shape(self) -> (usize, usize) {
+                        self.data.dim()
+                    }
+
     /// Create a new dataframe. The only required argument is data to populate the dataframe. The data's elements can be any of `InnerType`.
 /// By default, the columns and index of the dataframe are `["1", "2", "3"..."N"]`, where *N* is
 /// the number of columns (or rows) in the data.
@@ -60,182 +254,7 @@ where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T
 ///                [InnerType::Int32(6), InnerType::Int64(10)]]);
 /// let df = DataFrame::new(a);
 /// ```
-    fn new<U: Clone>(data: Matrix<U>) -> DataFrame<T, S>
-        where T: From<U>
-    {
-        let data: Matrix<T> = data.mapv(T::from);
-        let data: Matrix<T> = data.mapv_into(|x| {
-            if x.is_empty(){
-                 return T::empty();
-            }
-            else{
-                return x;
-            }
-        });
-        let columns: Vec<S> = (0..data.shape()[1])
-            .map(|x| x.to_string().into())
-            .collect();
 
-        let index: Vec<S> = (0..data.shape()[0])
-            .map(|x| x.to_string().into())
-            .collect();
-
-        DataFrame {
-            data: data,
-            columns: columns,
-            index: index,
-        }
-    }
-
-    fn from_array<U: Clone>(data: Row<U>, axis: UtahAxis) -> DataFrame<T, S>
-        where T: From<U>
-    {
-        let res_dim = match axis {
-            UtahAxis::Column => (data.len(), 1),
-            UtahAxis::Row => (1, data.len()),
-        };
-        let data: Matrix<T> = data.into_shape(res_dim).unwrap().mapv(T::from);
-        let data: Matrix<T> = data.mapv_into(|x| {
-            if x.is_empty() {
-                 return T::empty();
-            }
-            else{
-                return x;
-            }
-
-
-        });
-        let columns: Vec<S> = (0..res_dim.1)
-            .map(|x| x.to_string().into())
-            .collect();
-
-        let index: Vec<S> = (0..res_dim.0)
-            .map(|x| x.to_string().into())
-            .collect();
-
-        DataFrame {
-            data: data,
-            columns: columns,
-            index: index,
-        }
-    }
-/// Populate the dataframe with a set of columns. The column elements can be any of `OuterType`. Example:
-///
-/// ```
-/// use ndarray::arr2;
-/// use dataframe::DataFrame;
-///
-/// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-/// let df = DataFrame::new(a).columns(&["a", "b"]);
-/// df.is_ok();
-/// ```
-    fn columns<U: Clone>(mut self, columns: &'a [U]) -> Result<DataFrame<T, S>>
-        where S: From<U>
-    {
-        if columns.len() != self.data.shape()[1] {
-            return Err(ErrorKind::ColumnShapeMismatch.into());
-        }
-        let new_columns : Vec<S> = columns.iter()
-            .map(|x| x.clone().into())
-            .collect();
-        self.columns = new_columns;
-        Ok(self)
-    }
-
-    /// Populate the dataframe with an index. The index elements can be any of `OuterType`. Example:
-    ///
-    /// ```
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
-    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2]);
-    /// df.is_ok();
-    /// ```
-    ///
-    /// You can also populate the dataframe with both column names and index names, like so:
-    ///
-    /// ```
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
-    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2]).columns(&["a", "b"]).unwrap();
-    /// ```
-    fn index<U: Clone>(mut self, index: &'a [U]) -> Result<DataFrame<T, S>>
-        where S: From<U>
-    {
-        if index.len() != self.data.shape()[0] {
-            return Err(ErrorKind::RowShapeMismatch.into());
-        }
-        let new_index : Vec<S> =  index.iter()
-            .map(|x| x.clone().into())
-            .collect();
-        self.index = new_index;
-        Ok(self)
-    }
-
-/// Get the dimensions of the dataframe.
-    fn shape(self) -> (usize, usize) {
-        self.data.dim()
-    }
-
-
-/// Return a dataframe iterator over the specified `UtahAxis`.
-///
-/// The dataframe iterator yields a mutable view of a row or column of the dataframe for
-/// computation. Example:
-///
-/// ```
-/// use ndarray::arr2;
-/// use dataframe::DataFrame;
-///
-/// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-/// let df = DataFrame::new(a).index(&[1, 2]).columns(&["a", "b"]).unwrap();
-/// ```
-    fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, T, S> {
-        match axis {
-            UtahAxis::Row => {
-                DataFrameIterator {
-                    names: self.index.iter(),
-                    data: self.data.axis_iter(Axis(0)),
-                    other: self.columns.clone(),
-                    axis: UtahAxis::Row,
-                }
-            }
-            UtahAxis::Column => {
-                DataFrameIterator {
-                    names: self.columns.iter(),
-                    data: self.data.axis_iter(Axis(1)),
-                    other: self.index.to_owned(),
-                    axis: UtahAxis::Column,
-                }
-            }
-        }
-    }
-
-    fn df_iter_mut(&'a mut self,
-                   axis: UtahAxis)
-                   -> MutableDataFrameIterator<'a, T, S> {
-        match axis {
-            UtahAxis::Row => {
-                MutableDataFrameIterator {
-                    names: self.index.iter(),
-                    data: self.data.axis_iter_mut(Axis(0)),
-                    axis: UtahAxis::Row,
-                    other: self.columns.clone(),
-                }
-            }
-            UtahAxis::Column => {
-                MutableDataFrameIterator {
-                    names: self.columns.iter(),
-                    data: self.data.axis_iter_mut(Axis(1)),
-                    axis: UtahAxis::Row,
-                    other: self.index.clone(),
-                }
-            }
-        }
-    }
 /// Select rows or columns over the specified `UtahAxis`.
 ///
 /// The Select transform adaptor yields a mutable view of a row or column of the dataframe for
@@ -655,7 +674,7 @@ where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T
 
         }
     }
-}
+// }
 // impl<'a> DataframeOps<'a, f64, String> for DataFrame<f64, String> {
 //     /// Create a new dataframe. The only required argument is data to populate the dataframe. The data's elements can be any of `InnerType`.
 //     /// By default, the columns and index of the dataframe are `["1", "2", "3"..."N"]`, where *N* is
@@ -1248,7 +1267,7 @@ where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T
 // }
 //
 //
-//
+}
 impl<'a> MutableDataFrame<'a, InnerType, OuterType> {
     /// Create a new dataframe. The only required argument is data to populate the dataframe. The data's elements can be any of `InnerType`.
     /// By default, the columns and index of the dataframe are `["1", "2", "3"..."N"]`, where *N* is

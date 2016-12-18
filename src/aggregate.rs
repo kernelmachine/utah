@@ -7,7 +7,7 @@ use std::hash::Hash;
 use std::fmt::Debug;
 use std::ops::{Add, Div, Sub, Mul};
 use std::default::Default;
-
+use num::traits::One;
 #[derive(Clone)]
 pub struct Sum<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + 'a,
@@ -84,7 +84,7 @@ impl<'a, I, T, S> Mean<'a, I, T, S>
 
 impl<'a, I, T, S> Iterator for Mean<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T>,
+          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     type Item = T;
@@ -93,17 +93,11 @@ impl<'a, I, T, S> Iterator for Mean<'a, I, T, S>
 
             None => return None,
             Some((_, dat)) => unsafe {
-                let size = dat.len();
+                let size = dat.fold(T::one(), |acc, _| acc + T::one());
                 let first_element = dat.uget(0).to_owned();
-                let mean = (0..size).fold(first_element, |x, y| x + dat.uget(y).to_owned());
+                let mean = (0..dat.len()).fold(first_element, |x, y| x + dat.uget(y).to_owned()) /
+                           size;
                 Some(mean)
-                // match dat.uget(0) {
-                //     &InnerType::Float(_) => return Some(sum / InnerType::Float(size as f64)),
-                //     &InnerType::Int32(_) => return Some(sum / InnerType::Int32(size as i32)),
-                //     &InnerType::Int64(_) => return Some(sum / InnerType::Int64(size as i64)),
-                //     _ => return Some(InnerType::Empty),
-                // }
-
             },
         }
     }
@@ -231,7 +225,7 @@ impl<'a, I, T, S> Stdev<'a, I, T, S>
 
 impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>,
+          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T> + One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     type Item = T;
@@ -240,9 +234,9 @@ impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
 
             None => return None,
             Some((_, dat)) => unsafe {
-                let size = dat.len();
+                let size = dat.fold(T::one(), |acc, _| acc + T::one());
                 let first_element = dat.uget(0).to_owned();
-                let mean = (0..size).fold(first_element, |x, y| x + dat.uget(y).to_owned());
+                let mean = (0..dat.len()).fold(first_element, |x, y| x + dat.uget(y).to_owned()) / size;
 
 // let mean = match dat.uget(0) {
 //     &InnerType::Float(_) => sum / InnerType::Float(size as f64),
@@ -251,7 +245,7 @@ impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
 //     _ => InnerType::Empty,
 // };
 
-                let stdev = (0..size).fold(dat.uget(0).to_owned(), |x, y| {
+                let stdev = (0..dat.len()).fold(dat.uget(0).to_owned(), |x, y| {
                     x +
                     (dat.uget(y).to_owned() - mean.to_owned()) *
                     (dat.uget(y).to_owned() - mean.to_owned())
@@ -272,7 +266,7 @@ impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Stdev<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>,
+          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default+ From<String>
 {
     fn to_df(self) -> DataFrame<T, S> {
@@ -308,7 +302,7 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Stdev<'a, I, T, S>
 
 
 impl<'a, I,T,S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>,
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T> + One,
     S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default+ From<String>
 {
     fn to_df(self) -> DataFrame<T, S> {
@@ -345,7 +339,7 @@ impl<'a, I,T,S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
 
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Max<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,T: Clone + Debug + Ord + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>,
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,T: Clone + Debug + Ord + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>+ One,
     S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default+ From<String>
 {
     fn to_df(self) -> DataFrame<T, S> {
@@ -417,7 +411,7 @@ impl<'a, I> ToDataFrame<'a, InnerType, InnerType, OuterType> for Min<'a, I, Inne
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Sum<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>,
+    T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>+ One,
     S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default + From<String>
 {
     fn to_df(self) -> DataFrame<T, S> {

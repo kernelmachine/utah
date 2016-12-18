@@ -2,7 +2,7 @@
 #![feature(custom_derive)]
 #![feature(stmt_expr_attributes)]
 #![feature(conservative_impl_trait)]
-
+#![feature(specialization)]
 #![recursion_limit = "1024"]
 
 #[macro_use]
