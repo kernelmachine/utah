@@ -10,8 +10,29 @@ impl From<f64> for InnerType {
 }
 
 
+impl From<i64> for InnerType {
+    fn from(i: i64) -> InnerType {
+        InnerType::Int64(i)
+    }
+}
 
+impl From<i32> for InnerType {
+    fn from(i: i32) -> InnerType {
+        InnerType::Int32(i)
+    }
+}
 
+impl<'a> From<&'a i64> for InnerType {
+    fn from(i: &'a i64) -> InnerType {
+        InnerType::Int64(*i)
+    }
+}
+
+impl<'a> From<&'a i32> for InnerType {
+    fn from(i: &'a i32) -> InnerType {
+        InnerType::Int32(*i)
+    }
+}
 
 impl<'a, 'b> From<&'b &'a str> for InnerType {
     fn from(s: &'b &'a str) -> InnerType {
@@ -107,7 +128,12 @@ impl FromStr for InnerType {
         if let Ok(x) = s.parse::<f64>() {
             return Ok(InnerType::Float(x));
         }
-
+        if let Ok(x) = s.parse::<i64>() {
+            return Ok(InnerType::Int64(x));
+        }
+        if let Ok(x) = s.parse::<i32>() {
+            return Ok(InnerType::Int32(x));
+        }
         if let Ok(x) = s.parse::<String>() {
             return Ok(InnerType::Str(x));
         }
