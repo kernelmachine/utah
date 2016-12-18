@@ -52,11 +52,7 @@ pub type MatrixView<'a, T> = ArrayView<'a, T, (Ix, Ix)>;
 
 
 
-impl AsRef<InnerType> for InnerType {
-    fn as_ref(&self) -> &InnerType {
-        &(*self)
-    }
-}
+
 
 impl AsMut<InnerType> for InnerType {
     fn as_mut(&mut self) -> &mut InnerType {
@@ -77,12 +73,14 @@ impl Mul for InnerType {
             InnerType::Int32(x) => {
                 match rhs {
                     InnerType::Int32(y) => InnerType::Int32(x * y),
+                    InnerType::Float(y) => InnerType::Float(x as f64 * y),
                     _ => InnerType::Empty,
                 }
             }
             InnerType::Int64(x) => {
                 match rhs {
                     InnerType::Int64(y) => InnerType::Int64(x * y),
+                    InnerType::Float(y) => InnerType::Float(x as f64 * y),
                     _ => InnerType::Empty,
                 }
             }

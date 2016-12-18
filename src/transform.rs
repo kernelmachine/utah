@@ -1,7 +1,6 @@
 
 use types::*;
 use std::iter::Iterator;
-use ndarray::AxisIter;
 use itertools::PutBack;
 use std::slice::Iter;
 use ndarray::Array;
@@ -15,12 +14,13 @@ use std::ops::{Add, Sub, Mul, Div};
 use num::traits::One;
 
 #[derive(Clone)]
-pub struct DataFrameIterator<'a, T, S>
-    where T: Clone + Debug + 'a,
+pub struct DataFrameIterator<'a, I, T, S>
+    where I: Iterator<Item = RowView<'a, T>> + Clone,
+          T: Clone + Debug + 'a,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + 'a
 {
     pub names: Iter<'a, S>,
-    pub data: AxisIter<'a, T, usize>,
+    pub data: I,
     pub other: Vec<S>,
     pub axis: UtahAxis,
 }
@@ -28,8 +28,9 @@ pub struct DataFrameIterator<'a, T, S>
 
 
 
-impl<'a, T, S> Iterator for DataFrameIterator<'a, T, S>
-    where T: Clone + Debug,
+impl<'a, I, T, S> Iterator for DataFrameIterator<'a, I, T, S>
+    where I: Iterator<Item = RowView<'a, T>> + Clone,
+          T: Clone + Debug,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     type Item = (S, RowView<'a, T>);
@@ -266,8 +267,9 @@ impl<'a, I, T, S> Iterator for Append<'a, I, T, S>
 
 
 
-impl<'a, T, S> Aggregate<'a, T, S> for DataFrameIterator<'a, T, S>
-    where T: Clone + Debug + 'a,
+impl<'a, I, T, S> Aggregate<'a, T, S> for DataFrameIterator<'a, I, T, S>
+    where I: Iterator<Item = RowView<'a, T>> + Clone,
+          T: Clone + Debug + 'a,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     fn sumdf(self) -> Sum<'a, Self, T, S>
@@ -312,8 +314,9 @@ impl<'a, T, S> Aggregate<'a, T, S> for DataFrameIterator<'a, T, S>
 }
 
 
-impl<'a, T, S> Transform<'a, T, S> for DataFrameIterator<'a, T, S>
-    where T: Clone + Debug + 'a,
+impl<'a, I, T, S> Transform<'a, T, S> for DataFrameIterator<'a, I, T, S>
+    where I: Iterator<Item = RowView<'a, T>> + Clone + Clone,
+          T: Clone + Debug + 'a,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     fn select<U>(self, names: &'a [U]) -> Select<'a, T, S, Self>
@@ -353,8 +356,8 @@ impl<'a, T, S> Transform<'a, T, S> for DataFrameIterator<'a, T, S>
 
     }
 
-    fn concat<I>(self, other: I) -> Chain<Self, I>
-        where I: Sized + Iterator<Item = (S, RowView<'a, T>)>
+    fn concat<J>(self, other: J) -> Chain<Self, J>
+        where J: Sized + Iterator<Item = (S, RowView<'a, T>)>
     {
         self.chain(other)
     }
@@ -811,8 +814,9 @@ impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Select<'a, T, S
 }
 
 
-impl<'a, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for DataFrameIterator<'a, T, S>
-    where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
+impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for DataFrameIterator<'a, I, T, S>
+    where I: Iterator<Item = RowView<'a, T>> + Clone,
+            T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>
 {
     fn to_df(self) -> DataFrame<T, S> {

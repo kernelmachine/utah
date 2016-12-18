@@ -30,7 +30,7 @@ use dataframe::*;
 use types::*;
 
 use std::f64::NAN;
-use traits::{Transform, DataframeOps, DataframeConstructor, Aggregate, ToDataFrame};
+use traits::{Transform, DataframeOps, RawDataframeConstructor, Aggregate, ToDataFrame};
 
 fn main() {
     let a = arr2(&[[2., 7.], [3., NAN], [2., 4.]]);
