@@ -140,9 +140,9 @@ pub struct MixedDataFrame<T, S>
 //               fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a, T, S>{unimplemented!()}
 // }
 impl<'a, T,S> RawDataframeConstructor<'a,  AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
-where
-    T: 'a + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
-      S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>{
+        where
+            T: 'a + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+            S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>{
           fn new<U: Clone>(data: Matrix<U>) -> DataFrame<T, S>
               where T: From<U>
           {
@@ -202,16 +202,16 @@ where
                   index: index,
               }
           }
-/// Populate the dataframe with a set of columns. The column elements can be any of `OuterType`. Example:
-///
-/// ```
-/// use ndarray::arr2;
-/// use dataframe::DataFrame;
-///
-/// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-/// let df = DataFrame::new(a).columns(&["a", "b"]);
-/// df.is_ok();
-/// ```
+            /// Populate the dataframe with a set of columns. The column elements can be any of `OuterType`. Example:
+            ///
+            /// ```
+            /// use ndarray::arr2;
+            /// use dataframe::DataFrame;
+            ///
+            /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
+            /// let df = DataFrame::new(a).columns(&["a", "b"]);
+            /// df.is_ok();
+            /// ```
           fn columns<U: Clone>(mut self, columns: &'a [U]) -> Result<DataFrame<T, S>>
               where S: From<U>
           {
@@ -366,7 +366,7 @@ where
 ///    }
 /// ```
 
-    fn select<U: ?Sized>
+    fn select<U :?Sized>
         (&'a self,
          names: &'a [&'a U],
          axis: UtahAxis)
@@ -374,7 +374,7 @@ where
         where S: From<&'a  U>
     {
         let names : Vec<S>= names.iter()
-            .map(|x| S::from(*x))
+            .map(|x| (*x).into())
             .collect();
         match axis {
             UtahAxis::Row => {
@@ -407,14 +407,14 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn remove<U>(&'a self,
-                 names: &'a [U],
+    fn remove<U: ?Sized>(&'a self,
+                 names: &'a [&'a U],
                  axis: UtahAxis)
                  -> Remove<'a, DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>, T, S>
         where S: From<&'a U>
     {
         let names : Vec<S> = names.iter()
-            .map(|x| x.into())
+            .map(|x| (*x).into())
             .collect();
         match axis {
             UtahAxis::Row => {
@@ -447,7 +447,7 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn append<U>(&'a mut self,
+    fn append<U: ?Sized>(&'a mut self,
                  name: &'a U,
                  data: RowView<'a, T>,
                  axis: UtahAxis)

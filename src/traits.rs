@@ -61,17 +61,17 @@ pub trait DataframeOps<'a, I, T, S>
     fn shape(self) -> (usize, usize);
 // fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, I, T, S>;
 // fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a, I, T, S>;
-    fn select<U: ?Sized>(&'a self,
+    fn select<U :?Sized>(&'a self,
                          names: &'a [&'a U],
                          axis: UtahAxis)
                          -> Select<'a, T, S, DataFrameIterator<'a, I, T, S>>
         where S: From<&'a  U >;
-    fn remove<U>(&'a self,
-                 names: &'a [U],
+    fn remove<U: ?Sized>(&'a self,
+                 names: &'a [&'a U],
                  axis: UtahAxis)
                  -> Remove<'a, DataFrameIterator<'a, I, T, S>, T, S>
         where S: From<&'a U>;
-    fn append<U>(&'a mut self,
+    fn append<U :?Sized>(&'a mut self,
                  name: &'a U,
                  data: RowView<'a, T>,
                  axis: UtahAxis)
@@ -134,15 +134,15 @@ pub trait Transform<'a, T, S>
     where T: Clone + Debug + 'a,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    fn select<U>(self, names: &'a [U]) -> Select<'a, T, S, Self>
+    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, T, S, Self>
         where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
               S: From<&'a U>,
               T: 'a;
-    fn remove<U>(self, names: &'a [U]) -> Remove<'a, Self, T, S>
+    fn remove<U: ?Sized>(self, names: &'a [&'a U]) -> Remove<'a, Self, T, S>
         where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
               S: From<&'a U>,
               T: 'a;
-    fn append<U>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
+    fn append<U: ?Sized>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
         where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
               S: From<&'a U>,
               T: 'a;

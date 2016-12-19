@@ -23,9 +23,11 @@ pub mod tests {
     #[test]
     fn outer_left_join() {
         let a = arr2(&[["Alice"], ["Bob"]]);
-        let left = DataFrame::new(a).index(&[1, 2]).unwrap().columns(&["a"]).unwrap();
+        let left: DataFrame<InnerType, OuterType> =
+            DataFrame::new(a).index(&[1, 2]).unwrap().columns(&["a"]).unwrap();
         let b = arr2(&[["Programmer"]]);
-        let right = DataFrame::new(b).index(&[1]).unwrap().columns(&["b"]).unwrap();
+        let right: DataFrame<InnerType, OuterType> =
+            DataFrame::new(b).index(&[1]).unwrap().columns(&["b"]).unwrap();
         let first_index = &left.index[0];
         let second_index = &left.index[1];
         let res = left.outer_left_join(&right).to_df();
@@ -40,9 +42,11 @@ pub mod tests {
     #[test]
     fn inner_join() {
         let a = arr2(&[["Alice"], ["Bob"], ["Suchin"]]);
-        let left = DataFrame::new(a).index(&[1, 2, 3]).unwrap().columns(&["a"]).unwrap();
+        let left: DataFrame<InnerType, OuterType> =
+            DataFrame::new(a).index(&[1, 2, 3]).unwrap().columns(&["a"]).unwrap();
         let b = arr2(&[["Programmer"], ["Data Scientist"]]);
-        let right = DataFrame::new(b).index(&[1, 3]).unwrap().columns(&["b"]).unwrap();
+        let right: DataFrame<InnerType, OuterType> =
+            DataFrame::new(b).index(&[1, 3]).unwrap().columns(&["b"]).unwrap();
         let first_index = &left.index[0];
         let second_index = &left.index[2];
         let res = left.inner_left_join(&right).to_df();
@@ -147,7 +151,7 @@ pub mod tests {
             e_index.push(i.to_string());
         }
 
-        let mut c_df: DataFrame<InnerType, String> = DataFrame::new(c)
+        let mut c_df: DataFrame<f64, String> = DataFrame::new(c)
             .columns(&c_names[..])
             .unwrap()
             .index(&c_index[..])
@@ -158,7 +162,7 @@ pub mod tests {
             .index(&e_index[..])
             .unwrap();
         b.iter(|| {
-            let _: DataFrame<InnerType, String> = c_df.sumdf(UtahAxis::Column).to_df();
+            let _: DataFrame<f64, String> = c_df.sumdf(UtahAxis::Column).to_df();
         });
     }
 

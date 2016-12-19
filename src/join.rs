@@ -7,8 +7,9 @@ use ndarray::Array;
 use std::hash::Hash;
 use std::fmt::Debug;
 use dataframe::*;
-
-
+use std::ops::{Add, Div, Mul, Sub};
+use traits::Empty;
+use num::traits::One;
 #[derive(Clone)]
 pub struct InnerJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
@@ -120,10 +121,13 @@ impl<'a, L, T, S> Iterator for OuterJoin<'a, L, T, S>
 }
 
 
-impl<'a, L> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>, RowView<'a, InnerType>), InnerType, OuterType>  for InnerJoin<'a, L,InnerType, OuterType>
-    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, L, T, S> ToDataFrame<'a, (S, RowView<'a, T>, RowView<'a, T>), T, S>
+    for InnerJoin<'a, L, T, S>
+    where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+    T: 'a + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+      S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
-    fn to_df(self) -> DataFrame<InnerType, OuterType> {
+    fn to_df(self) -> DataFrame<T, S> {
 
         let s = self.clone();
         let right_columns = self.right_columns.clone();
@@ -156,10 +160,13 @@ impl<'a, L> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>, RowView<'a, Inne
 }
 
 
-impl<'a, L> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>, Option<RowView<'a, InnerType>>), InnerType, OuterType> for OuterJoin<'a, L, InnerType, OuterType>
-    where L: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, L,T,S> ToDataFrame<'a, (S, RowView<'a, T>, Option<RowView<'a, T>>), T, S>
+    for OuterJoin<'a, L, T, S>
+    where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+    T: 'a + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+      S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
-    fn to_df(self) -> DataFrame<InnerType, OuterType> {
+    fn to_df(self) -> DataFrame<T, S> {
 
         let s = self.clone();
         let right_columns = self.right_columns.clone();
@@ -168,7 +175,7 @@ impl<'a, L> ToDataFrame<'a, (OuterType, RowView<'a, InnerType>, Option<RowView<'
         let mut n = Vec::new();
         let res_dim = (s.fold(0, |acc, _| acc + 1), left_columns.len() + right_columns.len());
 
-        let r = repeat(InnerType::Empty).take(right_columns.len());
+        let r = repeat(T::empty()).take(right_columns.len());
         for (i, j, k) in self {
             c.extend(j.iter().map(|x| x.to_owned()));
             match k {

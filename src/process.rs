@@ -73,7 +73,7 @@ impl<'a, I, T, S> Impute<'a, I,T,S>
 
 impl<'a, I, T, S> Iterator for Impute<'a, I, T, S>
     where I: Iterator<Item = (S, RowViewMut<'a, T>)>,
-    T: Clone + Debug + 'a + Ord + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> +One,
+    T: Clone + Debug + 'a  + PartialEq + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> +One,
   S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     type Item = (S, RowViewMut<'a, T>);
@@ -102,20 +102,20 @@ impl<'a, I, T, S> Iterator for Impute<'a, I, T, S>
                         });
                         Some((val, dat))
                     },
-
-                    ImputeStrategy::Mode => {
-                        let max = dat.iter().max().map(|x| x.to_owned()).unwrap();
-                        dat.mapv_inplace(|x| {
-                            if x == emp {
-                                max.to_owned()
-                            }
-                            else{
-                                x.to_owned()
-                            }
-
-                        });
-                        return Some((val, dat));
-                    }
+                    //
+                    // ImputeStrategy::Mode => {
+                    //     let max = dat.iter().max().map(|x| x.to_owned()).unwrap();
+                    //     dat.mapv_inplace(|x| {
+                    //         if x == emp {
+                    //             max.to_owned()
+                    //         }
+                    //         else{
+                    //             x.to_owned()
+                    //         }
+                    //
+                    //     });
+                    //     return Some((val, dat));
+                    // }
                 }
             }
         }
@@ -253,7 +253,7 @@ impl<'a, T, S> ToDataFrame<'a, (S, RowViewMut<'a, T>), T, S>
 
 impl<'a, I,T,S> ToDataFrame<'a, (S, RowViewMut<'a, T>), T, S> for Impute<'a, I, T, S>
     where I: Iterator<Item = (S, RowViewMut<'a, T>)>,
-     T: Clone + Debug + Ord + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
+     T: Clone + Debug + PartialEq + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a + From<String>
 {
     fn to_df(self) -> DataFrame<T, S> {

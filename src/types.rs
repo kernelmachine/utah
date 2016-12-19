@@ -33,8 +33,7 @@ pub enum UtahAxis {
 
 #[derive( Clone, Debug)]
 pub enum ImputeStrategy {
-    Mean,
-    Mode,
+    Mean, // Mode,
 }
 
 

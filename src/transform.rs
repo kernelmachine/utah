@@ -319,7 +319,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for DataFrameIterator<'a, I, T, S>
           T: Clone + Debug + 'a,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    fn select<U>(self, names: &'a [U]) -> Select<'a, T, S, Self>
+    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, T, S, Self>
         where S: From<&'a U>,
               T: 'a
     {
@@ -332,7 +332,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for DataFrameIterator<'a, I, T, S>
     }
 
 
-    fn remove<U>(self, names: &'a [U]) -> Remove<'a, Self, T, S>
+    fn remove<U: ?Sized>(self, names: &'a [&'a U]) -> Remove<'a, Self, T, S>
         where S: From<&'a U>,
               T: 'a
     {
@@ -345,7 +345,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for DataFrameIterator<'a, I, T, S>
 
     }
 
-    fn append<U>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
+    fn append<U: ?Sized>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
         where S: From<&'a U>,
               T: 'a
     {
@@ -429,7 +429,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Select<'a, T, S, I>
           T: Clone + Debug + 'a,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    fn select<U>(self, names: &'a [U]) -> Select<'a, T, S, Self>
+    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, T, S, Self>
         where S: From<&'a U>,
               T: 'a
     {
@@ -442,7 +442,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Select<'a, T, S, I>
     }
 
 
-    fn remove<U>(self, names: &'a [U]) -> Remove<'a, Self, T, S>
+    fn remove<U: ?Sized>(self, names: &'a [&'a U]) -> Remove<'a, Self, T, S>
         where S: From<&'a U>
     {
         let other = self.other.clone();
@@ -454,7 +454,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Select<'a, T, S, I>
 
     }
 
-    fn append<U>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
+    fn append<U: ?Sized>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
         where S: From<&'a U>,
               T: 'a
     {
@@ -534,7 +534,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Remove<'a, I, T, S>
           T: Clone + Debug + 'a,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    fn select<U>(self, names: &'a [U]) -> Select<'a, T, S, Self>
+    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, T, S, Self>
         where S: From<&'a U>
     {
         let other = self.other.clone();
@@ -546,7 +546,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Remove<'a, I, T, S>
     }
 
 
-    fn remove<U>(self, names: &'a [U]) -> Remove<'a, Self, T, S>
+    fn remove<U: ?Sized>(self, names: &'a [&'a U]) -> Remove<'a, Self, T, S>
         where S: From<&'a U>
     {
         let other = self.other.clone();
@@ -558,7 +558,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Remove<'a, I, T, S>
 
     }
 
-    fn append<U>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
+    fn append<U: ?Sized>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
         where S: From<&'a U>
     {
         let other = self.other.clone();
@@ -635,7 +635,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Append<'a, I, T, S>
           T: Clone + Debug + 'a,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
-    fn select<U>(self, names: &'a [U]) -> Select<'a, T, S, Self>
+    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, T, S, Self>
         where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
               S: From<&'a U>
     {
@@ -648,7 +648,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Append<'a, I, T, S>
     }
 
 
-    fn remove<U>(self, names: &'a [U]) -> Remove<'a, Self, T, S>
+    fn remove<U: ?Sized>(self, names: &'a [&'a U]) -> Remove<'a, Self, T, S>
         where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
               S: From<&'a U>
     {
@@ -661,7 +661,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Append<'a, I, T, S>
 
     }
 
-    fn append<U>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
+    fn append<U: ?Sized>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
         where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
               S: From<&'a U>
     {

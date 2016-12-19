@@ -39,7 +39,7 @@ fn main() {
     let mut df: DataFrame<f64, String> =
         DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2", "3"]).unwrap();
     let df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap().index(&["1", "2"]).unwrap();
-    let new_data = c.column(1).mapv(InnerType::from);
+    let new_data = c.column(1);
     let remove_idx = vec!["1"];
     let select_idx = vec!["2"];
     let append_idx = "8";
@@ -58,7 +58,7 @@ fn main() {
     // .to_df();    // res.mapdf(|x| x.as_ref())
     println!("{:?}", res);
     // df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_df();
-    let res_1: DataFrame<InnerType, OuterType> = df.inner_left_join(&df_1).to_df();
+    let res_1: DataFrame<f64, String> = df.inner_left_join(&df_1).to_df();
     println!("join result - {:?}", res_1);
 
 }
