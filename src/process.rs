@@ -8,6 +8,7 @@ use ndarray::Array;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::{Add, Sub, Mul, Div};
+use num::traits::One;
 
 pub struct MutableDataFrameIterator<'a, T, S>
 where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>,
@@ -72,7 +73,7 @@ impl<'a, I, T, S> Impute<'a, I,T,S>
 
 impl<'a, I, T, S> Iterator for Impute<'a, I, T, S>
     where I: Iterator<Item = (S, RowViewMut<'a, T>)>,
-    T: Clone + Debug + 'a + Ord + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>,
+    T: Clone + Debug + 'a + Ord + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> +One,
   S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
 {
     type Item = (S, RowViewMut<'a, T>);
@@ -84,17 +85,12 @@ impl<'a, I, T, S> Iterator for Impute<'a, I, T, S>
             Some((val, mut dat)) => {
                 match self.strategy {
                     ImputeStrategy::Mean => unsafe {
-                        let size = dat.len();
+                        let size = dat.fold(T::one(), |acc, _| acc + T::one());
 
                         let first_element = dat.uget(0).to_owned();
-                        let mean = (0..size).fold(first_element, |x, y| x + dat.uget(y).to_owned());
+                        let mean = (0..dat.len()).fold(first_element, |x, y| x + dat.uget(y).to_owned())/size;
 
-                        // let mean = match dat.uget(0) {
-                        //     &InnerType::Float(_) => sum / InnerType::Float(size as f64),
-                        //     &InnerType::Int32(_) => sum / InnerType::Int32(size as i32),
-                        //     &InnerType::Int64(_) => sum / InnerType::Int64(size as i64),
-                        //     _ => InnerType::Empty,
-                        // };
+
                         dat.mapv_inplace(|x| {
                             if x == emp {
                                 mean.to_owned()
@@ -127,22 +123,24 @@ impl<'a, I, T, S> Iterator for Impute<'a, I, T, S>
 }
 
 
-impl<'a, I> Process<'a, InnerType, OuterType> for Impute<'a, I, InnerType, OuterType>
-    where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+impl<'a, I,T,S> Process<'a, T, S> for Impute<'a, I, T, S>
+    where I: Iterator<Item = (S, RowViewMut<'a, T>)>,
+     T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a + From<String>
 {
-    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, InnerType, OuterType>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowViewMut<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Impute::new(self, strategy, other, axis)
     }
 
-    fn to_mut_df(self) -> MutableDataFrame<'a, InnerType, OuterType>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+    fn to_mut_df(self) -> MutableDataFrame<'a, T, S>
+        where Self: Sized + Iterator<Item = (S, RowViewMut<'a, T>)>
     {
 
-        // let s = self.clone();
+// let s = self.clone();
         let axis = self.axis.clone();
         let other = self.other.clone();
         let mut c = Vec::new();
@@ -185,9 +183,12 @@ impl<'a, I> Process<'a, InnerType, OuterType> for Impute<'a, I, InnerType, Outer
     }
 }
 
-impl<'a> Process<'a, InnerType, OuterType> for MutableDataFrameIterator<'a, InnerType, OuterType> {
-    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, InnerType, OuterType>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+impl<'a, T, S> Process<'a, T, S> for MutableDataFrameIterator<'a, T, S>
+where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
+      S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a + From<String>
+{
+    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, RowViewMut<'a, T>)>
     {
 
         let other = self.other.clone();
@@ -195,8 +196,8 @@ impl<'a> Process<'a, InnerType, OuterType> for MutableDataFrameIterator<'a, Inne
         Impute::new(self, strategy, other, axis)
     }
 
-    fn to_mut_df(self) -> MutableDataFrame<'a, InnerType, OuterType>
-        where Self: Sized + Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+    fn to_mut_df(self) -> MutableDataFrame<'a, T, S>
+        where Self: Sized + Iterator<Item = (S, RowViewMut<'a, T>)>
     {
         // let s = self.clone();
         let axis = self.axis.clone();
@@ -240,17 +241,22 @@ impl<'a> Process<'a, InnerType, OuterType> for MutableDataFrameIterator<'a, Inne
     }
 }
 
-impl<'a> ToDataFrame<'a, (OuterType, RowViewMut<'a, InnerType>), InnerType, OuterType> for MutableDataFrameIterator<'a, InnerType, OuterType>
-{
-    fn to_df(self) -> DataFrame<InnerType, OuterType> {
+impl<'a, T, S> ToDataFrame<'a, (S, RowViewMut<'a, T>), T, S>
+    for MutableDataFrameIterator<'a, T, S>
+    where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a+ From<String>
+          {
+    fn to_df(self) -> DataFrame<T, S> {
         self.to_mut_df().to_df()
     }
 }
 
-impl<'a, I> ToDataFrame<'a, (OuterType, RowViewMut<'a, InnerType>), InnerType, OuterType> for Impute<'a, I, InnerType, OuterType>
-    where I: Iterator<Item = (OuterType, RowViewMut<'a, InnerType>)>
+impl<'a, I,T,S> ToDataFrame<'a, (S, RowViewMut<'a, T>), T, S> for Impute<'a, I, T, S>
+    where I: Iterator<Item = (S, RowViewMut<'a, T>)>,
+     T: Clone + Debug + Ord + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
+          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a + From<String>
 {
-    fn to_df(self) -> DataFrame<InnerType, OuterType> {
+    fn to_df(self) -> DataFrame<T, S> {
         self.to_mut_df().to_df()
     }
 }

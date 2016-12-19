@@ -238,12 +238,7 @@ impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
                 let first_element = dat.uget(0).to_owned();
                 let mean = (0..dat.len()).fold(first_element, |x, y| x + dat.uget(y).to_owned()) / size;
 
-// let mean = match dat.uget(0) {
-//     &InnerType::Float(_) => sum / InnerType::Float(size as f64),
-//     &InnerType::Int32(_) => sum / InnerType::Int32(size as i32),
-//     &InnerType::Int64(_) => sum / InnerType::Int64(size as i64),
-//     _ => InnerType::Empty,
-// };
+
 
                 let stdev = (0..dat.len()).fold(dat.uget(0).to_owned(), |x, y| {
                     x +
@@ -339,7 +334,8 @@ impl<'a, I,T,S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
 
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Max<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,T: Clone + Debug + Ord + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>+ One,
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+    T: Clone + Debug + Ord + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>+ One,
     S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default+ From<String>
 {
     fn to_df(self) -> DataFrame<T, S> {
@@ -374,10 +370,12 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Max<'a, I, T, S>
 }
 
 
-impl<'a, I> ToDataFrame<'a, InnerType, InnerType, OuterType> for Min<'a, I, InnerType, OuterType>
-    where I: Iterator<Item = (OuterType, RowView<'a, InnerType>)> + Clone
+impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Min<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+    T: Clone + Debug + Ord + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>+ One,
+    S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default + From<String>
 {
-    fn to_df(self) -> DataFrame<InnerType, OuterType> {
+    fn to_df(self) -> DataFrame<T, S> {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
@@ -393,12 +391,12 @@ impl<'a, I> ToDataFrame<'a, InnerType, InnerType, OuterType> for Min<'a, I, Inne
                 DataFrame {
                     columns: other,
                     data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-                    index: vec![OuterType::Int32(1)],
+                    index: vec![S::default()],
                 }
             }
             UtahAxis::Column => {
                 DataFrame {
-                    columns: vec![OuterType::Int32(1)],
+                    columns: vec![S::default()],
                     data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
                     index: other,
                 }

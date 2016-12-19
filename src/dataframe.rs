@@ -14,9 +14,8 @@ use traits::*;
 use std::ops::{Add, Sub, Mul, Div};
 use std::collections::BTreeMap;
 use num::traits::One;
-use ndarray::{Array, AxisIter};
-use std::iter::Map;
-use std::collections::btree_map::Values;
+use ndarray::AxisIter;
+
 /// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame<T, S>

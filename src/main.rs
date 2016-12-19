@@ -36,7 +36,8 @@ fn main() {
     let a = arr2(&[[2., 7.], [3., NAN], [2., 4.]]);
     let b = arr2(&[[2., 6.], [3., 4.]]);
     let c = arr2(&[[2., 6.], [3., 4.], [2., 1.]]);
-    let mut df = DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2", "3"]).unwrap();
+    let mut df: DataFrame<f64, String> =
+        DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2", "3"]).unwrap();
     let df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap().index(&["1", "2"]).unwrap();
     let new_data = c.column(1).mapv(InnerType::from);
     let remove_idx = vec!["1"];
@@ -44,7 +45,7 @@ fn main() {
     let append_idx = "8";
 
     // let df_iter: DataFrameIterator = df_1.df_iter(UtahAxis::Row);
-    df.impute(ImputeStrategy::Mode, UtahAxis::Column).to_df();
+    df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_df();
     let j = df.df_iter(UtahAxis::Row)
         .remove(&remove_idx[..])
         .select(&select_idx[..])
@@ -52,7 +53,7 @@ fn main() {
         .sumdf()
         .to_df();
     println!("{:?}", j);
-    let res: DataFrame<InnerType, OuterType> = df.impute(ImputeStrategy::Mean, UtahAxis::Column)
+    let res: DataFrame<f64, String> = df.impute(ImputeStrategy::Mean, UtahAxis::Column)
         .to_df();
     // .to_df();    // res.mapdf(|x| x.as_ref())
     println!("{:?}", res);
