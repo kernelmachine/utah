@@ -34,7 +34,7 @@ pub trait MixedDataframeConstructor<'a, I, T, S>
 }
 
 
-pub trait RawDataframeConstructor<'a, I, T, S>
+pub trait Constructor<'a, I, T, S>
     where I: Iterator<Item = RowView<'a, T>> + Clone,
             T: 'a + Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>,
@@ -49,7 +49,7 @@ pub trait RawDataframeConstructor<'a, I, T, S>
 }
 
 
-pub trait DataframeOps<'a, I, T, S>
+pub trait Operations<'a, I, T, S>
     where I: Iterator<Item = RowView<'a, T>>  + Clone,
         T: 'a + Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>
@@ -161,5 +161,7 @@ pub trait ToDataFrame<'a, I, T, S>
     where T: Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>
 {
-    fn to_df(self) -> DataFrame<T, S> where Self: Sized + Iterator<Item = I>;
+    fn as_df(self) -> DataFrame<T, S> where Self: Sized + Iterator<Item = I>;
+    fn as_matrix(self) -> Matrix<T> where Self : Sized + Iterator<Item = I>;
+    fn as_array(self) -> Row<T> where Self : Sized + Iterator<Item = I>;
 }

@@ -127,7 +127,7 @@ impl<'a, L, T, S> ToDataFrame<'a, (S, RowView<'a, T>, RowView<'a, T>), T, S>
     T: 'a + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
       S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
-    fn to_df(self) -> DataFrame<T, S> {
+    fn as_df(self) -> DataFrame<T, S> {
 
         let s = self.clone();
         let right_columns = self.right_columns.clone();
@@ -157,6 +157,34 @@ impl<'a, L, T, S> ToDataFrame<'a, (S, RowView<'a, T>, RowView<'a, T>), T, S>
 
 
     }
+    fn as_matrix(self) -> Matrix<T> {
+        let s = self.clone();
+        let right_columns = self.right_columns.clone();
+        let left_columns = self.left_columns.clone();
+        let mut c = Vec::new();
+        let mut n = Vec::new();
+        let res_dim = (s.fold(0, |acc, _| acc + 1), left_columns.len() + right_columns.len());
+
+
+        for (i, j, k) in self {
+            let p = j.iter().chain(k.iter()).map(|x| x.to_owned());
+            c.extend(p);
+
+            n.push(i.to_owned());
+        }
+
+
+        Array::from_shape_vec(res_dim, c).unwrap()
+    }
+
+    fn as_array(self) -> Row<T> {
+        let mut c = Vec::new();
+        for (_, j, k) in self {
+            let p = j.iter().chain(k.iter()).map(|x| x.to_owned());
+            c.extend(p);
+        }
+        Array::from_vec(c)
+    }
 }
 
 
@@ -166,7 +194,7 @@ impl<'a, L,T,S> ToDataFrame<'a, (S, RowView<'a, T>, Option<RowView<'a, T>>), T, 
     T: 'a + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
       S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
-    fn to_df(self) -> DataFrame<T, S> {
+    fn as_df(self) -> DataFrame<T, S> {
 
         let s = self.clone();
         let right_columns = self.right_columns.clone();
@@ -198,5 +226,43 @@ impl<'a, L,T,S> ToDataFrame<'a, (S, RowView<'a, T>, Option<RowView<'a, T>>), T, 
         }
 
 
+    }
+    fn as_matrix(self) -> Matrix<T> {
+        let s = self.clone();
+        let right_columns = self.right_columns.clone();
+        let left_columns = self.left_columns.clone();
+        let mut c = Vec::new();
+        let mut n = Vec::new();
+        let res_dim = (s.fold(0, |acc, _| acc + 1), left_columns.len() + right_columns.len());
+
+        let r = repeat(T::empty()).take(right_columns.len());
+        for (i, j, k) in self {
+            c.extend(j.iter().map(|x| x.to_owned()));
+            match k {
+                Some(z) => c.extend(z.iter().map(|x| x.to_owned())),
+                None => c.extend(r.clone()),
+            }
+
+
+            n.push(i.to_owned());
+        }
+
+        Array::from_shape_vec(res_dim, c).unwrap()
+
+
+    }
+
+    fn as_array(self) -> Row<T> {
+        let right_columns = self.right_columns.clone();
+        let mut c = Vec::new();
+        let r = repeat(T::empty()).take(right_columns.len());
+        for (_, j, k) in self {
+            c.extend(j.iter().map(|x| x.to_owned()));
+            match k {
+                Some(z) => c.extend(z.iter().map(|x| x.to_owned())),
+                None => c.extend(r.clone()),
+            }
+        }
+        Array::from_vec(c)
     }
 }

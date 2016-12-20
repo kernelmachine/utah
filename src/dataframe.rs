@@ -47,102 +47,34 @@ pub struct MixedDataFrame<T, S>
     pub index: BTreeMap<S, usize>,
 }
 
-// impl <'a, T, S> MixedDataframeConstructor<'a, Values<'a, S, RowView<'a, T>>, T, S> for MixedDataFrame<T, S>
-//     where
-//             T: 'a + Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+One,
-//           S: 'a + Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>{
-//               fn new<U: Clone + Debug + Ord>(data: BTreeMap<U, Row<T>>) -> Self where S: From<U>, U : 'a{
-//
-//                   let data: BTreeMap<S,Row<T>> = data.iter().map(|(z, y)| (z.clone().into(),y.clone().mapv_into(|x| {
-//                       if x.is_empty(){
-//                            return T::empty();
-//                       }
-//                       else{
-//                           return x;
-//                       }
-//                   }))).collect();
-//                   let row_size : usize = data.values().take(1).len();
-//                   let index: BTreeMap<S, usize> = (0..row_size).zip((0..row_size))
-//                       .map(|(x,y)| (x.to_string().into(), y))
-//                       .collect();
-//                   MixedDataFrame{
-//                       data : data,
-//                       index : index
-//                   }
-//               }
-//               fn index<U: Clone + Ord>(mut self, index: &'a [U]) -> Result<Self> where S: From<U>{
-//                   let index : Vec<S> = index.iter().map(|x| x.clone().into()).collect();
-//                   if index.len() != self.index.len() {
-//                       return Err(ErrorKind::ColumnShapeMismatch.into());
-//                   }
-//                   let new_index : BTreeMap<S, usize> = index.iter().zip((0..index.len())).map(|(x,y)| (x.clone(), y)).collect();
-//
-//
-//                   self.index = new_index;
-//                   Ok(self)
-//               }
-//               fn columns<U: Clone + Ord>(mut self, columns: &'a [U]) -> Result<Self> where S: From<U>{
-//                   let columns : Vec<S> = columns.iter().map(|x| x.clone().into()).collect();
-//                   if columns.len() != self.data.len() {
-//                       return Err(ErrorKind::ColumnShapeMismatch.into());
-//                   }
-//                   let new_data : BTreeMap<S, Row<T>> = columns.iter().zip(self.data.values()).map(|(x,y)| (x.clone(), y.clone())).collect();
-//
-//
-//                   self.data = new_data;
-//                   Ok(self)
-//               }
-//               fn from_array(data: Row<T>, axis: UtahAxis) -> Self {
-//                     let mut map : BTreeMap<S, Row<T>> = BTreeMap::new();
-//                     let mut index : BTreeMap<S, usize> = BTreeMap::new();
-//
-//                     match axis {
-//                         UtahAxis::Column => {
-//                             for (x,y) in (0..data.len()).zip(0..data.len()){
-//                                 index.insert(x.to_string().into(), y);
-//                             }
-//                             map.insert("1".to_string().into(), data);
-//                         },
-//                         UtahAxis::Row => {
-//                             for (x,y) in (0..data.len()).zip(data.iter()){
-//                                 map.insert(x.to_string().into(), Array::from_vec(vec![y.clone()]));
-//                             }
-//                             index.insert("1".to_string().into(), 0);
-//                         }
-//                     }
-//
-//
-//                     MixedDataFrame{
-//                         data : map,
-//                         index : index
-//                     }
-//                 }
-//               fn df_iter(self, axis: UtahAxis) -> DataFrameIterator<'a, Values<'a, S, RowView<'a, T>>, T, S>{
-//                   match axis {
-//                    UtahAxis::Row => {
-//                        DataFrameIterator {
-//                            names: self.index.keys(),
-//                            data: self.data.values().map(|x| *x),
-//                            other: self.columns.clone(),
-//                            axis: UtahAxis::Row,
-//                        }
-//                    }
-//                    UtahAxis::Column => {
-//                        DataFrameIterator {
-//                            names: self.columns.iter(),
-//                            data: self.data.iter().map(|x| *x),
-//                            other: self.index.to_owned(),
-//                            axis: UtahAxis::Column,
-//                        }
-//                    }
-//                }
-//            }
-//               fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a, T, S>{unimplemented!()}
-// }
-impl<'a, T,S> RawDataframeConstructor<'a,  AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
+
+
+impl<'a, T,S> Constructor<'a,  AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
         where
             T: 'a + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
             S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>{
+/// Create a new dataframe. The only required argument is data to populate the dataframe. The data's elements can be any of `InnerType`.
+/// By default, the columns and index of the dataframe are `["1", "2", "3"..."N"]`, where *N* is
+/// the number of columns (or rows) in the data.
+///
+/// ```
+/// use ndarray::arr2;
+/// use dataframe::DataFrame;
+///
+/// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
+/// let df = DataFrame::new(a);
+/// ```
+///
+/// When populating the dataframe with mixed-types, wrap the elements with `InnerType` enum:
+///
+/// ```
+/// use ndarray::arr2;
+/// use dataframe::DataFrame;
+///
+/// let a = arr2(&[[InnerType::Float(2.0), InnerType::Str("ak".into())],
+///                [InnerType::Int32(6), InnerType::Int64(10)]]);
+/// let df = DataFrame::new(a);
+/// ```
           fn new<U: Clone>(data: Matrix<U>) -> DataFrame<T, S>
               where T: From<U>
           {
@@ -202,16 +134,16 @@ impl<'a, T,S> RawDataframeConstructor<'a,  AxisIter<'a, T,usize>, T, S> for Data
                   index: index,
               }
           }
-            /// Populate the dataframe with a set of columns. The column elements can be any of `OuterType`. Example:
-            ///
-            /// ```
-            /// use ndarray::arr2;
-            /// use dataframe::DataFrame;
-            ///
-            /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-            /// let df = DataFrame::new(a).columns(&["a", "b"]);
-            /// df.is_ok();
-            /// ```
+/// Populate the dataframe with a set of columns. The column elements can be any of `OuterType`. Example:
+///
+/// ```
+/// use ndarray::arr2;
+/// use dataframe::DataFrame;
+///
+/// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
+/// let df = DataFrame::new(a).columns(&["a", "b"]);
+/// df.is_ok();
+/// ```
           fn columns<U: Clone>(mut self, columns: &'a [U]) -> Result<DataFrame<T, S>>
               where S: From<U>
           {
@@ -317,38 +249,17 @@ impl<'a, T,S> RawDataframeConstructor<'a,  AxisIter<'a, T,usize>, T, S> for Data
 
       }
 
-impl<'a, T,S> DataframeOps<'a, AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
-where
+impl<'a, T,S> Operations<'a, AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
+    where
         T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
         S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>{
 
 /// Get the dimensions of the dataframe.
-                    fn shape(self) -> (usize, usize) {
+        default fn shape(self) -> (usize, usize) {
                         self.data.dim()
-                    }
+        }
 
-/// Create a new dataframe. The only required argument is data to populate the dataframe. The data's elements can be any of `InnerType`.
-/// By default, the columns and index of the dataframe are `["1", "2", "3"..."N"]`, where *N* is
-/// the number of columns (or rows) in the data.
-///
-/// ```
-/// use ndarray::arr2;
-/// use dataframe::DataFrame;
-///
-/// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-/// let df = DataFrame::new(a);
-/// ```
-///
-/// When populating the dataframe with mixed-types, wrap the elements with `InnerType` enum:
-///
-/// ```
-/// use ndarray::arr2;
-/// use dataframe::DataFrame;
-///
-/// let a = arr2(&[[InnerType::Float(2.0), InnerType::Str("ak".into())],
-///                [InnerType::Int32(6), InnerType::Int64(10)]]);
-/// let df = DataFrame::new(a);
-/// ```
+
 
 /// Select rows or columns over the specified `UtahAxis`.
 ///
@@ -366,31 +277,31 @@ where
 ///    }
 /// ```
 
-    fn select<U :?Sized>
-        (&'a self,
-         names: &'a [&'a U],
-         axis: UtahAxis)
-         -> Select<'a, T, S, DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>>
-        where S: From<&'a  U>
-    {
-        let names : Vec<S>= names.iter()
-            .map(|x| (*x).into())
-            .collect();
-        match axis {
-            UtahAxis::Row => {
-                Select::new(self.df_iter(UtahAxis::Row),
-                            names,
-                            self.columns.clone(),
-                            UtahAxis::Row)
-            }
-            UtahAxis::Column => {
-                Select::new(self.df_iter(UtahAxis::Column),
-                            names,
-                            self.index.clone(),
-                            UtahAxis::Column)
+        default fn select<U :?Sized>
+            (&'a self,
+             names: &'a [&'a U],
+             axis: UtahAxis)
+             -> Select<'a, T, S, DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>>
+            where S: From<&'a  U>
+        {
+            let names : Vec<S>= names.iter()
+                .map(|x| (*x).into())
+                .collect();
+            match axis {
+                UtahAxis::Row => {
+                    Select::new(self.df_iter(UtahAxis::Row),
+                                names,
+                                self.columns.clone(),
+                                UtahAxis::Row)
+                }
+                UtahAxis::Column => {
+                    Select::new(self.df_iter(UtahAxis::Column),
+                                names,
+                                self.index.clone(),
+                                UtahAxis::Column)
+                }
             }
         }
-    }
 
 /// Remove rows or columns over the specified `UtahAxis`.
 ///
@@ -407,7 +318,7 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn remove<U: ?Sized>(&'a self,
+    default fn remove<U: ?Sized>(&'a self,
                  names: &'a [&'a U],
                  axis: UtahAxis)
                  -> Remove<'a, DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>, T, S>
@@ -447,7 +358,7 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn append<U: ?Sized>(&'a mut self,
+    default fn append<U: ?Sized>(&'a mut self,
                  name: &'a U,
                  data: RowView<'a, T>,
                  axis: UtahAxis)
@@ -488,7 +399,7 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn inner_left_join
+    default fn inner_left_join
         (&'a self,
          other: &'a DataFrame<T, S>)
          -> InnerJoin<'a, DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>, T, S> {
@@ -511,7 +422,7 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn outer_left_join
+    default fn outer_left_join
         (&'a self,
          other: &'a DataFrame<T, S>)
          -> OuterJoin<'a, DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>, T, S> {
@@ -539,7 +450,7 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn inner_right_join
+    default fn inner_right_join
         (&'a self,
          other: &'a DataFrame<T, S>)
          -> InnerJoin<'a, DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>, T, S> {
@@ -563,7 +474,7 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn outer_right_join
+    default fn outer_right_join
         (&'a self,
          other: &'a DataFrame<T, S>)
          -> OuterJoin<'a, DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>, T, S> {
@@ -588,7 +499,7 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn sumdf(&'a mut self,
+    default fn sumdf(&'a mut self,
              axis: UtahAxis)
              -> Sum<'a, DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>, T, S> {
         let columns = self.columns.clone();
@@ -613,7 +524,7 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn map<F, B>
+    default fn map<F, B>
         (&'a mut self,
          f: F,
          axis: UtahAxis)
@@ -640,7 +551,7 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn mean(&'a mut self,
+    default fn mean(&'a mut self,
             axis: UtahAxis)
             -> Mean<'a, DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>, T, S> {
 
@@ -666,7 +577,7 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn maxdf(&'a mut self,
+    default fn maxdf(&'a mut self,
              axis: UtahAxis)
              -> Max<'a, DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>, T, S> {
 
@@ -692,7 +603,7 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn min(&'a mut self,
+    default fn min(&'a mut self,
            axis: UtahAxis)
            -> Min<'a, DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>, T, S> {
 
@@ -719,7 +630,7 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn stdev(&'a self,
+    default fn stdev(&'a self,
              axis: UtahAxis)
              -> Stdev<'a, DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>, T, S> {
         let columns = self.columns.clone();
@@ -745,7 +656,7 @@ where
 ///        assert_eq!(row, a.row(idx))
 ///    }
 /// ```
-    fn impute
+    default fn impute
         (&'a mut self,
          strategy: ImputeStrategy,
          axis: UtahAxis)
@@ -773,6 +684,436 @@ where
 
 }
 
+impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64, String> {
+    /// Get the dimensions of the dataframe.
+    fn shape(self) -> (usize, usize) {
+        self.data.dim()
+    }
+
+
+    /// Select rows or columns over the specified `UtahAxis`.
+    ///
+    /// The Select transform adaptor yields a mutable view of a row or column of the dataframe for
+    /// computation
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// for (idx, row) in df.select(&["a", "c"], UtahAxis::Column) {
+    ///        assert_eq!(row, a.row(idx))
+    ///    }
+    /// ```
+
+    fn select<U: ?Sized>
+        (&'a self,
+         names: &'a [&'a U],
+         axis: UtahAxis)
+         -> Select<'a, f64, String, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>>
+        where String: From<&'a U>
+    {
+        let names: Vec<String> = names.iter().map(|x| String::from(x)).collect();
+        match axis {
+            UtahAxis::Row => {
+                Select::new(self.df_iter(UtahAxis::Row),
+                            names,
+                            self.columns.clone(),
+                            UtahAxis::Row)
+            }
+            UtahAxis::Column => {
+                Select::new(self.df_iter(UtahAxis::Column),
+                            names,
+                            self.index.clone(),
+                            UtahAxis::Column)
+            }
+        }
+    }
+
+    /// Remove rows or columns over the specified `UtahAxis`.
+    ///
+    /// The Remove transform adaptor yields a mutable view of a row or column of the dataframe for
+    /// computation.
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
+    ///        assert_eq!(row, a.row(idx))
+    ///    }
+    /// ```
+    fn remove<U: ?Sized>
+        (&'a self,
+         names: &'a [&'a U],
+         axis: UtahAxis)
+         -> Remove<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String>
+        where String: From<&'a U>
+    {
+        let names: Vec<String> = names.iter().map(|x| String::from(x)).collect();
+        match axis {
+            UtahAxis::Row => {
+                Remove::new(self.df_iter(UtahAxis::Row),
+                            names,
+                            self.columns.clone(),
+                            UtahAxis::Row)
+            }
+            UtahAxis::Column => {
+                Remove::new(self.df_iter(UtahAxis::Column),
+                            names,
+                            self.index.clone(),
+                            UtahAxis::Column)
+            }
+        }
+    }
+
+    /// Append  a row or column along the specified `UtahAxis`.
+    ///
+    /// The Remove transform adaptor yields a mutable view of a row or column of the dataframe for
+    /// computation.
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
+    ///        assert_eq!(row, a.row(idx))
+    ///    }
+    /// ```
+    fn append<U: ?Sized>
+        (&'a mut self,
+         name: &'a U,
+         data: RowView<'a, f64>,
+         axis: UtahAxis)
+         -> Append<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String>
+        where String: From<&'a U>
+    {
+        let name: String = String::from(name);
+        match axis {
+            UtahAxis::Row => {
+                Append::new(self.df_iter(UtahAxis::Row),
+                            name,
+                            data,
+                            self.columns.clone(),
+                            UtahAxis::Row)
+            }
+            UtahAxis::Column => {
+                Append::new(self.df_iter(UtahAxis::Column),
+                            name,
+                            data,
+                            self.index.clone(),
+                            UtahAxis::Column)
+            }
+
+        }
+    }
+
+
+    /// Perform an inner left join between two dataframes along the specified `UtahAxis`.
+    ///
+
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
+    ///        assert_eq!(row, a.row(idx))
+    ///    }
+    /// ```
+    fn inner_left_join
+        (&'a self,
+         other: &'a DataFrame<f64, String>)
+         -> InnerJoin<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+        InnerJoin::new(self.df_iter(UtahAxis::Row),
+                       other.df_iter(UtahAxis::Row),
+                       self.columns.clone(),
+                       other.columns.clone())
+    }
+
+    /// Perform an outer left join between two dataframes along the specified `UtahAxis`.
+    ///
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
+    ///        assert_eq!(row, a.row(idx))
+    ///    }
+    /// ```
+    fn outer_left_join
+        (&'a self,
+         other: &'a DataFrame<f64, String>)
+         -> OuterJoin<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+
+        OuterJoin::new(self.df_iter(UtahAxis::Row),
+                       other.df_iter(UtahAxis::Row),
+                       self.columns.clone(),
+                       other.columns.clone())
+
+
+
+
+    }
+
+    /// Perform an inner right join between two dataframes along the specified `UtahAxis`.
+    ///
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
+    ///        assert_eq!(row, a.row(idx))
+    ///    }
+    /// ```
+    fn inner_right_join
+        (&'a self,
+         other: &'a DataFrame<f64, String>)
+         -> InnerJoin<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+        InnerJoin::new(other.df_iter(UtahAxis::Row),
+                       self.df_iter(UtahAxis::Row),
+                       other.columns.clone(),
+                       self.columns.clone())
+
+    }
+
+    /// Perform an outer right join between two dataframes along the specified `UtahAxis`.
+    ///
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
+    ///        assert_eq!(row, a.row(idx))
+    ///    }
+    /// ```
+    fn outer_right_join
+        (&'a self,
+         other: &'a DataFrame<f64, String>)
+         -> OuterJoin<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+        OuterJoin::new(other.df_iter(UtahAxis::Row),
+                       self.df_iter(UtahAxis::Row),
+                       other.columns.clone(),
+                       self.columns.clone())
+
+    }
+
+
+    /// Sum along the specified `UtahAxis`.
+    ///
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
+    ///        assert_eq!(row, a.row(idx))
+    ///    }
+    /// ```
+    fn sumdf
+        (&'a mut self,
+         axis: UtahAxis)
+         -> Sum<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+        let columns = self.columns.clone();
+        let index = self.index.clone();
+        match axis {
+            UtahAxis::Row => Sum::new(self.df_iter(UtahAxis::Column), columns, UtahAxis::Column),
+            UtahAxis::Column => Sum::new(self.df_iter(UtahAxis::Row), index, UtahAxis::Row),
+
+        }
+    }
+
+    /// Map a function along the specified `UtahAxis`.
+    ///
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
+    ///        assert_eq!(row, a.row(idx))
+    ///    }
+    /// ```
+    fn map<F, B>
+        (&'a mut self,
+         f: F,
+         axis: UtahAxis)
+         -> MapDF<'a, f64, String, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, F, B>
+        where F: Fn(&f64) -> B,
+              for<'r> F: Fn(&InnerType) -> B
+    {
+
+        match axis {
+            UtahAxis::Row => MapDF::new(self.df_iter(UtahAxis::Row), f, UtahAxis::Row),
+            UtahAxis::Column => MapDF::new(self.df_iter(UtahAxis::Column), f, UtahAxis::Column),
+
+        }
+    }
+    /// Get the average of entries along the specified `UtahAxis`.
+    ///
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
+    ///        assert_eq!(row, a.row(idx))
+    ///    }
+    /// ```
+    fn mean
+        (&'a mut self,
+         axis: UtahAxis)
+         -> Mean<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+
+        let columns = self.columns.clone();
+        let index = self.index.clone();
+        match axis {
+            UtahAxis::Row => Mean::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
+            UtahAxis::Column => Mean::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Row),
+
+        }
+    }
+
+    /// Get the maximum of entries along the specified `UtahAxis`.
+    ///
+    ///
+    /// ```no_run
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
+    ///        assert_eq!(row, a.row(idx))
+    ///    }
+    /// ```
+    fn maxdf
+        (&'a mut self,
+         axis: UtahAxis)
+         -> Max<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+
+        let columns = self.columns.clone();
+        let index = self.index.clone();
+        match axis {
+            UtahAxis::Row => Max::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
+            UtahAxis::Column => Max::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Row),
+
+        }
+    }
+
+    /// Get the minimum of entries along the specified `UtahAxis`.
+    ///
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
+    ///        assert_eq!(row, a.row(idx))
+    ///    }
+    /// ```
+    fn min
+        (&'a mut self,
+         axis: UtahAxis)
+         -> Min<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+
+        let columns = self.columns.clone();
+        let index = self.index.clone();
+        match axis {
+            UtahAxis::Row => Min::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
+            UtahAxis::Column => Min::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Row),
+
+        }
+
+    }
+
+    /// Get the standard deviation along the specified `UtahAxis`.
+    ///
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
+    ///        assert_eq!(row, a.row(idx))
+    ///    }
+    /// ```
+    fn stdev
+        (&'a self,
+         axis: UtahAxis)
+         -> Stdev<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+        let columns = self.columns.clone();
+        let index = self.index.clone();
+        match axis {
+            UtahAxis::Row => Stdev::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
+            UtahAxis::Column => Stdev::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Row),
+
+        }
+
+
+    }
+    /// Get the standard deviation along the specified `UtahAxis`.
+    ///
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
+    ///        assert_eq!(row, a.row(idx))
+    ///    }
+    /// ```
+    fn impute(&'a mut self,
+              strategy: ImputeStrategy,
+              axis: UtahAxis)
+              -> Impute<'a, MutableDataFrameIterator<'a, f64, String>, f64, String> {
+
+        let index = self.index.clone();
+        let columns = self.columns.clone();
+        match axis {
+            UtahAxis::Row => {
+                Impute::new(self.df_iter_mut(UtahAxis::Row),
+                            strategy,
+                            columns,
+                            UtahAxis::Row)
+            }
+            UtahAxis::Column => {
+                Impute::new(self.df_iter_mut(UtahAxis::Column),
+                            strategy,
+                            index,
+                            UtahAxis::Column)
+            }
+
+        }
+    }
+}
 
 
 

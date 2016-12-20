@@ -30,7 +30,7 @@ use dataframe::*;
 use types::*;
 
 use std::f64::NAN;
-use traits::{Transform, DataframeOps, RawDataframeConstructor, Aggregate, ToDataFrame};
+use traits::{Transform, Operations, Constructor, Aggregate, ToDataFrame};
 
 fn main() {
     let a = arr2(&[[2., 7.], [3., NAN], [2., 4.]]);
@@ -38,27 +38,23 @@ fn main() {
     let c = arr2(&[[2., 6.], [3., 4.], [2., 1.]]);
     let mut df: DataFrame<f64, String> =
         DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2", "3"]).unwrap();
-    let df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap().index(&["1", "2"]).unwrap();
-    let new_data = c.column(1);
-    let remove_idx = vec!["1"];
-    let select_idx = vec!["2"];
-    let append_idx = "8";
+    let df_1 = DataFrame::new(b).columns(&["c", "d"]).unwrap().index(&["1", "2", "3"]).unwrap();
+    let new_data = df.select(&["2"], UtahAxis::Row).as_array();
 
+    println!("{:?}", new_data);
     // let df_iter: DataFrameIterator = df_1.df_iter(UtahAxis::Row);
-    df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_df();
+    df.impute(ImputeStrategy::Mean, UtahAxis::Column).as_df();
     let j = df.df_iter(UtahAxis::Row)
-        .remove(&remove_idx[..])
-        .select(&select_idx[..])
-        .append(&append_idx, new_data.view())
-        .sumdf()
-        .to_df();
+        .remove(&["1"])
+        .select(&["2"])
+        .append("8", new_data.view())
+        .as_df();
     println!("{:?}", j);
     let res: DataFrame<f64, String> = df.impute(ImputeStrategy::Mean, UtahAxis::Column)
-        .to_df();
-    // .to_df();    // res.mapdf(|x| x.as_ref())
+        .as_df();
+
     println!("{:?}", res);
-    // df.impute(ImputeStrategy::Mean, UtahAxis::Column).to_df();
-    let res_1: DataFrame<f64, String> = df.inner_left_join(&df_1).to_df();
+    let res_1: DataFrame<f64, String> = df.inner_left_join(&df_1).as_df();
     println!("join result - {:?}", res_1);
 
 }

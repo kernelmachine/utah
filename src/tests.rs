@@ -45,8 +45,7 @@ pub mod tests {
         let left: DataFrame<InnerType, OuterType> =
             DataFrame::new(a).index(&[1, 2, 3]).unwrap().columns(&["a"]).unwrap();
         let b = arr2(&[["Programmer"], ["Data Scientist"]]);
-        let right: DataFrame<InnerType, OuterType> =
-            DataFrame::new(b).index(&[1, 3]).unwrap().columns(&["b"]).unwrap();
+        let right = DataFrame::new(b).index(&[1, 3]).unwrap().columns(&["b"]).unwrap();
         let first_index = &left.index[0];
         let second_index = &left.index[2];
         let res = left.inner_left_join(&right).to_df();
