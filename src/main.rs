@@ -34,10 +34,10 @@ use traits::{Transform, Operations, Constructor, Aggregate, ToDataFrame};
 
 fn main() {
     let a = arr2(&[[2., 7.], [3., NAN], [2., 4.]]);
-    let b = arr2(&[[2., 6.], [3., 4.]]);
+    // let b = arr2(&[[2., 6.], [3., 4.]]);
     let c = arr2(&[[2., 6.], [3., 4.], [2., 1.]]);
     let mut df: DataFrame<f64, String> =
-        DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2"]).unwrap();
+        DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2", "3"]).unwrap();
     let df_1 = DataFrame::new(c).columns(&["c", "d"]).unwrap().index(&["1", "2", "3"]).unwrap();
     let new_data = df.select(&["2"], UtahAxis::Row).as_array();
 
@@ -57,5 +57,6 @@ fn main() {
     println!("{:?}", res);
     let res_1: DataFrame<f64, String> = df.inner_left_join(&df_1).as_df();
     println!("join result - {:?}", res_1);
-
+    let concat = df.concat(&df_1, UtahAxis::Row).as_df();
+    println!("concat result - {:?}", concat);
 }

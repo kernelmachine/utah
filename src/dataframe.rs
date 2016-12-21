@@ -14,6 +14,7 @@ use traits::*;
 use std::ops::{Add, Sub, Mul, Div};
 use num::traits::One;
 use ndarray::AxisIter;
+use std::iter::Chain;
 /// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame<T, S>
@@ -479,6 +480,25 @@ impl<'a, T,S> Operations<'a, AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
 
     }
 
+    default fn concat(&'a self, other: &'a DataFrame<T, S>, axis : UtahAxis) ->
+            Concat<'a, Chain<DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>,DataFrameIterator<'a,  AxisIter<'a, T,usize>, T, S>>, T, S>
+    {
+        match axis {
+            UtahAxis::Row => {
+                Concat::new(self.df_iter(UtahAxis::Column),
+                            other.df_iter(UtahAxis::Column),
+                            self.columns.clone(),
+                            UtahAxis::Column)
+            }
+            UtahAxis::Column => {
+                Concat::new(self.df_iter(UtahAxis::Row),
+                            other.df_iter(UtahAxis::Row),
+                            self.columns.clone(),
+                            UtahAxis::Row)
+            }
+        }
+    }
+
 
 /// Sum along the specified `UtahAxis`.
 ///
@@ -907,6 +927,30 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
 
     }
 
+
+    fn concat(&'a self,
+              other: &'a DataFrame<f64, String>,
+              axis: UtahAxis)
+              -> Concat<'a,
+                        Chain<DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>,
+                              DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>>,
+                        f64,
+                        String> {
+        match axis {
+            UtahAxis::Row => {
+                Concat::new(self.df_iter(UtahAxis::Row),
+                            other.df_iter(UtahAxis::Row),
+                            self.columns.clone(),
+                            UtahAxis::Row)
+            }
+            UtahAxis::Column => {
+                Concat::new(self.df_iter(UtahAxis::Column),
+                            other.df_iter(UtahAxis::Column),
+                            self.index.clone(),
+                            UtahAxis::Column)
+            }
+        }
+    }
 
     /// Sum along the specified `UtahAxis`.
     ///

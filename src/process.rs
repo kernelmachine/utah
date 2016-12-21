@@ -293,6 +293,7 @@ impl<'a, I,T,S> ToDataFrame<'a, (S, RowViewMut<'a, T>), T, S> for Impute<'a, I, 
     fn as_df(self) -> DataFrame<T, S> {
         self.to_mut_df().to_df()
     }
+
     fn as_matrix(self) -> Matrix<T> {
         let axis = self.axis.clone();
         let other = self.other.clone();

@@ -89,6 +89,8 @@ pub trait Operations<'a, I, T, S>
     fn outer_right_join(&'a self,
                         other: &'a DataFrame<T, S>)
                         -> OuterJoin<'a, DataFrameIterator<'a, I, T, S>, T, S>;
+    fn concat(&'a self,
+                        other: &'a DataFrame<T, S>, axis : UtahAxis) -> Concat<'a, Chain<DataFrameIterator<'a, I, T, S>,DataFrameIterator<'a, I, T, S>>, T, S>;
     fn sumdf(&'a mut self, axis: UtahAxis) -> Sum<'a, DataFrameIterator<'a, I, T, S>, T, S>;
     fn map<F, B>(&'a mut self,
                  f: F,
@@ -146,9 +148,7 @@ pub trait Transform<'a, T, S>
         where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
               S: From<&'a U>,
               T: 'a;
-    fn concat<I>(self, other: I) -> Chain<Self, I>
-        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>,
-              I: Sized + Iterator<Item = (S, RowView<'a, T>)>;
+
 
     fn mapdf<F, B>(self, f: F) -> MapDF<'a, T, S, Self, F, B>
         where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,

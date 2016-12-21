@@ -6,18 +6,16 @@ use std::slice::Iter;
 use ndarray::Array;
 use aggregate::*;
 use traits::*;
-use std::iter::Chain;
 use dataframe::*;
 use std::hash::Hash;
 use std::fmt::Debug;
 use std::ops::{Add, Sub, Mul, Div};
 use num::traits::One;
 
-#[derive(Clone)]
-pub struct DataFrameIterator<'a, I, T, S>
-    where I: Iterator<Item = RowView<'a, T>> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + 'a
+#[derive(Clone, Debug)]
+pub struct DataFrameIterator<'a, I, T: 'a, S: 'a>
+    where I: Iterator<Item = RowView<'a, T>>,
+          S: Hash + Eq + PartialOrd
 {
     pub names: Iter<'a, S>,
     pub data: I,
@@ -29,9 +27,8 @@ pub struct DataFrameIterator<'a, I, T, S>
 
 
 impl<'a, I, T, S> Iterator for DataFrameIterator<'a, I, T, S>
-    where I: Iterator<Item = RowView<'a, T>> + Clone,
-          T: Clone + Debug,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+    where I: Iterator<Item = RowView<'a, T>>,
+          S: Hash + Eq + PartialOrd + Clone
 {
     type Item = (S, RowView<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
@@ -47,12 +44,11 @@ impl<'a, I, T, S> Iterator for DataFrameIterator<'a, I, T, S>
     }
 }
 
-#[derive(Clone)]
-pub struct MapDF<'a, T, S, I, F, B>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
+#[derive(Clone, Debug)]
+pub struct MapDF<'a, T: 'a, S, I, F, B: 'a>
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
           F: Fn(&T) -> B,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          S: Hash + Eq + PartialOrd
 {
     data: I,
     func: F,
@@ -62,12 +58,9 @@ pub struct MapDF<'a, T, S, I, F, B>
 impl<'a, T, S, I, F, B> MapDF<'a, T, S, I, F, B>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
           F: Fn(&T) -> B,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          S: Hash + PartialOrd + Eq + Clone
 {
-    pub fn new(df: I, f: F, axis: UtahAxis) -> MapDF<'a, T, S, I, F, B>
-        where I: Iterator<Item = (S, RowView<'a, T>)>
-    {
+    pub fn new(df: I, f: F, axis: UtahAxis) -> MapDF<'a, T, S, I, F, B> {
 
         MapDF {
             data: df,
@@ -80,14 +73,11 @@ impl<'a, T, S, I, F, B> MapDF<'a, T, S, I, F, B>
 impl<'a, T, S, I, F, B> Iterator for MapDF<'a, T, S, I, F, B>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
           F: Fn(&T) -> B,
-          B: 'a,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          S: Hash + PartialOrd + Eq
 {
     type Item = (S, Row<B>);
     fn next(&mut self) -> Option<Self::Item> {
         match self.data.next() {
-
             None => return None,
             Some((val, dat)) => return Some((val, dat.map(&self.func))),
         }
@@ -98,12 +88,10 @@ impl<'a, T, S, I, F, B> Iterator for MapDF<'a, T, S, I, F, B>
 
 
 
-#[derive(Clone)]
-
-pub struct Select<'a, T, S, I>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+#[derive(Clone, Debug)]
+pub struct Select<'a, T: 'a, S, I>
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          S: Hash + PartialOrd + Eq
 {
     pub data: I,
     pub ind: Vec<S>,
@@ -113,13 +101,10 @@ pub struct Select<'a, T, S, I>
 
 
 impl<'a, T, S, I> Select<'a, T, S, I>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          S: Hash + PartialOrd + Eq
 {
-    pub fn new(df: I, ind: Vec<S>, other: Vec<S>, axis: UtahAxis) -> Select<'a, T, S, I>
-        where I: Iterator<Item = (S, RowView<'a, T>)> + Clone
-    {
+    pub fn new(df: I, ind: Vec<S>, other: Vec<S>, axis: UtahAxis) -> Select<'a, T, S, I> {
 
         Select {
             data: df,
@@ -134,9 +119,8 @@ impl<'a, T, S, I> Select<'a, T, S, I>
 
 
 impl<'a, I, T, S> Iterator for Select<'a, T, S, I>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          S: Hash + PartialOrd + Eq
 {
     type Item = (S, RowView<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
@@ -144,7 +128,7 @@ impl<'a, I, T, S> Iterator for Select<'a, T, S, I>
             match self.data.next() {
                 Some((val, dat)) => {
                     if self.ind.contains(&val) {
-                        return Some((val.clone(), dat));
+                        return Some((val, dat));
                     } else {
                         continue;
                     }
@@ -157,11 +141,10 @@ impl<'a, I, T, S> Iterator for Select<'a, T, S, I>
     }
 }
 
-#[derive(Clone)]
-pub struct Remove<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+#[derive(Clone, Debug)]
+pub struct Remove<'a, I, T: 'a, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          S: Hash + PartialOrd + Eq
 {
     pub data: I,
     pub ind: Vec<S>,
@@ -171,13 +154,10 @@ pub struct Remove<'a, I, T, S>
 
 
 impl<'a, I, T, S> Remove<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          S: Hash + PartialOrd + Eq
 {
-    pub fn new(df: I, ind: Vec<S>, other: Vec<S>, axis: UtahAxis) -> Remove<'a, I, T, S>
-        where I: Iterator<Item = (S, RowView<'a, T>)> + Clone
-    {
+    pub fn new(df: I, ind: Vec<S>, other: Vec<S>, axis: UtahAxis) -> Remove<'a, I, T, S> {
 
         Remove {
             data: df,
@@ -191,18 +171,16 @@ impl<'a, I, T, S> Remove<'a, I, T, S>
 
 
 impl<'a, I, T, S> Iterator for Remove<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          S: Hash + PartialOrd + Eq
 {
     type Item = (S, RowView<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.data.next() {
-
                 Some((val, dat)) => {
                     if !self.ind.contains(&val) {
-                        return Some((val.clone(), dat));
+                        return Some((val, dat));
                     } else {
                         continue;
                     }
@@ -214,10 +192,10 @@ impl<'a, I, T, S> Iterator for Remove<'a, I, T, S>
 }
 
 #[derive(Clone)]
-pub struct Append<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+pub struct Append<'a, I, T: 'a, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          T: Debug,
+          S: Hash + PartialOrd + Eq + Debug
 {
     pub new_data: PutBack<I>,
     pub other: Vec<S>,
@@ -228,18 +206,16 @@ pub struct Append<'a, I, T, S>
 
 
 impl<'a, I, T, S> Append<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          T: Debug,
+          S: Hash + PartialOrd + Eq + Debug
 {
     pub fn new(df: I,
                name: S,
                data: RowView<'a, T>,
                other: Vec<S>,
                axis: UtahAxis)
-               -> Append<'a, I, T, S>
-        where I: Iterator<Item = (S, RowView<'a, T>)> + Clone
-    {
+               -> Append<'a, I, T, S> {
         let name = S::from(name);
         let mut it = PutBack::new(df);
         it.put_back((name, data));
@@ -252,10 +228,11 @@ impl<'a, I, T, S> Append<'a, I, T, S>
 }
 
 
+
 impl<'a, I, T, S> Iterator for Append<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          T: Debug,
+          S: Hash + PartialOrd + Eq + Debug
 {
     type Item = (S, RowView<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
@@ -265,10 +242,13 @@ impl<'a, I, T, S> Iterator for Append<'a, I, T, S>
 
 
 
+
+
+
 impl<'a, I, T, S> Aggregate<'a, T, S> for DataFrameIterator<'a, I, T, S>
     where I: Iterator<Item = RowView<'a, T>> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Clone + Debug,
+          S: Hash + PartialEq + Eq + Ord + Clone + Debug
 {
     fn sumdf(self) -> Sum<'a, Self, T, S>
         where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
@@ -313,9 +293,9 @@ impl<'a, I, T, S> Aggregate<'a, T, S> for DataFrameIterator<'a, I, T, S>
 
 
 impl<'a, I, T, S> Transform<'a, T, S> for DataFrameIterator<'a, I, T, S>
-    where I: Iterator<Item = RowView<'a, T>> + Clone + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+    where I: Iterator<Item = RowView<'a, T>> + Clone,
+          T: Clone + Debug,
+          S: Hash + PartialOrd + Eq + Ord + Clone + Debug
 {
     fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, T, S, Self>
         where S: From<&'a U>,
@@ -354,11 +334,6 @@ impl<'a, I, T, S> Transform<'a, T, S> for DataFrameIterator<'a, I, T, S>
 
     }
 
-    fn concat<J>(self, other: J) -> Chain<Self, J>
-        where J: Sized + Iterator<Item = (S, RowView<'a, T>)>
-    {
-        self.chain(other)
-    }
 
 
 
@@ -462,11 +437,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Select<'a, T, S, I>
         Append::new(self, name, data, other, axis)
 
     }
-    fn concat<J>(self, other: J) -> Chain<Self, J>
-        where J: Sized + Iterator<Item = (S, RowView<'a, T>)>
-    {
-        self.chain(other)
-    }
+
 
 
     fn mapdf<F, B>(self, f: F) -> MapDF<'a, T, S, Self, F, B>
@@ -565,11 +536,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Remove<'a, I, T, S>
         Append::new(self, name, data, other, axis)
 
     }
-    fn concat<J>(self, other: J) -> Chain<Self, J>
-        where J: Sized + Iterator<Item = (S, RowView<'a, T>)>
-    {
-        self.chain(other)
-    }
+
 
 
 
@@ -669,11 +636,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Append<'a, I, T, S>
         Append::new(self, name, data, other, axis)
 
     }
-    fn concat<J>(self, other: J) -> Chain<Self, J>
-        where J: Sized + Iterator<Item = (S, RowView<'a, T>)>
-    {
-        self.chain(other)
-    }
+
 
 
     fn mapdf<F, B>(self, f: F) -> MapDF<'a, T, S, Self, F, B>
