@@ -30,7 +30,7 @@ pub mod tests {
             DataFrame::new(b).index(&[1]).unwrap().columns(&["b"]).unwrap();
         let first_index = &left.index[0];
         let second_index = &left.index[1];
-        let res = left.outer_left_join(&right).to_df();
+        let res = left.outer_left_join(&right).as_df();
         let expected_data = arr2(&[[InnerType::Str(String::from("Alice")),
                                     InnerType::Str(String::from("Programmer"))],
                                    [InnerType::Str(String::from("Bob")), InnerType::Empty]]);
@@ -48,7 +48,7 @@ pub mod tests {
         let right = DataFrame::new(b).index(&[1, 3]).unwrap().columns(&["b"]).unwrap();
         let first_index = &left.index[0];
         let second_index = &left.index[2];
-        let res = left.inner_left_join(&right).to_df();
+        let res = left.inner_left_join(&right).as_df();
         let expected_data = arr2(&[[InnerType::Str(String::from("Alice")),
                                     InnerType::Str(String::from("Programmer"))],
                                    [InnerType::Str(String::from("Suchin")),
@@ -90,7 +90,7 @@ pub mod tests {
         let a = arr2(&[[2., 3.], [3., 4.]]);
         let df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         let select_idx = vec!["a"];
-        let z = df.select(&select_idx[..], UtahAxis::Column).to_df();
+        let z = df.select(&select_idx[..], UtahAxis::Column).as_df();
         let col = df.data.column(0).clone();
         let expected = DataFrame::from_array(col.to_owned(), UtahAxis::Column)
             .columns(&["a"])
@@ -98,7 +98,7 @@ pub mod tests {
         assert_eq!(z, expected);
 
         let select_idx = vec!["0"];
-        let z = df.select(&select_idx[..], UtahAxis::Row).to_df();
+        let z = df.select(&select_idx[..], UtahAxis::Row).as_df();
         let col = df.data.row(0).clone();
         let expected = DataFrame::from_array(col.to_owned(), UtahAxis::Row)
             .index(&["0"])
@@ -161,7 +161,7 @@ pub mod tests {
             .index(&e_index[..])
             .unwrap();
         b.iter(|| {
-            let _: DataFrame<f64, String> = c_df.sumdf(UtahAxis::Column).to_df();
+            let _: DataFrame<f64, String> = c_df.sumdf(UtahAxis::Column).as_df();
         });
     }
 
