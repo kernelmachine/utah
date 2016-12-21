@@ -12,10 +12,8 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use traits::*;
 use std::ops::{Add, Sub, Mul, Div};
-use std::collections::BTreeMap;
 use num::traits::One;
 use ndarray::AxisIter;
-
 /// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame<T, S>
@@ -38,20 +36,14 @@ pub struct MutableDataFrame<'a, T, S>
     pub index: Vec<S>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct MixedDataFrame<T, S>
-    where T: Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
-          S: Hash + PartialOrd + Eq + Ord + From<String>
-{
-    pub data: BTreeMap<S, Row<T>>,
-    pub index: BTreeMap<S, usize>,
-}
+
+
 
 
 
 impl<'a, T,S> Constructor<'a,  AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
         where
-            T: 'a + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+            T: 'a  + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
             S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>{
 /// Create a new dataframe. The only required argument is data to populate the dataframe. The data's elements can be any of `InnerType`.
 /// By default, the columns and index of the dataframe are `["1", "2", "3"..."N"]`, where *N* is
@@ -117,8 +109,6 @@ impl<'a, T,S> Constructor<'a,  AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
                   else{
                       return x;
                   }
-
-
               });
               let columns: Vec<S> = (0..res_dim.1)
                   .map(|x| x.to_string().into())
@@ -147,8 +137,10 @@ impl<'a, T,S> Constructor<'a,  AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
           fn columns<U: Clone>(mut self, columns: &'a [U]) -> Result<DataFrame<T, S>>
               where S: From<U>
           {
-              if columns.len() != self.data.shape()[1] {
-                  return Err(ErrorKind::ColumnShapeMismatch.into());
+              let data_shape = self.data.shape()[1];
+              let column_shape = columns.len();
+              if column_shape != data_shape {
+                   return Err(ErrorKind::ColumnShapeMismatch(data_shape.to_string(), column_shape.to_string()).into());
               }
               let new_columns : Vec<S> = columns.iter()
                   .map(|x| x.clone().into())
@@ -180,8 +172,10 @@ impl<'a, T,S> Constructor<'a,  AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
           fn index<U: Clone>(mut self, index: &'a [U]) -> Result<DataFrame<T, S>>
               where S: From<U>
           {
-              if index.len() != self.data.shape()[0] {
-                  return Err(ErrorKind::RowShapeMismatch.into());
+              let data_shape = self.data.shape()[0];
+              let index_shape = index.len();
+              if index_shape != data_shape {
+                  return Err(ErrorKind::IndexShapeMismatch(data_shape.to_string(), index_shape.to_string()).into());
               }
               let new_index : Vec<S> =  index.iter()
                   .map(|x| x.clone().into())
@@ -251,7 +245,7 @@ impl<'a, T,S> Constructor<'a,  AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
 
 impl<'a, T,S> Operations<'a, AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
     where
-        T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+        T: Clone  +  Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
         S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>{
 
 /// Get the dimensions of the dataframe.
@@ -1118,7 +1112,7 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
 
 
 impl<'a, T, S> MutableDataFrame<'a, T, S>
-where   T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+where   T: Clone +  Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
       S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
 /// Create a new dataframe. The only required argument is data to populate the dataframe. The data's elements can be any of `InnerType`.

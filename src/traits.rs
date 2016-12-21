@@ -158,7 +158,7 @@ pub trait Transform<'a, T, S>
 
 
 pub trait ToDataFrame<'a, I, T, S>
-    where T: Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
+    where T: Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>
 {
     fn as_df(self) -> DataFrame<T, S> where Self: Sized + Iterator<Item = I>;

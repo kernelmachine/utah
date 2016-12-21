@@ -20,6 +20,7 @@ pub mod tests {
     use transform::*;
     use traits::*;
     use std::f64::NAN;
+    use ndarray::Axis;
     #[test]
     fn outer_left_join() {
         let a = arr2(&[["Alice"], ["Bob"]]);
@@ -161,7 +162,10 @@ pub mod tests {
             .index(&e_index[..])
             .unwrap();
         b.iter(|| {
-            let _: DataFrame<f64, String> = c_df.sumdf(UtahAxis::Column).as_df();
+            // let c = c.clone().sum(Axis(1));
+            for x in c_df.select(&["1"], UtahAxis::Row) {
+                x;
+            }
         });
     }
 

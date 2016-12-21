@@ -185,7 +185,7 @@ impl<'a, I,T,S> Process<'a, T, S> for Impute<'a, I, T, S>
 }
 
 impl<'a, T, S> Process<'a, T, S> for MutableDataFrameIterator<'a, T, S>
-where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
+where T: Copy +Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
       S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a + From<String>
 {
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T, S>
@@ -244,7 +244,7 @@ where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T
 
 impl<'a, T, S> ToDataFrame<'a, (S, RowViewMut<'a, T>), T, S>
     for MutableDataFrameIterator<'a, T, S>
-    where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
+    where T: Copy +Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a+ From<String>
           {
     fn as_df(self) -> DataFrame<T, S> {
@@ -287,7 +287,7 @@ impl<'a, T, S> ToDataFrame<'a, (S, RowViewMut<'a, T>), T, S>
 
 impl<'a, I,T,S> ToDataFrame<'a, (S, RowViewMut<'a, T>), T, S> for Impute<'a, I, T, S>
     where I: Iterator<Item = (S, RowViewMut<'a, T>)>,
-     T: Clone + Debug  + PartialEq + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One + Zero,
+     T: Copy +Clone + Debug  + PartialEq + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One + Zero,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a + From<String>
 {
     fn as_df(self) -> DataFrame<T, S> {

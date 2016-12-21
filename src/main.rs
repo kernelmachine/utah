@@ -37,7 +37,7 @@ fn main() {
     let b = arr2(&[[2., 6.], [3., 4.]]);
     let c = arr2(&[[2., 6.], [3., 4.], [2., 1.]]);
     let mut df: DataFrame<f64, String> =
-        DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2", "3"]).unwrap();
+        DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2"]).unwrap();
     let df_1 = DataFrame::new(c).columns(&["c", "d"]).unwrap().index(&["1", "2", "3"]).unwrap();
     let new_data = df.select(&["2"], UtahAxis::Row).as_array();
 

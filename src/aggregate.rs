@@ -254,7 +254,7 @@ impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Stdev<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> +
+          T: Clone+ Debug + 'a + Add<Output = T> + Div<Output = T> +
              Sub<Output = T> + Mul<Output=T>+ Empty<T>+ One + Zero,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default+ From<String>
 {
@@ -313,7 +313,7 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Stdev<'a, I, T, S>
 
 impl<'a, I,T,S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T> + One + Zero,
+    T:  Clone +Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T> + One + Zero,
     S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default+ From<String>
 {
     fn as_df(self) -> DataFrame<T, S> {
@@ -371,7 +371,7 @@ impl<'a, I,T,S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Max<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T: Clone + Debug + Ord + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>+ One,
+    T:  Clone +Debug + Ord + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>+ One,
     S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default+ From<String>
 {
     fn as_df(self) -> DataFrame<T, S> {

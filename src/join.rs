@@ -10,6 +10,7 @@ use dataframe::*;
 use std::ops::{Add, Div, Mul, Sub};
 use traits::Empty;
 use num::traits::One;
+
 #[derive(Clone)]
 pub struct InnerJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
@@ -124,7 +125,7 @@ impl<'a, L, T, S> Iterator for OuterJoin<'a, L, T, S>
 impl<'a, L, T, S> ToDataFrame<'a, (S, RowView<'a, T>, RowView<'a, T>), T, S>
     for InnerJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T: 'a + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+    T: 'a +Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
       S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
     fn as_df(self) -> DataFrame<T, S> {
@@ -191,7 +192,7 @@ impl<'a, L, T, S> ToDataFrame<'a, (S, RowView<'a, T>, RowView<'a, T>), T, S>
 impl<'a, L,T,S> ToDataFrame<'a, (S, RowView<'a, T>, Option<RowView<'a, T>>), T, S>
     for OuterJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T: 'a + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+    T: 'a +Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
       S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
     fn as_df(self) -> DataFrame<T, S> {
@@ -214,6 +215,7 @@ impl<'a, L,T,S> ToDataFrame<'a, (S, RowView<'a, T>, Option<RowView<'a, T>>), T, 
 
             n.push(i.to_owned());
         }
+
         let columns: Vec<_> = left_columns.iter()
             .chain(right_columns.iter())
             .map(|x| x.to_owned())
