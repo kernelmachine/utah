@@ -21,6 +21,8 @@ pub mod tests {
     use traits::*;
     use std::f64::NAN;
     use ndarray::Axis;
+    use join::*;
+
     #[test]
     fn outer_left_join() {
         let a = arr2(&[["Alice"], ["Bob"]]);
@@ -29,15 +31,13 @@ pub mod tests {
         let b = arr2(&[["Programmer"]]);
         let right: DataFrame<InnerType, OuterType> =
             DataFrame::new(b).index(&[1]).unwrap().columns(&["b"]).unwrap();
-        let first_index = &left.index[0];
-        let second_index = &left.index[1];
         let res = left.outer_left_join(&right).as_df();
         let expected_data = arr2(&[[InnerType::Str(String::from("Alice")),
                                     InnerType::Str(String::from("Programmer"))],
                                    [InnerType::Str(String::from("Bob")), InnerType::Empty]]);
         let expected =
             DataFrame::new(expected_data).index(&[1, 2]).unwrap().columns(&["a", "b"]).unwrap();
-        assert_eq!(res, expected);
+        assert_eq!(res.unwrap(), expected);
 
     }
     #[test]
@@ -47,8 +47,6 @@ pub mod tests {
             DataFrame::new(a).index(&[1, 2, 3]).unwrap().columns(&["a"]).unwrap();
         let b = arr2(&[["Programmer"], ["Data Scientist"]]);
         let right = DataFrame::new(b).index(&[1, 3]).unwrap().columns(&["b"]).unwrap();
-        let first_index = &left.index[0];
-        let second_index = &left.index[2];
         let res = left.inner_left_join(&right).as_df();
         let expected_data = arr2(&[[InnerType::Str(String::from("Alice")),
                                     InnerType::Str(String::from("Programmer"))],
@@ -56,7 +54,7 @@ pub mod tests {
                                     InnerType::Str(String::from("Data Scientist"))]]);
         let expected =
             DataFrame::new(expected_data).index(&[1, 3]).unwrap().columns(&["a", "b"]).unwrap();
-        assert_eq!(res, expected);
+        assert_eq!(res.unwrap(), expected);
     }
 
     #[test]
@@ -96,7 +94,7 @@ pub mod tests {
         let expected = DataFrame::from_array(col.to_owned(), UtahAxis::Column)
             .columns(&["a"])
             .unwrap();
-        assert_eq!(z, expected);
+        assert_eq!(z.unwrap(), expected);
 
         let select_idx = vec!["0"];
         let z = df.select(&select_idx[..], UtahAxis::Row).as_df();
@@ -106,7 +104,7 @@ pub mod tests {
             .unwrap()
             .columns(&["a", "b"])
             .unwrap();
-        assert_eq!(z, expected);
+        assert_eq!(z.unwrap(), expected);
     }
     #[test]
     fn dataframe_creation_failure() {
@@ -163,9 +161,7 @@ pub mod tests {
             .unwrap();
         b.iter(|| {
             // let c = c.clone().sum(Axis(1));
-            for x in c_df.select(&["1"], UtahAxis::Row) {
-                x;
-            }
+            let c = c_df.sumdf(UtahAxis::Row).as_df();
         });
     }
 

@@ -651,7 +651,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Append<'a, I, T, S>
 
 impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Remove<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Copy+Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
+          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
@@ -716,7 +716,7 @@ impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Remove<'a, I, T
 
 impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Append<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T:Copy + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
+          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
@@ -785,7 +785,7 @@ impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Append<'a, I, T
 
 impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Select<'a, T, S, I>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Copy+Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
+          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
@@ -851,7 +851,7 @@ impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Select<'a, T, S
 
 impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for DataFrameIterator<'a, I, T, S>
     where I: Iterator<Item = RowView<'a, T>> + Clone,
-          T: Copy + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
+          T:  Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {

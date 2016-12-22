@@ -172,7 +172,7 @@ impl<'a, L, T, S> Iterator for OuterJoin<'a, L, T, S>
 impl<'a, L, T, S> ToDataFrame<'a, (S, RowView<'a, T>, RowView<'a, T>), T, S>
     for InnerJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T: 'a +Copy + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+    T: 'a + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
       S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
@@ -239,7 +239,7 @@ impl<'a, L, T, S> ToDataFrame<'a, (S, RowView<'a, T>, RowView<'a, T>), T, S>
 impl<'a, L,T,S> ToDataFrame<'a, (S, RowView<'a, T>, Option<RowView<'a, T>>), T, S>
     for OuterJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T: 'a + Copy + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+    T: 'a  + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
       S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
@@ -320,7 +320,7 @@ impl<'a, L,T,S> ToDataFrame<'a, (S, RowView<'a, T>, Option<RowView<'a, T>>), T, 
 
 impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Concat<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Copy + Clone + Debug+ Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
+          T: Clone + Debug+ Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
