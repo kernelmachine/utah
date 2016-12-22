@@ -36,14 +36,13 @@ use ndarray::{Axis, ArrayView};
 use ndarray::stack;
 macro_rules! dataframe {
  {
-    $t:ty,
-    { $ ($column:expr , $data:expr);+}
+    { $ ($column:expr => $data:expr),+}
 } => { {
     let mut n : Vec<String> = Vec::new();
     $(
         n.push($column.to_owned());
     )*
-    let a : Matrix<$t> = stack(Axis(1), &[ $(ArrayView::from(&$data) ),+ ]).unwrap();
+    let a  = stack(Axis(1), &[ $(ArrayView::from(&$data) ),+ ]).unwrap();
     let new_index : Vec<String> = (0..a.dim().0).map(|x| x.to_string()).collect();
     DataFrame::new(a).index(&new_index[..])?.columns(&n[..])?
 
@@ -110,10 +109,9 @@ fn run() -> Result<()> {
     println!("concat result - {:?}", concat);
     // let b = arr1(&[2., 3., 2.]);
     let k: DataFrame<f64, String> = dataframe!(
-        f64,
     {
-        "a", array!([2., 3., 2.]);
-        "b", array!([2., NAN, 2.])
+        "a" =>  array!([2., 3., 2.]),
+        "b" =>  array!([2., NAN, 2.])
     });
     println!("{:?}", k);
     Ok(())
