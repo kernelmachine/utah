@@ -31,13 +31,62 @@ use types::*;
 
 use std::f64::NAN;
 use traits::{Transform, Operations, Constructor, Aggregate, ToDataFrame};
+use error::*;
+use ndarray::{Axis, ArrayView};
+use ndarray::stack;
+macro_rules! dataframe {
+ {
+    $t:ty,
+    { $ ($column:expr , $data:expr);+}
+} => { {
+    let mut n : Vec<String> = Vec::new();
+    $(
+        n.push($column.to_owned());
+    )*
+    let a : Matrix<$t> = stack(Axis(1), &[ $(ArrayView::from(&$data) ),+ ]).unwrap();
+    let new_index : Vec<String> = (0..a.dim().0).map(|x| x.to_string()).collect();
+    DataFrame::new(a).index(&new_index[..])?.columns(&n[..])?
+
+}
+}
+}
+
+macro_rules! array {
+    {
+        $($element : expr),+
+    } => {
+        arr2(&[$($element)+]).t().to_owned()
+    }
+}
 
 fn main() {
+    if let Err(ref e) = run() {
+        use ::std::io::Write;
+        let stderr = &mut ::std::io::stderr();
+        let errmsg = "Error writing to stderr";
+
+        writeln!(stderr, "error: {}", e).expect(errmsg);
+
+        for e in e.iter().skip(1) {
+            writeln!(stderr, "caused by: {}", e).expect(errmsg);
+        }
+
+        // The backtrace is not always generated. Try to run this example
+        // with `RUST_BACKTRACE=1`.
+        if let Some(backtrace) = e.backtrace() {
+            writeln!(stderr, "backtrace: {:?}", backtrace).expect(errmsg);
+        }
+
+        ::std::process::exit(1);
+    }
+}
+
+fn run() -> Result<()> {
     let a = arr2(&[[2., 7.], [3., NAN], [2., 4.]]);
     // let b = arr2(&[[2., 6.], [3., 4.]]);
     let c = arr2(&[[2., 6.], [3., 4.], [2., 1.]]);
-    let mut df: DataFrame<f64, String> =
-        DataFrame::new(a).columns(&["a", "b"]).unwrap().index(&["1", "2", "3"]).unwrap();
+    let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"])?
+        .index(&["1", "2", "3"])?;
     let df_1 = DataFrame::new(c).columns(&["c", "d"]).unwrap().index(&["1", "2", "3"]).unwrap();
     let new_data = df.select(&["2"], UtahAxis::Row).as_array();
 
@@ -59,4 +108,14 @@ fn main() {
     println!("join result - {:?}", res_1);
     let concat = df.concat(&df_1, UtahAxis::Row).as_df();
     println!("concat result - {:?}", concat);
+    // let b = arr1(&[2., 3., 2.]);
+    let k: DataFrame<f64, String> = dataframe!(
+        f64,
+    {
+        "a", array!([2., 3., 2.]);
+        "b", array!([2., NAN, 2.])
+    });
+    println!("{:?}", k);
+    Ok(())
+
 }

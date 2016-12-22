@@ -17,7 +17,30 @@ extern crate chrono;
 extern crate error_chain;
 extern crate itertools;
 
+macro_rules! dataframe {
+ {
+    $ (
+        $column:item : $data:item
+    ),
+    *
+} => {
+    let mut c = Vec::new();
+    let mut n = Vec::new();
 
+    $(
+        c.extend($data.iter().map(|x| x.to_owned()));
+        n.push($column.to_owned())
+        let row_len = $data.iter().fold(0, |acc, _| acc + 1);
+    )*
+    let res_dim = (row_len, n.len());
+    DataFrame {
+        columns: n,
+        data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
+        index: (0..),
+    }
+
+}
+}
 /// # Utah
 ///
 /// ## Table of contents
