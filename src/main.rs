@@ -4,7 +4,6 @@
 #![feature(specialization)]
 
 #[macro_use]
-
 extern crate ndarray;
 extern crate test;
 extern crate rand;
@@ -25,6 +24,9 @@ pub mod aggregate;
 pub mod process;
 pub mod join;
 
+#[macro_use]
+pub mod macros;
+
 use ndarray::arr2;
 use dataframe::*;
 use types::*;
@@ -34,29 +36,6 @@ use traits::{Transform, Operations, Constructor, Aggregate, ToDataFrame};
 use error::*;
 use ndarray::{Axis, ArrayView};
 use ndarray::stack;
-macro_rules! dataframe {
- {
-    { $ ($column:expr => $data:expr),+}
-} => { {
-    let mut n : Vec<String> = Vec::new();
-    $(
-        n.push($column.to_owned());
-    )*
-    let a  = stack(Axis(1), &[ $(ArrayView::from(&$data) ),+ ]).unwrap();
-    let new_index : Vec<String> = (0..a.dim().0).map(|x| x.to_string()).collect();
-    DataFrame::new(a).index(&new_index[..])?.columns(&n[..])?
-
-}
-}
-}
-
-macro_rules! column {
-    {
-        $($element : expr),+
-    } => {
-        arr2(&[$($element)+]).t().to_owned()
-    }
-}
 
 fn main() {
     if let Err(ref e) = run() {

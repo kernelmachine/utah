@@ -14,33 +14,10 @@ extern crate rand;
 extern crate test;
 extern crate num;
 extern crate chrono;
+#[macro_use]
 extern crate error_chain;
 extern crate itertools;
 
-macro_rules! dataframe {
- {
-    $ (
-        $column:item : $data:item
-    ),
-    *
-} => {
-    let mut c = Vec::new();
-    let mut n = Vec::new();
-
-    $(
-        c.extend($data.iter().map(|x| x.to_owned()));
-        n.push($column.to_owned())
-        let row_len = $data.iter().fold(0, |acc, _| acc + 1);
-    )*
-    let res_dim = (row_len, n.len());
-    DataFrame {
-        columns: n,
-        data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-        index: (0..),
-    }
-
-}
-}
 /// # Utah
 ///
 /// ## Table of contents
@@ -66,6 +43,7 @@ macro_rules! dataframe {
 
 pub mod dataframe;
 mod tests;
+#[macro_use]
 pub mod error;
 mod from;
 pub mod types;
@@ -74,3 +52,5 @@ pub mod transform;
 pub mod traits;
 pub mod process;
 pub mod join;
+#[macro_use]
+pub mod macros;
