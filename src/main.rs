@@ -65,24 +65,23 @@ fn run() -> Result<()> {
     let c = arr2(&[[2., 6.], [3., 4.], [2., 1.]]);
     let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"])?
         .index(&["1", "2", "3"])?;
-    let df_1 = DataFrame::new(c).columns(&["c", "d"]).unwrap().index(&["1", "2", "3"]).unwrap();
-    let new_data = df.select(&["2"], UtahAxis::Row).as_array();
+    let df_1 = DataFrame::new(c).columns(&["c", "d"])?.index(&["1", "2", "3"])?;
+    let new_data = df.select(&["2"], UtahAxis::Row).as_array()?;
 
     println!("{:?}", new_data);
     // let df_iter: DataFrameIterator = df_1.df_iter(UtahAxis::Row);
-    df.impute(ImputeStrategy::Mean, UtahAxis::Column).as_df();
     let j = df.df_iter(UtahAxis::Row)
         .remove(&["1"])
         .select(&["2"])
         .append("8", new_data.view())
         .sumdf()
-        .as_df();
+        .as_df()?;
     println!("{:?}", j);
     let res: DataFrame<f64, String> = df.impute(ImputeStrategy::Mean, UtahAxis::Column)
-        .as_df();
+        .as_df()?;
 
     println!("{:?}", res);
-    let res_1: DataFrame<f64, String> = df.inner_left_join(&df_1).as_df();
+    let res_1: DataFrame<f64, String> = df.inner_left_join(&df_1).as_df()?;
     println!("join result - {:?}", res_1);
     let concat = df.concat(&df_1, UtahAxis::Row).as_df();
     println!("concat result - {:?}", concat);

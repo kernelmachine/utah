@@ -51,7 +51,7 @@ pub trait Constructor<'a, I, T, S>
 
 pub trait Operations<'a, I, T, S>
     where I: Iterator<Item = RowView<'a, T>>  + Clone,
-        T: 'a + Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
+        T:  'a + Clone + Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>
 {
 // fn new<U: Clone + Debug>(data: Matrix<U>) -> DataFrame<T, S> where T: From<U>;
@@ -158,10 +158,10 @@ pub trait Transform<'a, T, S>
 
 
 pub trait ToDataFrame<'a, I, T, S>
-    where T: Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
+    where T:  Debug + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug+ From<String>
 {
-    fn as_df(self) -> DataFrame<T, S> where Self: Sized + Iterator<Item = I>;
-    fn as_matrix(self) -> Matrix<T> where Self : Sized + Iterator<Item = I>;
-    fn as_array(self) -> Row<T> where Self : Sized + Iterator<Item = I>;
+    fn as_df(self) -> Result<DataFrame<T, S>> where Self: Sized + Iterator<Item = I>;
+    fn as_matrix(self) -> Result<Matrix<T>> where Self : Sized + Iterator<Item = I>;
+    fn as_array(self) -> Result<Row<T>> where Self : Sized + Iterator<Item = I>;
 }

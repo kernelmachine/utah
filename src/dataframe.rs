@@ -44,7 +44,7 @@ pub struct MutableDataFrame<'a, T, S>
 
 impl<'a, T,S> Constructor<'a,  AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
         where
-            T: 'a  + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+            T:  'a  + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
             S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>{
 /// Create a new dataframe. The only required argument is data to populate the dataframe. The data's elements can be any of `InnerType`.
 /// By default, the columns and index of the dataframe are `["1", "2", "3"..."N"]`, where *N* is
@@ -246,7 +246,7 @@ impl<'a, T,S> Constructor<'a,  AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
 
 impl<'a, T,S> Operations<'a, AxisIter<'a, T,usize>, T, S> for DataFrame<T, S>
     where
-        T: Clone  +  Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+        T:  Clone  +  Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
         S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>{
 
 /// Get the dimensions of the dataframe.
@@ -1156,7 +1156,7 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
 
 
 impl<'a, T, S> MutableDataFrame<'a, T, S>
-where   T: Clone +  Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+where   T:  Clone +  Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
       S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
 /// Create a new dataframe. The only required argument is data to populate the dataframe. The data's elements can be any of `InnerType`.
@@ -1181,13 +1181,15 @@ where   T: Clone +  Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output 
 ///                [InnerType::Int32(6), InnerType::Int64(10)]]);
 /// let df = DataFrame::new(a);
 /// ```
-    pub fn to_df(self) -> DataFrame<T, S> {
+    pub fn to_df(self) -> Result<DataFrame<T, S>> {
         let d = self.data.map(|x| ((*x).clone()));
-        DataFrame {
-            data: d,
-            columns: self.columns,
-            index: self.index,
-        }
+        let df = DataFrame::new(d).columns(&self.columns[..])?.index(&self.index[..])?;
+        Ok(df)
+// DataFrame {
+//     data: d,
+//     columns: self.columns,
+//     index: self.index,
+// }
     }
 }
 

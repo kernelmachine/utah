@@ -9,6 +9,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::{Add, Sub, Mul, Div};
 use num::traits::{One, Zero};
+use error::*;
 
 pub struct MutableDataFrameIterator<'a, T, S>
 where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>,
@@ -185,7 +186,7 @@ impl<'a, I,T,S> Process<'a, T, S> for Impute<'a, I, T, S>
 }
 
 impl<'a, T, S> Process<'a, T, S> for MutableDataFrameIterator<'a, T, S>
-where T: Copy +Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
+where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
       S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a + From<String>
 {
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T, S>
@@ -244,13 +245,13 @@ where T: Copy +Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Outp
 
 impl<'a, T, S> ToDataFrame<'a, (S, RowViewMut<'a, T>), T, S>
     for MutableDataFrameIterator<'a, T, S>
-    where T: Copy +Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
+    where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a+ From<String>
           {
-    fn as_df(self) -> DataFrame<T, S> {
+    fn as_df(self) -> Result<DataFrame<T, S>> {
         self.to_mut_df().to_df()
     }
-    fn as_matrix(self) -> Matrix<T> {
+    fn as_matrix(self) -> Result<Matrix<T>> {
         let axis = self.axis.clone();
         let other = self.other.clone();
         let mut c = Vec::new();
@@ -270,31 +271,31 @@ impl<'a, T, S> ToDataFrame<'a, (S, RowViewMut<'a, T>), T, S>
             n.push(i.to_owned());
         }
 
-        Array::from_shape_vec((nrows, ncols), c).unwrap().map(|x| ((*x).clone()))
+        Ok(Array::from_shape_vec((nrows, ncols), c).unwrap().map(|x| ((*x).clone())))
 
 
     }
 
-    fn as_array(self) -> Row<T> {
+    fn as_array(self) -> Result<Row<T>> {
         let mut c = Vec::new();
         for (_, j) in self {
             c.extend(j);
         }
-        Array::from_vec(c).map(|x| ((*x).clone()))
+        Ok(Array::from_vec(c).map(|x| ((*x).clone())))
     }
 
 }
 
 impl<'a, I,T,S> ToDataFrame<'a, (S, RowViewMut<'a, T>), T, S> for Impute<'a, I, T, S>
     where I: Iterator<Item = (S, RowViewMut<'a, T>)>,
-     T: Copy +Clone + Debug  + PartialEq + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One + Zero,
+     T: Clone + Debug  + PartialEq + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One + Zero,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a + From<String>
 {
-    fn as_df(self) -> DataFrame<T, S> {
+    fn as_df(self) -> Result<DataFrame<T, S>> {
         self.to_mut_df().to_df()
     }
 
-    fn as_matrix(self) -> Matrix<T> {
+    fn as_matrix(self) -> Result<Matrix<T>> {
         let axis = self.axis.clone();
         let other = self.other.clone();
         let mut c = Vec::new();
@@ -314,14 +315,14 @@ impl<'a, I,T,S> ToDataFrame<'a, (S, RowViewMut<'a, T>), T, S> for Impute<'a, I, 
             n.push(i.to_owned());
         }
 
-        Array::from_shape_vec((nrows, ncols), c).unwrap().map(|x| ((*x).clone()))
+        Ok(Array::from_shape_vec((nrows, ncols), c).unwrap().map(|x| ((*x).clone())))
     }
 
-    fn as_array(self) -> Row<T> {
+    fn as_array(self) -> Result<Row<T>> {
         let mut c = Vec::new();
         for (_, j) in self {
             c.extend(j);
         }
-        Array::from_vec(c).map(|x| ((*x).clone()))
+        Ok(Array::from_vec(c).map(|x| ((*x).clone())))
     }
 }

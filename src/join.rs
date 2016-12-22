@@ -11,6 +11,8 @@ use std::ops::{Add, Div, Mul, Sub};
 use traits::Empty;
 use num::traits::One;
 use std::iter::Chain;
+use error::*;
+use traits::Constructor;
 
 #[derive(Clone, Debug)]
 pub struct Concat<'a, I, T: 'a, S>
@@ -170,10 +172,10 @@ impl<'a, L, T, S> Iterator for OuterJoin<'a, L, T, S>
 impl<'a, L, T, S> ToDataFrame<'a, (S, RowView<'a, T>, RowView<'a, T>), T, S>
     for InnerJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T: 'a +Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+    T: 'a +Copy + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
       S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
-    fn as_df(self) -> DataFrame<T, S> {
+    fn as_df(self) -> Result<DataFrame<T, S>> {
 
         let s = self.clone();
         let right_columns = self.right_columns.clone();
@@ -195,15 +197,15 @@ impl<'a, L, T, S> ToDataFrame<'a, (S, RowView<'a, T>, RowView<'a, T>), T, S>
             .map(|x| x.to_owned())
             .collect();
 
-        DataFrame {
-            columns: columns,
-            data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-            index: n,
-        }
+        let d = Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned());
+
+        let df = DataFrame::new(d).columns(&columns[..])?.index(&n[..])?;
+        Ok(df)
+
 
 
     }
-    fn as_matrix(self) -> Matrix<T> {
+    fn as_matrix(self) -> Result<Matrix<T>> {
         let s = self.clone();
         let right_columns = self.right_columns.clone();
         let left_columns = self.left_columns.clone();
@@ -220,16 +222,16 @@ impl<'a, L, T, S> ToDataFrame<'a, (S, RowView<'a, T>, RowView<'a, T>), T, S>
         }
 
 
-        Array::from_shape_vec(res_dim, c).unwrap()
+        Ok(Array::from_shape_vec(res_dim, c).unwrap())
     }
 
-    fn as_array(self) -> Row<T> {
+    fn as_array(self) -> Result<Row<T>> {
         let mut c = Vec::new();
         for (_, j, k) in self {
             let p = j.iter().chain(k.iter()).map(|x| x.to_owned());
             c.extend(p);
         }
-        Array::from_vec(c)
+        Ok(Array::from_vec(c))
     }
 }
 
@@ -237,10 +239,10 @@ impl<'a, L, T, S> ToDataFrame<'a, (S, RowView<'a, T>, RowView<'a, T>), T, S>
 impl<'a, L,T,S> ToDataFrame<'a, (S, RowView<'a, T>, Option<RowView<'a, T>>), T, S>
     for OuterJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T: 'a +Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
+    T: 'a + Copy + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
       S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
-    fn as_df(self) -> DataFrame<T, S> {
+    fn as_df(self) -> Result<DataFrame<T, S>> {
 
         let s = self.clone();
         let right_columns = self.right_columns.clone();
@@ -266,15 +268,15 @@ impl<'a, L,T,S> ToDataFrame<'a, (S, RowView<'a, T>, Option<RowView<'a, T>>), T, 
             .map(|x| x.to_owned())
             .collect();
 
-        DataFrame {
-            columns: columns,
-            data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-            index: n,
-        }
+        let d = Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned());
+
+        let df = DataFrame::new(d).columns(&columns[..])?.index(&n[..])?;
+        Ok(df)
+
 
 
     }
-    fn as_matrix(self) -> Matrix<T> {
+    fn as_matrix(self) -> Result<Matrix<T>> {
         let s = self.clone();
         let right_columns = self.right_columns.clone();
         let left_columns = self.left_columns.clone();
@@ -294,12 +296,12 @@ impl<'a, L,T,S> ToDataFrame<'a, (S, RowView<'a, T>, Option<RowView<'a, T>>), T, 
             n.push(i.to_owned());
         }
 
-        Array::from_shape_vec(res_dim, c).unwrap()
+        Ok(Array::from_shape_vec(res_dim, c).unwrap())
 
 
     }
 
-    fn as_array(self) -> Row<T> {
+    fn as_array(self) -> Result<Row<T>> {
         let right_columns = self.right_columns.clone();
         let mut c = Vec::new();
         let r = repeat(T::empty()).take(right_columns.len());
@@ -310,7 +312,7 @@ impl<'a, L,T,S> ToDataFrame<'a, (S, RowView<'a, T>, Option<RowView<'a, T>>), T, 
                 None => c.extend(r.clone()),
             }
         }
-        Array::from_vec(c)
+        Ok(Array::from_vec(c))
     }
 }
 
@@ -318,53 +320,69 @@ impl<'a, L,T,S> ToDataFrame<'a, (S, RowView<'a, T>, Option<RowView<'a, T>>), T, 
 
 impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Concat<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug+ Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
+          T: Copy + Clone + Debug+ Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
           S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
 {
-    fn as_df(self) -> DataFrame<T, S> {
+    fn as_df(self) -> Result<DataFrame<T, S>> {
 
         let s = self.clone();
-        let columns = self.concat_other.clone();
+        let axis = self.axis.clone();
+        let other = self.concat_other.clone();
         let mut c = Vec::new();
         let mut n = Vec::new();
-        let res_dim = (s.fold(0, |acc, _| acc + 1), columns.len());
+        let res_dim =  match axis {
+            UtahAxis::Row => (s.fold(0, |acc, _| acc + 1),other.len()),
+            UtahAxis::Column => ( other.len(), s.fold(0, |acc, _| acc + 1)),
 
-        for (i, j) in self {
-            c.extend(j.iter().map(|x| x.to_owned()));
-            n.push(i.to_owned());
-        }
-        println!("{:?}", c);
-        DataFrame {
-            columns: columns,
-            data: Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned()),
-            index: n,
-        }
-
-
-    }
-    fn as_matrix(self) -> Matrix<T> {
-        let s = self.clone();
-        let columns = self.concat_other.clone();
-        let mut c = Vec::new();
-        let mut n = Vec::new();
-        let res_dim = (s.fold(0, |acc, _| acc + 1), columns.len());
+        };
 
         for (i, j) in self {
             c.extend(j.iter().map(|x| x.to_owned()));
             n.push(i.to_owned());
         }
 
-        Array::from_shape_vec(res_dim, c).unwrap()
+        let d = Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned());
+
+        match axis {
+            UtahAxis::Row => {
+                let df = DataFrame::new(d).columns(&other[..])?.index(&n[..])?;
+                Ok(df)
+            }
+            UtahAxis::Column => {
+                let df = DataFrame::new(d).columns(&n[..])?.index(&other[..])?;
+                Ok(df)
+            }
+        }
+
+
+    }
+    fn as_matrix(self) -> Result<Matrix<T>> {
+        let s = self.clone();
+        let other = self.concat_other.clone();
+        let mut c = Vec::new();
+        let mut n = Vec::new();
+        let res_dim =  match self.axis {
+            UtahAxis::Row => (other.len(),s.fold(0, |acc, _| acc + 1)),
+            UtahAxis::Column => (s.fold(0, |acc, _| acc + 1), other.len()),
+
+        };
+
+        for (i, j) in self {
+            c.extend(j.iter().map(|x| x.to_owned()));
+            n.push(i.to_owned());
+        }
+
+        Ok(Array::from_shape_vec(res_dim, c).unwrap())
 
 
     }
 
-    fn as_array(self) -> Row<T> {
+    fn as_array(self) -> Result<Row<T>> {
         let mut c = Vec::new();
 
         for (_, j) in self {
             c.extend(j.iter().map(|x| x.to_owned()));
         }
-        Array::from_vec(c)
+        Ok(Array::from_vec(c))
     }
 }
