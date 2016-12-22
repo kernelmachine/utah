@@ -50,7 +50,7 @@ macro_rules! dataframe {
 }
 }
 
-macro_rules! array {
+macro_rules! column {
     {
         $($element : expr),+
     } => {
@@ -110,8 +110,8 @@ fn run() -> Result<()> {
     // let b = arr1(&[2., 3., 2.]);
     let k: DataFrame<f64, String> = dataframe!(
     {
-        "a" =>  array!([2., 3., 2.]),
-        "b" =>  array!([2., NAN, 2.])
+        "a" =>  column!([2., 3., 2.]),
+        "b" =>  column!([2., NAN, 2.])
     });
     println!("{:?}", k);
     Ok(())
