@@ -5,7 +5,7 @@ use std::cmp::Ordering;
 use traits::Empty;
 use std::f64::NAN;
 use std::default::Default;
-use num::traits::One;
+use num::traits::{One, Zero};
 
 #[derive(Hash, PartialOrd, PartialEq, Eq , Ord , Clone,  Debug)]
 pub enum OuterType {
@@ -308,20 +308,20 @@ impl Sub for InnerType {
         }
     }
 }
-// impl One for InnerType {
-//     fn one() -> InnerType {
-//         InnerType::Float(1.0)
-//     }
-// }
-//
-// impl Zero for InnerType {
-//     fn zero() -> InnerType {
-//         InnerType::Float(0.0)
-//     }
-//     fn is_zero(&self) -> bool {
-//         *self == InnerType::Float(0.0)
-//     }
-// }
+impl One for InnerType {
+    fn one() -> InnerType {
+        InnerType::Float(1.0)
+    }
+}
+
+impl Zero for InnerType {
+    fn zero() -> InnerType {
+        InnerType::Float(0.0)
+    }
+    fn is_zero(&self) -> bool {
+        *self == InnerType::Float(0.0)
+    }
+}
 
 impl Empty<InnerType> for InnerType {
     fn empty() -> InnerType {
@@ -354,11 +354,11 @@ impl Empty<i32> for i32 {
     }
 }
 
-impl One for InnerType {
-    fn one() -> InnerType {
-        InnerType::Float(1.0)
-    }
-}
+// impl One for InnerType {
+//     fn one() -> InnerType {
+//         InnerType::Float(1.0)
+//     }
+// }
 
 impl Default for OuterType {
     fn default() -> OuterType {

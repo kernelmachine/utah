@@ -124,9 +124,51 @@ pub mod tests {
 
 
     #[bench]
-    fn test_inner_join(b: &mut Bencher) {
-        let c = Array::random((200, 10), Range::new(0., 10.));
-        let e = Array::random((200, 10), Range::new(0., 10.));
+    fn test_sumdf_2_2(b: &mut Bencher) {
+        let c = Array::random((2, 2), Range::new(0., 10.));
+        let e = Array::random((2, 2), Range::new(0., 10.));
+
+
+        let mut c_names: Vec<String> = vec![];
+        for i in 0..2 {
+            c_names.push(i.to_string());
+        }
+
+        let mut e_names: Vec<String> = vec![];
+        for i in 0..2 {
+            e_names.push(i.to_string());
+        }
+
+        let mut c_index: Vec<String> = vec![];
+        for i in 0..2 {
+            c_index.push(i.to_string());
+        }
+
+        let mut e_index: Vec<String> = vec![];
+        for i in 0..2 {
+            e_index.push(i.to_string());
+        }
+
+        let mut c_df: DataFrame<f64, String> = DataFrame::new(c)
+            .columns(&c_names[..])
+            .unwrap()
+            .index(&c_index[..])
+            .unwrap();
+        let e_df: DataFrame<f64, String> = DataFrame::new(e)
+            .columns(&e_names[..])
+            .unwrap()
+            .index(&e_index[..])
+            .unwrap();
+        b.iter(|| {
+            // let c = c.clone().sum(Axis(1));
+            let c = c_df.sumdf(UtahAxis::Column).as_df();
+        });
+    }
+
+    #[bench]
+    fn test_sumdf_10_10(b: &mut Bencher) {
+        let c = Array::random((10, 10), Range::new(0., 10.));
+        let e = Array::random((10, 10), Range::new(0., 10.));
 
 
         let mut c_names: Vec<String> = vec![];
@@ -140,12 +182,96 @@ pub mod tests {
         }
 
         let mut c_index: Vec<String> = vec![];
-        for i in 0..200 {
+        for i in 0..10 {
             c_index.push(i.to_string());
         }
 
         let mut e_index: Vec<String> = vec![];
-        for i in 1..201 {
+        for i in 0..10 {
+            e_index.push(i.to_string());
+        }
+
+        let mut c_df: DataFrame<f64, String> = DataFrame::new(c)
+            .columns(&c_names[..])
+            .unwrap()
+            .index(&c_index[..])
+            .unwrap();
+        let e_df: DataFrame<f64, String> = DataFrame::new(e)
+            .columns(&e_names[..])
+            .unwrap()
+            .index(&e_index[..])
+            .unwrap();
+        b.iter(|| {
+            // let c = c.clone().sum(Axis(1));
+            let c = c_df.sumdf(UtahAxis::Column).as_df();
+        });
+    }
+
+    #[bench]
+    fn test_sumdf_100_100(b: &mut Bencher) {
+        let c = Array::random((100, 100), Range::new(0., 10.));
+        let e = Array::random((100, 100), Range::new(0., 10.));
+
+
+        let mut c_names: Vec<String> = vec![];
+        for i in 0..100 {
+            c_names.push(i.to_string());
+        }
+
+        let mut e_names: Vec<String> = vec![];
+        for i in 0..100 {
+            e_names.push(i.to_string());
+        }
+
+        let mut c_index: Vec<String> = vec![];
+        for i in 0..100 {
+            c_index.push(i.to_string());
+        }
+
+        let mut e_index: Vec<String> = vec![];
+        for i in 0..100 {
+            e_index.push(i.to_string());
+        }
+
+        let mut c_df: DataFrame<f64, String> = DataFrame::new(c)
+            .columns(&c_names[..])
+            .unwrap()
+            .index(&c_index[..])
+            .unwrap();
+        let e_df: DataFrame<f64, String> = DataFrame::new(e)
+            .columns(&e_names[..])
+            .unwrap()
+            .index(&e_index[..])
+            .unwrap();
+        b.iter(|| {
+            // let c = c.clone().sum(Axis(1));
+            let c = c_df.sumdf(UtahAxis::Column).as_df();
+        });
+    }
+
+    #[bench]
+    fn test_sumdf_1000_10(b: &mut Bencher) {
+        let c = Array::random((1000, 10), Range::new(0., 10.));
+        let e = Array::random((1000, 10), Range::new(0., 10.));
+
+
+        let mut c_names: Vec<String> = vec![];
+        for i in 0..10 {
+            c_names.push(i.to_string());
+        }
+
+        let mut e_names: Vec<String> = vec![];
+        for i in 0..10 {
+            e_names.push(i.to_string());
+        }
+
+        let mut c_index: Vec<String> = vec![];
+        for i in 0..1000 {
+            c_index.push(i.to_string());
+        }
+
+        let mut e_index: Vec<String> = vec![];
+        for i in 0..1000 {
             e_index.push(i.to_string());
         }
 
@@ -164,6 +290,90 @@ pub mod tests {
             let c = c_df.sumdf(UtahAxis::Row).as_df();
         });
     }
+    // #[bench]
+    // fn test_sumdf_10000_10000(b: &mut Bencher) {
+    //     let c = Array::random((10000, 10000), Range::new(0., 10.));
+    //     let e = Array::random((10000, 10000), Range::new(0., 10.));
+    //
+    //
+    //     let mut c_names: Vec<String> = vec![];
+    //     for i in 0..10000 {
+    //         c_names.push(i.to_string());
+    //     }
+    //
+    //     let mut e_names: Vec<String> = vec![];
+    //     for i in 0..10000 {
+    //         e_names.push(i.to_string());
+    //     }
+    //
+    //     let mut c_index: Vec<String> = vec![];
+    //     for i in 0..10000 {
+    //         c_index.push(i.to_string());
+    //     }
+    //
+    //     let mut e_index: Vec<String> = vec![];
+    //     for i in 0..10000 {
+    //         e_index.push(i.to_string());
+    //     }
+    //
+    //     let mut c_df: DataFrame<f64, String> = DataFrame::new(c)
+    //         .columns(&c_names[..])
+    //         .unwrap()
+    //         .index(&c_index[..])
+    //         .unwrap();
+    //     let e_df: DataFrame<f64, String> = DataFrame::new(e)
+    //         .columns(&e_names[..])
+    //         .unwrap()
+    //         .index(&e_index[..])
+    //         .unwrap();
+    //     b.iter(|| {
+    //         // let c = c.clone().sum(Axis(1));
+    //         let c = c_df.sumdf(UtahAxis::Row).as_df();
+    //     });
+    // }
+    // #[bench]
+    // fn test_sumdf_100000_100000(b: &mut Bencher) {
+    //     let c = Array::random((100000, 100000), Range::new(0., 10.));
+    //     let e = Array::random((100000, 100000), Range::new(0., 10.));
+    //
+    //
+    //     let mut c_names: Vec<String> = vec![];
+    //     for i in 0..100000 {
+    //         c_names.push(i.to_string());
+    //     }
+    //
+    //     let mut e_names: Vec<String> = vec![];
+    //     for i in 0..100000 {
+    //         e_names.push(i.to_string());
+    //     }
+    //
+    //     let mut c_index: Vec<String> = vec![];
+    //     for i in 0..100000 {
+    //         c_index.push(i.to_string());
+    //     }
+    //
+    //     let mut e_index: Vec<String> = vec![];
+    //     for i in 0..100000 {
+    //         e_index.push(i.to_string());
+    //     }
+    //
+    //     let mut c_df: DataFrame<f64, String> = DataFrame::new(c)
+    //         .columns(&c_names[..])
+    //         .unwrap()
+    //         .index(&c_index[..])
+    //         .unwrap();
+    //     let e_df: DataFrame<f64, String> = DataFrame::new(e)
+    //         .columns(&e_names[..])
+    //         .unwrap()
+    //         .index(&e_index[..])
+    //         .unwrap();
+    //     b.iter(|| {
+    //         // let c = c.clone().sum(Axis(1));
+    //         let c = c_df.sumdf(UtahAxis::Row).as_df();
+    //     });
+    // }
+    //
+
 
 
 }
