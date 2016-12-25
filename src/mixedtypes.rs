@@ -6,17 +6,18 @@ use util::traits::Empty;
 use std::f64::NAN;
 use std::str::FromStr;
 use util::error::ErrorKind;
+use rustc_serialize::Decodable;
 
-#[derive(Hash, PartialOrd, PartialEq, Eq , Ord , Clone,  Debug)]
+#[derive(RustcDecodable, Hash, PartialOrd, PartialEq, Eq , Ord , Clone,  Debug)]
 pub enum OuterType {
     Str(String),
-    Date(DateTime<UTC>),
+    // Date(DateTime<UTC>),
     Int64(i64),
     Int32(i32),
     USize(usize),
 }
 
-#[derive(Clone, Debug)]
+#[derive(RustcDecodable,Clone, Debug)]
 pub enum InnerType {
     Float(f64),
     Int64(i64),
@@ -405,11 +406,11 @@ impl<'a> From<&'a String> for OuterType {
     }
 }
 
-impl<'a> From<DateTime<UTC>> for OuterType {
-    fn from(d: DateTime<UTC>) -> OuterType {
-        OuterType::Date(d.to_owned())
-    }
-}
+// impl<'a> From<DateTime<UTC>> for OuterType {
+//     fn from(d: DateTime<UTC>) -> OuterType {
+//         OuterType::Date(d.to_owned())
+//     }
+// }
 
 impl From<i64> for OuterType {
     fn from(i: i64) -> OuterType {
