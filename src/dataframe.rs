@@ -7,7 +7,6 @@ use util::traits::*;
 use std::slice::Iter;
 use std::collections::BTreeMap;
 use itertools::Zip;
-use std::collections::btree_map::Iter as BTreeIter;
 
 /// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
