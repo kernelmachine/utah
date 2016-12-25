@@ -25,7 +25,7 @@ pub mod implement;
 pub mod mixedtypes;
 pub mod bench;
 
-use ndarray::arr2;
+use ndarray::{arr1, arr2};
 use dataframe::*;
 use util::types::*;
 
@@ -36,8 +36,13 @@ use ndarray::{Axis, ArrayView};
 use ndarray::stack;
 use util::readcsv::*;
 use mixedtypes::*;
+use std::collections::BTreeMap;
 
 fn main() {
+    let mut btree: BTreeMap<String, Row<f64>> = BTreeMap::new();
+    btree.insert("a".to_string(), arr1(&[2., 3., 2.]));
+
+
     if let Err(ref e) = run() {
         use ::std::io::Write;
         let stderr = &mut ::std::io::stderr();

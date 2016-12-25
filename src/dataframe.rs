@@ -5,6 +5,9 @@ use ndarray::{AxisIter, AxisIterMut};
 use util::types::UtahAxis;
 use util::traits::*;
 use std::slice::Iter;
+use std::collections::BTreeMap;
+use itertools::Zip;
+use std::collections::btree_map::Iter as BTreeIter;
 
 /// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
@@ -27,6 +30,7 @@ pub struct MutableDataFrame<'a, T: 'a, S>
     pub data: MatrixMut<'a, T>,
     pub index: Vec<S>,
 }
+
 
 
 #[derive(Clone)]
@@ -92,6 +96,64 @@ impl<'a, T, S> Iterator for MutableDataFrameIterator<'a, T, S>
         }
     }
 }
+
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MixedDataFrame<T, S>
+    where T: Num,
+          S: Identifier
+{
+    pub data: BTreeMap<S, Row<T>>,
+    pub index: BTreeMap<S, usize>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct MutableMixedDataFrame<'a, T: 'a, S>
+    where T: Num,
+          S: Identifier + Clone
+{
+    pub data: BTreeMap<S, RowMut<'a, T>>,
+    pub index: Vec<S>,
+}
+
+
+#[derive(Clone)]
+pub struct MutableMixedDataFrameIterator<'a, T: 'a, S: 'a>
+    where T: Num,
+          S: Identifier,
+          Zip<AxisIter<'a, T, usize>>: Iterator
+{
+    pub names: Iter<'a, S>,
+    pub data: Zip<AxisIter<'a, T, usize>>,
+    pub other: Vec<S>,
+    pub axis: UtahAxis,
+}
+
+
+
+impl<'a, T, S> Iterator for MutableMixedDataFrameIterator<'a, T, S>
+    where T: Num,
+          S: Identifier,
+          Zip<AxisIter<'a, T, usize>>: Iterator
+{
+    type Item = (S, <Zip<AxisIter<'a, T, usize>> as Iterator>::Item);
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.names.next() {
+            Some(val) => {
+                match self.data.next() {
+                    Some(dat) => Some((val.clone(), dat)),
+                    None => None,
+                }
+            }
+            None => None,
+        }
+    }
+}
+
+
+
+
+
 
 impl<'a, T, S> MutableDataFrame<'a, T, S>
     where T: 'a + Num,

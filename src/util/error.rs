@@ -1,6 +1,5 @@
 #[allow(unused_imports)]
 use error_chain::*;
-use csv;
 
 error_chain! {
 // The type defined for this error. These are the conventional

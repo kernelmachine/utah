@@ -21,6 +21,8 @@ pub enum ImputeStrategy {
 
 pub type Column<T> = Array<T, Ix>;
 pub type Row<T> = Array<T, Ix>;
+pub type RowMut<'a, T> = Array<&'a mut T, Ix>;
+
 pub type Matrix<T> = Array<T, (Ix, Ix)>;
 pub type MatrixMut<'a, T> = Array<&'a mut T, (Ix, Ix)>;
 

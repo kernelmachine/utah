@@ -1,4 +1,3 @@
-use chrono::*;
 use std::ops::{Mul, Add, Sub, Div};
 use std::cmp::Ordering;
 use num::traits::{One, Zero};
@@ -11,7 +10,6 @@ use rustc_serialize::Decodable;
 #[derive(RustcDecodable, Hash, PartialOrd, PartialEq, Eq , Ord , Clone,  Debug)]
 pub enum OuterType {
     Str(String),
-    // Date(DateTime<UTC>),
     Int64(i64),
     Int32(i32),
     USize(usize),

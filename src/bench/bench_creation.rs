@@ -1,5 +1,3 @@
-extern crate rand;
-extern crate test;
 use ndarray::{arr2, arr1, stack};
 use dataframe::*;
 use test::Bencher;
