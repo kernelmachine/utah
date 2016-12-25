@@ -17,18 +17,18 @@ use csv;
 
 
 
-pub trait FromCSV<T, S>
+pub trait ReadCSV<T, S>
     where T: Num + Decodable,
           S: Identifier
 {
-    fn from_csv(file: &'static str) -> Result<DataFrame<T, S>>;
+    fn read_csv(file: &'static str) -> Result<DataFrame<T, S>>;
 }
 
-impl<T, S> FromCSV<T, S> for DataFrame<T, S>
+impl<T, S> ReadCSV<T, S> for DataFrame<T, S>
     where T: Num + Decodable,
           S: Identifier
 {
-    fn from_csv(file: &'static str) -> Result<DataFrame<T, S>> {
+    fn read_csv(file: &'static str) -> Result<DataFrame<T, S>> {
         let mut rdr = csv::Reader::from_file(file).unwrap();
         let columns = rdr.headers().unwrap();
         let (mut nrow, ncol) = (0, columns.len());

@@ -34,7 +34,7 @@ use util::traits::*;
 use util::error::*;
 use ndarray::{Axis, ArrayView};
 use ndarray::stack;
-use util::read::*;
+use util::readCSV::*;
 
 fn main() {
     if let Err(ref e) = run() {
@@ -60,9 +60,8 @@ fn main() {
 
 fn run() -> Result<()> {
 
-    let df: Result<DataFrame<f64, String>> = DataFrame::from_csv("/home/suchin/Github/rust-dataframe/src/test.\
+    let df: Result<DataFrame<f64, String>> = DataFrame::read_csv("/home/suchin/Github/rust-dataframe/src/tests/test.\
                                                                   csv");
-    println!("{:?}", df);
     let a = arr2(&[[2., 7.], [3., NAN], [2., 4.]]);
     // let b = arr2(&[[2., 6.], [3., 4.]]);
     let c = arr2(&[[2., 6.], [3., 4.], [2., 1.]]);
