@@ -12,6 +12,8 @@ extern crate num;
 extern crate chrono;
 extern crate error_chain;
 extern crate itertools;
+extern crate rustc_serialize;
+extern crate csv;
 
 
 pub mod adapters;
@@ -32,6 +34,7 @@ use util::traits::*;
 use util::error::*;
 use ndarray::{Axis, ArrayView};
 use ndarray::stack;
+use util::read::*;
 
 fn main() {
     if let Err(ref e) = run() {
@@ -56,6 +59,10 @@ fn main() {
 }
 
 fn run() -> Result<()> {
+
+    let df: Result<DataFrame<f64, String>> = DataFrame::from_csv("/home/suchin/Github/rust-dataframe/src/test.\
+                                                                  csv");
+    println!("{:?}", df);
     let a = arr2(&[[2., 7.], [3., NAN], [2., 4.]]);
     // let b = arr2(&[[2., 6.], [3., 4.]]);
     let c = arr2(&[[2., 6.], [3., 4.], [2., 1.]]);

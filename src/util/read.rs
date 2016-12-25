@@ -1,59 +1,45 @@
-// ///
-// /// This example parses, sorts and groups the iris dataset
-// /// and does some simple manipulations.
-// ///
-// /// Iterators and itertools functionality are used throughout.
-// ///
-// ///
-//
-// extern crate itertools;
-//
-// use itertools::Itertools;
-// use std::collections::HashMap;
-// use std::iter::repeat;
-// use std::num::ParseFloatError;
-// use std::str::FromStr;
-// use types::{InnerType, Row};
-// use ndarray::Array;
-// use error::ErrorKind;
-// // static DATA: &'static str = include_str!("iris.data");
-//
-// #[derive(Debug)]
-// struct DataLine {
-//     name: String,
-//     data: Vec<InnerType>,
-//     index: String,
-// }
-//
-// #[derive(Clone, Debug)]
-// enum ParseError {
-//     Numeric(ParseFloatError),
-// }
-//
-// impl From<ParseFloatError> for ParseError {
-//     fn from(err: ParseFloatError) -> Self {
-//         ParseError::Numeric(err)
-//     }
-// }
-//
-// /// Parse an Iris from a comma-separated line
-// impl FromStr for DataLine {
-//     type Err = ErrorKind;
-//
-//     fn from_str(s: &str) -> Result<Self, Self::Err> {
-//         let mut dl = DataLine {
-//             name: "".into(),
-//             data: vec![],
-//             index: "".into(),
-//         };
-//         let mut parts = s.split(",").map(str::trim);
-//         // using Iterator::by_ref()
-//         for (index, part) in parts.by_ref().enumerate() {
-//             dl.data[index] = try!(part.parse::<InnerType>());
-//         }
-//
-//
-//
-//         Ok(DataFrame::new(dl.data))
-//     }
-// }
+///
+/// This example parses, sorts and groups the iris dataset
+/// and does some simple manipulations.
+///
+/// Iterators and itertools functionality are used throughout.
+///
+///
+
+use ndarray::Array;
+use dataframe::DataFrame;
+use util::traits::{Num, Identifier};
+use util::error::*;
+use util::traits::Constructor;
+use rustc_serialize::Decodable;
+
+use csv;
+
+
+
+pub trait FromCSV<T, S>
+    where T: Num + Decodable,
+          S: Identifier
+{
+    fn from_csv(file: &'static str) -> Result<DataFrame<T, S>>;
+}
+
+impl<T, S> FromCSV<T, S> for DataFrame<T, S>
+    where T: Num + Decodable,
+          S: Identifier
+{
+    fn from_csv(file: &'static str) -> Result<DataFrame<T, S>> {
+        let mut rdr = csv::Reader::from_file(file).unwrap();
+        let columns = rdr.headers().unwrap();
+        let (mut nrow, ncol) = (0, columns.len());
+        let mut v: Vec<T> = Vec::new();
+        for record in rdr.decode() {
+            nrow += 1;
+            let e: Vec<T> = record.unwrap();
+            v.extend(e.into_iter())
+        }
+
+        let matrix = Array::from_shape_vec((nrow, ncol), v).unwrap();
+        DataFrame::new(matrix).columns(&columns[..])
+    }
+}

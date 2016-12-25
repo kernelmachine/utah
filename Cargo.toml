@@ -11,6 +11,8 @@ num = "*"
 chrono = "0.2"
 error-chain="*"
 itertools = "*"
+csv = "*"
+rustc-serialize = "*"
 [[bin]]
 name="df"
 path='src/main.rs'
