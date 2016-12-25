@@ -19,6 +19,7 @@ pub mod dataframe;
 pub mod tests;
 #[macro_use]
 pub mod util;
+pub mod implement;
 
 use ndarray::arr2;
 use dataframe::*;
@@ -27,7 +28,6 @@ use util::types::*;
 use std::f64::NAN;
 use util::traits::*;
 use util::error::*;
-
 use ndarray::{Axis, ArrayView};
 use ndarray::stack;
 
