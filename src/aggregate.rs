@@ -5,16 +5,13 @@ use dataframe::*;
 use ndarray::Array;
 use std::hash::Hash;
 use std::fmt::Debug;
-use std::ops::{Add, Div, Sub, Mul};
-use std::default::Default;
-use num::traits::{One, Zero};
 use error::*;
 
-#[derive(Clone)]
-pub struct Sum<'a, I, T, S>
+#[derive(Clone, Debug)]
+pub struct Sum<'a, I: 'a, T: 'a, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + 'a,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num,
+          S: Identifier
 {
     data: I,
     other: Vec<S>,
@@ -23,12 +20,10 @@ pub struct Sum<'a, I, T, S>
 
 impl<'a, I, T, S> Sum<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num,
+          S: Identifier
 {
-    pub fn new(df: I, other: Vec<S>, axis: UtahAxis) -> Sum<'a, I, T, S>
-        where I: Iterator<Item = (S, RowView<'a, T>)>
-    {
+    pub fn new(df: I, other: Vec<S>, axis: UtahAxis) -> Sum<'a, I, T, S> {
 
         Sum {
             data: df,
@@ -40,8 +35,8 @@ impl<'a, I, T, S> Sum<'a, I, T, S>
 
 impl<'a, I, T, S> Iterator for Sum<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a + Add<Output = T> + Zero,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num,
+          S: Identifier
 {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
@@ -53,11 +48,11 @@ impl<'a, I, T, S> Iterator for Sum<'a, I, T, S>
     }
 }
 
-#[derive(Clone)]
-pub struct Mean<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + 'a,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+#[derive(Clone, Debug)]
+pub struct Mean<'a, I: 'a, T: 'a, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          T: Num,
+          S: Identifier
 {
     data: I,
     other: Vec<S>,
@@ -66,12 +61,10 @@ pub struct Mean<'a, I, T, S>
 
 impl<'a, I, T, S> Mean<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num + 'a,
+          S: Identifier
 {
-    pub fn new(df: I, other: Vec<S>, axis: UtahAxis) -> Mean<'a, I, T, S>
-        where I: Iterator<Item = (S, RowView<'a, T>)>
-    {
+    pub fn new(df: I, other: Vec<S>, axis: UtahAxis) -> Mean<'a, I, T, S> {
 
         Mean {
             data: df,
@@ -83,8 +76,8 @@ impl<'a, I, T, S> Mean<'a, I, T, S>
 
 impl<'a, I, T, S> Iterator for Mean<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + One + Zero,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num + 'a,
+          S: Identifier
 {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
@@ -102,10 +95,10 @@ impl<'a, I, T, S> Iterator for Mean<'a, I, T, S>
 
 
 #[derive(Clone)]
-pub struct Max<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + 'a,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+pub struct Max<'a, I: 'a, T: 'a, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          T: Num,
+          S: Identifier
 {
     data: I,
     other: Vec<S>,
@@ -114,8 +107,8 @@ pub struct Max<'a, I, T, S>
 
 impl<'a, I, T, S> Max<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num + 'a,
+          S: Identifier
 {
     pub fn new(df: I, other: Vec<S>, axis: UtahAxis) -> Max<'a, I, T, S> {
 
@@ -129,8 +122,8 @@ impl<'a, I, T, S> Max<'a, I, T, S>
 
 impl<'a, I, T, S> Iterator for Max<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a + Ord,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num + Ord + 'a,
+          S: Identifier
 {
     type Item = T;
     default fn next(&mut self) -> Option<Self::Item> {
@@ -145,11 +138,11 @@ impl<'a, I, T, S> Iterator for Max<'a, I, T, S>
 }
 
 
-#[derive(Clone)]
-pub struct Min<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + 'a,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+#[derive(Clone, Debug)]
+pub struct Min<'a, I: 'a, T: 'a, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          T: Num,
+          S: Identifier
 {
     data: I,
     other: Vec<S>,
@@ -158,14 +151,10 @@ pub struct Min<'a, I, T, S>
 
 impl<'a, I, T, S> Min<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num + 'a,
+          S: Identifier
 {
-    pub fn new(df: I, other: Vec<S>, axis: UtahAxis) -> Min<'a, I, T, S>
-        where I: Iterator<Item = (S, RowView<'a, T>)>,
-              T: Clone + Debug + 'a,
-              S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
-    {
+    pub fn new(df: I, other: Vec<S>, axis: UtahAxis) -> Min<'a, I, T, S> {
 
         Min {
             data: df,
@@ -177,8 +166,8 @@ impl<'a, I, T, S> Min<'a, I, T, S>
 
 impl<'a, I, T, S> Iterator for Min<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a + Ord,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num + Ord,
+          S: Identifier
 {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
@@ -193,10 +182,10 @@ impl<'a, I, T, S> Iterator for Min<'a, I, T, S>
 }
 
 #[derive(Clone)]
-pub struct Stdev<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + 'a,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+pub struct Stdev<'a, I: 'a, T: 'a, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          T: Num,
+          S: Identifier
 {
     data: I,
     other: Vec<S>,
@@ -205,12 +194,10 @@ pub struct Stdev<'a, I, T, S>
 
 impl<'a, I, T, S> Stdev<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num + 'a,
+          S: Identifier
 {
-    pub fn new(df: I, other: Vec<S>, axis: UtahAxis) -> Stdev<'a, I, T, S>
-        where I: Iterator<Item = (S, RowView<'a, T>)>
-    {
+    pub fn new(df: I, other: Vec<S>, axis: UtahAxis) -> Stdev<'a, I, T, S> {
 
         Stdev {
             data: df,
@@ -222,9 +209,8 @@ impl<'a, I, T, S> Stdev<'a, I, T, S>
 
 impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> +
-             Sub<Output = T> + Mul<Output=T> + One + Zero,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num,
+          S: Identifier
 {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
@@ -255,10 +241,9 @@ impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
 
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Stdev<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T:  Clone+ Debug + 'a + Add<Output = T> + Div<Output = T> +
-             Sub<Output = T> + Mul<Output=T>+ Empty<T>+ One + Zero,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default+ From<String>
+    where I: Iterator<Item = (S, RowView<'a, T>)> + 'a,
+          T: Num + 'a + Debug,
+          S: Identifier + Clone + Debug
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
         let other = self.other.clone();
@@ -303,15 +288,14 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Stdev<'a, I, T, S>
         let c: Vec<_> = self.collect();
         Ok(Array::from_vec(c))
     }
-
 }
 
 
 
-impl<'a, I,T,S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T:  Clone +Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T> + One + Zero,
-    S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default+ From<String>
+impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          T: Num,
+          S: Identifier
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
         let other = self.other.clone();
@@ -357,15 +341,14 @@ impl<'a, I,T,S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
         let c: Vec<_> = self.collect();
         Ok(Array::from_vec(c))
     }
-
 }
 
 
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Max<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T:   Clone +Debug + Ord + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>+ One,
-    S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default+ From<String>
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          T: Num + Ord,
+          S: Identifier
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
         let other = self.other.clone();
@@ -415,9 +398,9 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Max<'a, I, T, S>
 
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Min<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T:  Clone + Debug + Ord + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>+ One,
-    S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default + From<String>
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          T: Num + Ord,
+          S: Identifier
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
         let other = self.other.clone();
@@ -467,9 +450,9 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Min<'a, I, T, S>
 
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Sum<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T:  Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output=T>+ Empty<T>+ One + Zero,
-    S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + Default + From<String>
+    where I: Iterator<Item = (S, RowView<'a, T>)>,
+          T: Num,
+          S: Identifier
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
         let other = self.other.clone();

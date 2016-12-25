@@ -4,20 +4,15 @@ use std::iter::Iterator;
 use std::iter::repeat;
 use std::collections::HashMap;
 use ndarray::Array;
-use std::hash::Hash;
-use std::fmt::Debug;
 use dataframe::*;
-use std::ops::{Add, Div, Mul, Sub};
-use traits::Empty;
-use num::traits::One;
 use std::iter::Chain;
 use error::*;
-use traits::Constructor;
+use traits::*;
 
 #[derive(Clone, Debug)]
 pub struct Concat<'a, I, T: 'a, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          S: Hash + PartialOrd + Eq
+          S: Identifier
 {
     pub concat_data: I,
     pub concat_other: Vec<S>,
@@ -29,7 +24,7 @@ pub struct Concat<'a, I, T: 'a, S>
 
 impl<'a, I, T, S> Concat<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          S: Hash + PartialOrd + Eq
+          S: Identifier
 {
     pub fn new(left_df: I,
                right_df: I,
@@ -49,8 +44,7 @@ impl<'a, I, T, S> Concat<'a, I, T, S>
 
 impl<'a, I, T, S> Iterator for Concat<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Debug,
-          S: Hash + PartialOrd + Eq + Debug
+          S: Identifier
 {
     type Item = (S, RowView<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
@@ -61,8 +55,8 @@ impl<'a, I, T, S> Iterator for Concat<'a, I, T, S>
 #[derive(Clone)]
 pub struct InnerJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num + 'a,
+          S: Identifier
 {
     pub left: L,
     pub right: HashMap<S, RowView<'a, T>>,
@@ -72,8 +66,8 @@ pub struct InnerJoin<'a, L, T, S>
 
 impl<'a, L, T, S> InnerJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num + 'a,
+          S: Identifier
 {
     pub fn new<RI>(left: L, right: RI, left_columns: Vec<S>, right_columns: Vec<S>) -> Self
         where RI: Iterator<Item = (S, RowView<'a, T>)>
@@ -91,8 +85,8 @@ impl<'a, L, T, S> InnerJoin<'a, L, T, S>
 
 impl<'a, L, T, S> Iterator for InnerJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num + 'a,
+          S: Identifier
 {
     type Item = (S, RowView<'a, T>, RowView<'a, T>);
 
@@ -116,8 +110,8 @@ impl<'a, L, T, S> Iterator for InnerJoin<'a, L, T, S>
 #[derive(Clone)]
 pub struct OuterJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num + 'a,
+          S: Identifier
 {
     left: L,
     right: HashMap<S, RowView<'a, T>>,
@@ -128,8 +122,8 @@ pub struct OuterJoin<'a, L, T, S>
 
 impl<'a, L, T, S> OuterJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num + 'a,
+          S: Identifier
 {
     pub fn new<RI>(left: L, right: RI, left_columns: Vec<S>, right_columns: Vec<S>) -> Self
         where RI: Iterator<Item = (S, RowView<'a, T>)>
@@ -146,8 +140,8 @@ impl<'a, L, T, S> OuterJoin<'a, L, T, S>
 
 impl<'a, L, T, S> Iterator for OuterJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug + 'a,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+          T: Num + 'a,
+          S: Identifier
 {
     type Item = (S, RowView<'a, T>, Option<RowView<'a, T>>);
 
@@ -172,8 +166,8 @@ impl<'a, L, T, S> Iterator for OuterJoin<'a, L, T, S>
 impl<'a, L, T, S> ToDataFrame<'a, (S, RowView<'a, T>, RowView<'a, T>), T, S>
     for InnerJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T: 'a + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
-      S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
+          T: Num,
+          S: Identifier
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
 
@@ -239,8 +233,8 @@ impl<'a, L, T, S> ToDataFrame<'a, (S, RowView<'a, T>, RowView<'a, T>), T, S>
 impl<'a, L,T,S> ToDataFrame<'a, (S, RowView<'a, T>, Option<RowView<'a, T>>), T, S>
     for OuterJoin<'a, L, T, S>
     where L: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-    T: 'a  + Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T>+ One,
-      S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
+          T: Num,
+          S: Identifier
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
 
@@ -320,8 +314,8 @@ impl<'a, L,T,S> ToDataFrame<'a, (S, RowView<'a, T>, Option<RowView<'a, T>>), T, 
 
 impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Concat<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          T: Clone + Debug+ Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>+ Empty<T>+ One,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug + From<String>
+          T: Num,
+          S: Identifier
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
 
@@ -330,9 +324,9 @@ impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Concat<'a, I, T
         let other = self.concat_other.clone();
         let mut c = Vec::new();
         let mut n = Vec::new();
-        let res_dim =  match axis {
-            UtahAxis::Row => (s.fold(0, |acc, _| acc + 1),other.len()),
-            UtahAxis::Column => ( other.len(), s.fold(0, |acc, _| acc + 1)),
+        let res_dim = match axis {
+            UtahAxis::Row => (s.fold(0, |acc, _| acc + 1), other.len()),
+            UtahAxis::Column => (other.len(), s.fold(0, |acc, _| acc + 1)),
 
         };
 
@@ -361,8 +355,8 @@ impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Concat<'a, I, T
         let other = self.concat_other.clone();
         let mut c = Vec::new();
         let mut n = Vec::new();
-        let res_dim =  match self.axis {
-            UtahAxis::Row => (other.len(),s.fold(0, |acc, _| acc + 1)),
+        let res_dim = match self.axis {
+            UtahAxis::Row => (other.len(), s.fold(0, |acc, _| acc + 1)),
             UtahAxis::Column => (s.fold(0, |acc, _| acc + 1), other.len()),
 
         };
