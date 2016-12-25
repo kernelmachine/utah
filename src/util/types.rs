@@ -1,6 +1,4 @@
 use ndarray::{Array, ArrayView, ArrayViewMut, Ix};
-use util::traits::Empty;
-use std::f64::NAN;
 use adapters::transform::*;
 use adapters::join::*;
 use adapters::aggregate::*;
@@ -46,22 +44,3 @@ pub type StdevIter<'a, T, S> = Stdev<'a, DFIter<'a, T, S>, T, S>;
 pub type MeanIter<'a, T, S> = Mean<'a, DFIter<'a, T, S>, T, S>;
 pub type MapDFIter<'a, T, S, F, B> = MapDF<'a, T, S, DFIter<'a, T, S>, F, B>;
 pub type ImputeIter<'a, T, S> = Impute<'a, MutableDataFrameIterator<'a, T, S>, T, S>;
-
-
-impl Empty<f64> for f64 {
-    fn empty() -> f64 {
-        NAN
-    }
-    fn is_empty(&self) -> bool {
-        self.is_nan()
-    }
-}
-
-impl Empty<i32> for i32 {
-    fn empty() -> i32 {
-        0
-    }
-    fn is_empty(&self) -> bool {
-        *self == 0
-    }
-}
