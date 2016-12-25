@@ -118,7 +118,7 @@ pub trait Operations<'a, T, S>
                  axis: UtahAxis)
                  -> MapDF<'a, T, S, DataFrameIterator<'a, T, S>, F, B>
         where F: Fn(&T) -> B,
-              for<'r> F: Fn(&InnerType) -> B;
+              for<'r> F: Fn(&T) -> B;
     fn mean(&'a mut self, axis: UtahAxis) -> Mean<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn maxdf(&'a mut self, axis: UtahAxis) -> Max<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn min(&'a mut self, axis: UtahAxis) -> Min<'a, DataFrameIterator<'a, T, S>, T, S>;

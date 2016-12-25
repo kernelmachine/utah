@@ -4,7 +4,6 @@ use adapters::aggregate::*;
 use adapters::process::*;
 use adapters::join::*;
 use adapters::transform::*;
-
 use util::types::UtahAxis;
 use util::traits::*;
 use dataframe::*;
@@ -290,7 +289,7 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     /// ```
     fn map<F, B>(&'a mut self, f: F, axis: UtahAxis) -> MapDFIter<'a, f64, String, F, B>
         where F: Fn(&f64) -> B,
-              for<'r> F: Fn(&InnerType) -> B
+              for<'r> F: Fn(&f64) -> B
     {
 
         match axis {

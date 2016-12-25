@@ -14,7 +14,6 @@ pub mod tests {
     use std::collections::{HashMap, BTreeMap};
     use chrono::*;
     use util::types::*;
-    use util::from::*;
     use util::error::*;
     use adapters::aggregate::*;
     use adapters::transform::*;

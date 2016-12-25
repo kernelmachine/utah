@@ -47,3 +47,4 @@ pub mod tests;
 #[macro_use]
 pub mod util;
 pub mod implement;
+pub mod mixedtypes;
