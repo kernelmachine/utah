@@ -48,3 +48,4 @@ pub mod tests;
 pub mod util;
 pub mod implement;
 pub mod mixedtypes;
+pub mod bench;
