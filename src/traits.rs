@@ -54,7 +54,7 @@ pub trait MixedDataframeConstructor<'a, I, T, S>
     fn index<U: Clone + Ord>(self, index: &'a [U]) -> Result<Self> where S: From<U>;
     fn columns<U: Clone + Ord>(self, columns: &'a [U]) -> Result<Self> where S: From<U>;
     fn from_array(data: Row<T>, axis: UtahAxis) -> Self;
-    fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, I, T, S>;
+    fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, T, S>;
     fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a, T, S>;
 }
 
@@ -69,7 +69,7 @@ pub trait Constructor<'a, I, T, S>
     fn index<U: Clone>(self, index: &'a [U]) -> Result<Self> where S: From<U>;
     fn columns<U: Clone>(self, columns: &'a [U]) -> Result<Self> where S: From<U>;
     fn from_array<U: Clone>(data: Row<U>, axis: UtahAxis) -> Self where T: From<U>;
-    fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, I, T, S>;
+    fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, T, S>;
     fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a, T, S>;
 }
 
@@ -83,47 +83,47 @@ pub trait Operations<'a, I, T, S>
     fn select<U: ?Sized>(&'a self,
                          names: &'a [&'a U],
                          axis: UtahAxis)
-                         -> Select<'a, T, S, DataFrameIterator<'a, I, T, S>>
+                         -> Select<'a, DataFrameIterator<'a, T, S>, T, S>
         where S: From<&'a U>;
     fn remove<U: ?Sized>(&'a self,
                          names: &'a [&'a U],
                          axis: UtahAxis)
-                         -> Remove<'a, DataFrameIterator<'a, I, T, S>, T, S>
+                         -> Remove<'a, DataFrameIterator<'a, T, S>, T, S>
         where S: From<&'a U>;
     fn append<U: ?Sized>(&'a mut self,
                          name: &'a U,
                          data: RowView<'a, T>,
                          axis: UtahAxis)
-                         -> Append<'a, DataFrameIterator<'a, I, T, S>, T, S>
+                         -> Append<'a, DataFrameIterator<'a, T, S>, T, S>
         where S: From<&'a U>;
     fn inner_left_join(&'a self,
                        other: &'a DataFrame<T, S>)
-                       -> InnerJoin<'a, DataFrameIterator<'a, I, T, S>, T, S>;
+                       -> InnerJoin<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn outer_left_join(&'a self,
                        other: &'a DataFrame<T, S>)
-                       -> OuterJoin<'a, DataFrameIterator<'a, I, T, S>, T, S>;
+                       -> OuterJoin<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn inner_right_join(&'a self,
                         other: &'a DataFrame<T, S>)
-                        -> InnerJoin<'a, DataFrameIterator<'a, I, T, S>, T, S>;
+                        -> InnerJoin<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn outer_right_join(&'a self,
                         other: &'a DataFrame<T, S>)
-                        -> OuterJoin<'a, DataFrameIterator<'a, I, T, S>, T, S>;
+                        -> OuterJoin<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn concat
         (&'a self,
          other: &'a DataFrame<T, S>,
          axis: UtahAxis)
-         -> Concat<'a, Chain<DataFrameIterator<'a, I, T, S>, DataFrameIterator<'a, I, T, S>>, T, S>;
-    fn sumdf(&'a mut self, axis: UtahAxis) -> Sum<'a, DataFrameIterator<'a, I, T, S>, T, S>;
+         -> Concat<'a, Chain<DataFrameIterator<'a, T, S>, DataFrameIterator<'a, T, S>>, T, S>;
+    fn sumdf(&'a mut self, axis: UtahAxis) -> Sum<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn map<F, B>(&'a mut self,
                  f: F,
                  axis: UtahAxis)
-                 -> MapDF<'a, T, S, DataFrameIterator<'a, I, T, S>, F, B>
+                 -> MapDF<'a, T, S, DataFrameIterator<'a, T, S>, F, B>
         where F: Fn(&T) -> B,
               for<'r> F: Fn(&InnerType) -> B;
-    fn mean(&'a mut self, axis: UtahAxis) -> Mean<'a, DataFrameIterator<'a, I, T, S>, T, S>;
-    fn maxdf(&'a mut self, axis: UtahAxis) -> Max<'a, DataFrameIterator<'a, I, T, S>, T, S>;
-    fn min(&'a mut self, axis: UtahAxis) -> Min<'a, DataFrameIterator<'a, I, T, S>, T, S>;
-    fn stdev(&'a self, axis: UtahAxis) -> Stdev<'a, DataFrameIterator<'a, I, T, S>, T, S>;
+    fn mean(&'a mut self, axis: UtahAxis) -> Mean<'a, DataFrameIterator<'a, T, S>, T, S>;
+    fn maxdf(&'a mut self, axis: UtahAxis) -> Max<'a, DataFrameIterator<'a, T, S>, T, S>;
+    fn min(&'a mut self, axis: UtahAxis) -> Min<'a, DataFrameIterator<'a, T, S>, T, S>;
+    fn stdev(&'a self, axis: UtahAxis) -> Stdev<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn impute(&'a mut self,
               strategy: ImputeStrategy,
               axis: UtahAxis)
@@ -159,7 +159,7 @@ pub trait Transform<'a, T, S>
     where T: Num + 'a,
           S: Identifier
 {
-    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, T, S, Self>
+    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T, S>
         where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
               S: From<&'a U>,
               T: 'a;

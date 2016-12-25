@@ -9,14 +9,15 @@ use traits::*;
 use dataframe::*;
 use std::fmt::Debug;
 use error::*;
+use ndarray::AxisIter;
 
-#[derive(Clone, Debug)]
-pub struct DataFrameIterator<'a, I, T: 'a, S: 'a>
-    where I: Iterator<Item = RowView<'a, T>>,
+#[derive(Clone)]
+pub struct DataFrameIterator<'a, T: 'a, S: 'a>
+    where T: Num,
           S: Identifier
 {
     pub names: Iter<'a, S>,
-    pub data: I,
+    pub data: AxisIter<'a, T, usize>,
     pub other: Vec<S>,
     pub axis: UtahAxis,
 }
@@ -24,8 +25,8 @@ pub struct DataFrameIterator<'a, I, T: 'a, S: 'a>
 
 
 
-impl<'a, I, T, S> Iterator for DataFrameIterator<'a, I, T, S>
-    where I: Iterator<Item = RowView<'a, T>>,
+impl<'a, T, S> Iterator for DataFrameIterator<'a, T, S>
+    where T: Num,
           S: Identifier
 {
     type Item = (S, RowView<'a, T>);
@@ -87,7 +88,7 @@ impl<'a, T, S, I, F, B> Iterator for MapDF<'a, T, S, I, F, B>
 
 
 #[derive(Clone, Debug)]
-pub struct Select<'a, T: 'a, S, I>
+pub struct Select<'a, I, T: 'a, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
           S: Identifier
 {
@@ -98,11 +99,11 @@ pub struct Select<'a, T: 'a, S, I>
 }
 
 
-impl<'a, T, S, I> Select<'a, T, S, I>
+impl<'a, I, T, S> Select<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
           S: Identifier
 {
-    pub fn new(df: I, ind: Vec<S>, other: Vec<S>, axis: UtahAxis) -> Select<'a, T, S, I> {
+    pub fn new(df: I, ind: Vec<S>, other: Vec<S>, axis: UtahAxis) -> Select<'a, I, T, S> {
 
         Select {
             data: df,
@@ -116,7 +117,7 @@ impl<'a, T, S, I> Select<'a, T, S, I>
 
 
 
-impl<'a, I, T, S> Iterator for Select<'a, T, S, I>
+impl<'a, I, T, S> Iterator for Select<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
           S: Identifier
 {
@@ -242,9 +243,8 @@ impl<'a, I, T, S> Iterator for Append<'a, I, T, S>
 
 
 
-impl<'a, I, T, S> Aggregate<'a, T, S> for DataFrameIterator<'a, I, T, S>
-    where I: Iterator<Item = RowView<'a, T>> + Clone,
-          T: Num + 'a,
+impl<'a, T, S> Aggregate<'a, T, S> for DataFrameIterator<'a, T, S>
+    where T: Num + 'a,
           S: Identifier
 {
     fn sumdf(self) -> Sum<'a, Self, T, S>
@@ -289,12 +289,11 @@ impl<'a, I, T, S> Aggregate<'a, T, S> for DataFrameIterator<'a, I, T, S>
 }
 
 
-impl<'a, I, T, S> Transform<'a, T, S> for DataFrameIterator<'a, I, T, S>
-    where I: Iterator<Item = RowView<'a, T>> + Clone,
-          T: Num,
+impl<'a, T, S> Transform<'a, T, S> for DataFrameIterator<'a, T, S>
+    where T: Num,
           S: Identifier
 {
-    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, T, S, Self>
+    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T, S>
         where S: From<&'a U>,
               T: 'a
     {
@@ -348,7 +347,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for DataFrameIterator<'a, I, T, S>
 
 
 
-impl<'a, I, T, S> Aggregate<'a, T, S> for Select<'a, T, S, I>
+impl<'a, I, T, S> Aggregate<'a, T, S> for Select<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
           T: Num + 'a,
           S: Identifier
@@ -394,12 +393,12 @@ impl<'a, I, T, S> Aggregate<'a, T, S> for Select<'a, T, S, I>
     }
 }
 
-impl<'a, I, T, S> Transform<'a, T, S> for Select<'a, T, S, I>
+impl<'a, I, T, S> Transform<'a, T, S> for Select<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
           T: Num + Clone + Debug,
           S: Identifier + Clone + Debug
 {
-    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, T, S, Self>
+    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T, S>
         where S: From<&'a U>,
               T: 'a
     {
@@ -500,7 +499,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Remove<'a, I, T, S>
           T: Num,
           S: Identifier
 {
-    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, T, S, Self>
+    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T, S>
         where S: From<&'a U>
     {
         let other = self.other.clone();
@@ -597,7 +596,7 @@ impl<'a, I, T, S> Transform<'a, T, S> for Append<'a, I, T, S>
           T: Num,
           S: Identifier
 {
-    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, T, S, Self>
+    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T, S>
         where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
               S: From<&'a U>
     {
@@ -779,7 +778,7 @@ impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Append<'a, I, T
 }
 
 
-impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Select<'a, T, S, I>
+impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Select<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
           T: Num,
           S: Identifier
@@ -845,9 +844,8 @@ impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for Select<'a, T, S
 }
 
 
-impl<'a, I, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for DataFrameIterator<'a, I, T, S>
-    where I: Iterator<Item = RowView<'a, T>> + Clone,
-          T: Num,
+impl<'a, T, S> ToDataFrame<'a, (S, RowView<'a, T>), T, S> for DataFrameIterator<'a, T, S>
+    where T: Num,
           S: Identifier
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {

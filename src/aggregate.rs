@@ -3,8 +3,6 @@ use types::*;
 use traits::*;
 use dataframe::*;
 use ndarray::Array;
-use std::hash::Hash;
-use std::fmt::Debug;
 use error::*;
 
 #[derive(Clone, Debug)]
@@ -242,8 +240,8 @@ impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Stdev<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + 'a,
-          T: Num + 'a + Debug,
-          S: Identifier + Clone + Debug
+          T: Num + 'a,
+          S: Identifier
 {
     fn as_df(self) -> Result<DataFrame<T, S>> {
         let other = self.other.clone();

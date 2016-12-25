@@ -11,7 +11,6 @@ use join::*;
 use std::fmt::Debug;
 use traits::*;
 use ndarray::AxisIter;
-use std::iter::Chain;
 
 /// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
@@ -199,7 +198,7 @@ impl<'a, T, S> Constructor<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
     /// let df = DataFrame::new(a).index(&[1, 2]).columns(&["a", "b"]).unwrap();
     /// ```
-    fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, AxisIter<T, usize>, T, S> {
+    fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, T, S> {
         match axis {
             UtahAxis::Row => {
                 DataFrameIterator {
@@ -269,11 +268,10 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     ///    }
     /// ```
 
-    default fn select<U: ?Sized>
-        (&'a self,
-         names: &'a [&'a U],
-         axis: UtahAxis)
-         -> Select<'a, T, S, DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>>
+    default fn select<U: ?Sized>(&'a self,
+                                 names: &'a [&'a U],
+                                 axis: UtahAxis)
+                                 -> SelectIter<'a, T, S>
         where S: From<&'a U>
     {
         let names: Vec<S> = names.iter()
@@ -310,11 +308,10 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    default fn remove<U: ?Sized>
-        (&'a self,
-         names: &'a [&'a U],
-         axis: UtahAxis)
-         -> Remove<'a, DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>, T, S>
+    default fn remove<U: ?Sized>(&'a self,
+                                 names: &'a [&'a U],
+                                 axis: UtahAxis)
+                                 -> RemoveIter<'a, T, S>
         where S: From<&'a U>
     {
         let names: Vec<S> = names.iter()
@@ -351,12 +348,11 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    default fn append<U: ?Sized>
-        (&'a mut self,
-         name: &'a U,
-         data: RowView<'a, T>,
-         axis: UtahAxis)
-         -> Append<'a, DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>, T, S>
+    default fn append<U: ?Sized>(&'a mut self,
+                                 name: &'a U,
+                                 data: RowView<'a, T>,
+                                 axis: UtahAxis)
+                                 -> AppendIter<'a, T, S>
         where S: From<&'a U>
     {
         let name: S = name.into();
@@ -393,10 +389,7 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    default fn inner_left_join
-        (&'a self,
-         other: &'a DataFrame<T, S>)
-         -> InnerJoin<'a, DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>, T, S> {
+    default fn inner_left_join(&'a self, other: &'a DataFrame<T, S>) -> InnerJoinIter<'a, T, S> {
         InnerJoin::new(self.df_iter(UtahAxis::Row),
                        other.df_iter(UtahAxis::Row),
                        self.columns.clone(),
@@ -416,10 +409,7 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    default fn outer_left_join
-        (&'a self,
-         other: &'a DataFrame<T, S>)
-         -> OuterJoin<'a, DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>, T, S> {
+    default fn outer_left_join(&'a self, other: &'a DataFrame<T, S>) -> OuterJoinIter<'a, T, S> {
 
         OuterJoin::new(self.df_iter(UtahAxis::Row),
                        other.df_iter(UtahAxis::Row),
@@ -440,10 +430,7 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    default fn inner_right_join
-        (&'a self,
-         other: &'a DataFrame<T, S>)
-         -> InnerJoin<'a, DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>, T, S> {
+    default fn inner_right_join(&'a self, other: &'a DataFrame<T, S>) -> InnerJoinIter<'a, T, S> {
         InnerJoin::new(other.df_iter(UtahAxis::Row),
                        self.df_iter(UtahAxis::Row),
                        other.columns.clone(),
@@ -464,10 +451,7 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    default fn outer_right_join
-        (&'a self,
-         other: &'a DataFrame<T, S>)
-         -> OuterJoin<'a, DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>, T, S> {
+    default fn outer_right_join(&'a self, other: &'a DataFrame<T, S>) -> OuterJoinIter<'a, T, S> {
         OuterJoin::new(other.df_iter(UtahAxis::Row),
                        self.df_iter(UtahAxis::Row),
                        other.columns.clone(),
@@ -478,11 +462,7 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     default fn concat(&'a self,
                       other: &'a DataFrame<T, S>,
                       axis: UtahAxis)
-                      -> Concat<'a,
-                                Chain<DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>,
-                                      DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>>,
-                                T,
-                                S> {
+                      -> ConcatIter<'a, T, S> {
         match axis {
             UtahAxis::Row => {
                 Concat::new(self.df_iter(UtahAxis::Column),
@@ -513,9 +493,7 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    default fn sumdf(&'a mut self,
-                     axis: UtahAxis)
-                     -> Sum<'a, DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>, T, S> {
+    default fn sumdf(&'a mut self, axis: UtahAxis) -> SumIter<'a, T, S> {
         let columns = self.columns.clone();
         let index = self.index.clone();
         match axis {
@@ -538,11 +516,7 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    default fn map<F, B>
-        (&'a mut self,
-         f: F,
-         axis: UtahAxis)
-         -> MapDF<'a, T, S, DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>, F, B>
+    default fn map<F, B>(&'a mut self, f: F, axis: UtahAxis) -> MapDFIter<'a, T, S, F, B>
         where F: Fn(&T) -> B
     {
 
@@ -565,9 +539,7 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    default fn mean(&'a mut self,
-                    axis: UtahAxis)
-                    -> Mean<'a, DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>, T, S> {
+    default fn mean(&'a mut self, axis: UtahAxis) -> MeanIter<'a, T, S> {
 
         let columns = self.columns.clone();
         let index = self.index.clone();
@@ -591,9 +563,7 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    default fn maxdf(&'a mut self,
-                     axis: UtahAxis)
-                     -> Max<'a, DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>, T, S> {
+    default fn maxdf(&'a mut self, axis: UtahAxis) -> MaxIter<'a, T, S> {
 
         let columns = self.columns.clone();
         let index = self.index.clone();
@@ -617,9 +587,7 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    default fn min(&'a mut self,
-                   axis: UtahAxis)
-                   -> Min<'a, DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>, T, S> {
+    default fn min(&'a mut self, axis: UtahAxis) -> MinIter<'a, T, S> {
 
         let columns = self.columns.clone();
         let index = self.index.clone();
@@ -644,9 +612,7 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    default fn stdev(&'a self,
-                     axis: UtahAxis)
-                     -> Stdev<'a, DataFrameIterator<'a, AxisIter<'a, T, usize>, T, S>, T, S> {
+    default fn stdev(&'a self, axis: UtahAxis) -> StdevIter<'a, T, S> {
         let columns = self.columns.clone();
         let index = self.index.clone();
         match axis {
@@ -673,7 +639,7 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     default fn impute(&'a mut self,
                       strategy: ImputeStrategy,
                       axis: UtahAxis)
-                      -> Impute<'a, MutableDataFrameIterator<'a, T, S>, T, S> {
+                      -> ImputeIter<'a, T, S> {
 
         let index = self.index.clone();
         let columns = self.columns.clone();
@@ -719,11 +685,10 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     ///    }
     /// ```
 
-    fn select<U: ?Sized>
-        (&'a self,
-         names: &'a [&'a U],
-         axis: UtahAxis)
-         -> Select<'a, f64, String, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>>
+    fn select<U: ?Sized>(&'a self,
+                         names: &'a [&'a U],
+                         axis: UtahAxis)
+                         -> SelectIter<'a, f64, String>
         where String: From<&'a U>
     {
         let names: Vec<String> = names.iter().map(|x| String::from(x)).collect();
@@ -758,11 +723,10 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    fn remove<U: ?Sized>
-        (&'a self,
-         names: &'a [&'a U],
-         axis: UtahAxis)
-         -> Remove<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String>
+    fn remove<U: ?Sized>(&'a self,
+                         names: &'a [&'a U],
+                         axis: UtahAxis)
+                         -> RemoveIter<'a, f64, String>
         where String: From<&'a U>
     {
         let names: Vec<String> = names.iter().map(|x| String::from(x)).collect();
@@ -797,12 +761,11 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    fn append<U: ?Sized>
-        (&'a mut self,
-         name: &'a U,
-         data: RowView<'a, f64>,
-         axis: UtahAxis)
-         -> Append<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String>
+    fn append<U: ?Sized>(&'a mut self,
+                         name: &'a U,
+                         data: RowView<'a, f64>,
+                         axis: UtahAxis)
+                         -> AppendIter<'a, f64, String>
         where String: From<&'a U>
     {
         let name: String = String::from(name);
@@ -839,10 +802,9 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    fn inner_left_join
-        (&'a self,
-         other: &'a DataFrame<f64, String>)
-         -> InnerJoin<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+    fn inner_left_join(&'a self,
+                       other: &'a DataFrame<f64, String>)
+                       -> InnerJoinIter<'a, f64, String> {
         InnerJoin::new(self.df_iter(UtahAxis::Row),
                        other.df_iter(UtahAxis::Row),
                        self.columns.clone(),
@@ -862,10 +824,9 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    fn outer_left_join
-        (&'a self,
-         other: &'a DataFrame<f64, String>)
-         -> OuterJoin<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+    fn outer_left_join(&'a self,
+                       other: &'a DataFrame<f64, String>)
+                       -> OuterJoinIter<'a, f64, String> {
 
         OuterJoin::new(self.df_iter(UtahAxis::Row),
                        other.df_iter(UtahAxis::Row),
@@ -890,10 +851,9 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    fn inner_right_join
-        (&'a self,
-         other: &'a DataFrame<f64, String>)
-         -> InnerJoin<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+    fn inner_right_join(&'a self,
+                        other: &'a DataFrame<f64, String>)
+                        -> InnerJoinIter<'a, f64, String> {
         InnerJoin::new(other.df_iter(UtahAxis::Row),
                        self.df_iter(UtahAxis::Row),
                        other.columns.clone(),
@@ -914,10 +874,9 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    fn outer_right_join
-        (&'a self,
-         other: &'a DataFrame<f64, String>)
-         -> OuterJoin<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+    fn outer_right_join(&'a self,
+                        other: &'a DataFrame<f64, String>)
+                        -> OuterJoinIter<'a, f64, String> {
         OuterJoin::new(other.df_iter(UtahAxis::Row),
                        self.df_iter(UtahAxis::Row),
                        other.columns.clone(),
@@ -929,11 +888,7 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     fn concat(&'a self,
               other: &'a DataFrame<f64, String>,
               axis: UtahAxis)
-              -> Concat<'a,
-                        Chain<DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>,
-                              DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>>,
-                        f64,
-                        String> {
+              -> ConcatIter<'a, f64, String> {
         match axis {
             UtahAxis::Row => {
                 Concat::new(self.df_iter(UtahAxis::Row),
@@ -963,10 +918,7 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    fn sumdf
-        (&'a mut self,
-         axis: UtahAxis)
-         -> Sum<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+    fn sumdf(&'a mut self, axis: UtahAxis) -> SumIter<'a, f64, String> {
         let columns = self.columns.clone();
         let index = self.index.clone();
         match axis {
@@ -989,11 +941,7 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    fn map<F, B>
-        (&'a mut self,
-         f: F,
-         axis: UtahAxis)
-         -> MapDF<'a, f64, String, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, F, B>
+    fn map<F, B>(&'a mut self, f: F, axis: UtahAxis) -> MapDFIter<'a, f64, String, F, B>
         where F: Fn(&f64) -> B,
               for<'r> F: Fn(&InnerType) -> B
     {
@@ -1017,10 +965,7 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    fn mean
-        (&'a mut self,
-         axis: UtahAxis)
-         -> Mean<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+    fn mean(&'a mut self, axis: UtahAxis) -> MeanIter<'a, f64, String> {
 
         let columns = self.columns.clone();
         let index = self.index.clone();
@@ -1044,10 +989,7 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    fn maxdf
-        (&'a mut self,
-         axis: UtahAxis)
-         -> Max<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+    fn maxdf(&'a mut self, axis: UtahAxis) -> MaxIter<'a, f64, String> {
 
         let columns = self.columns.clone();
         let index = self.index.clone();
@@ -1071,10 +1013,7 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    fn min
-        (&'a mut self,
-         axis: UtahAxis)
-         -> Min<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+    fn min(&'a mut self, axis: UtahAxis) -> MinIter<'a, f64, String> {
 
         let columns = self.columns.clone();
         let index = self.index.clone();
@@ -1099,10 +1038,7 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    fn stdev
-        (&'a self,
-         axis: UtahAxis)
-         -> Stdev<'a, DataFrameIterator<'a, AxisIter<'a, f64, usize>, f64, String>, f64, String> {
+    fn stdev(&'a self, axis: UtahAxis) -> StdevIter<'a, f64, String> {
         let columns = self.columns.clone();
         let index = self.index.clone();
         match axis {
@@ -1129,7 +1065,7 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
     fn impute(&'a mut self,
               strategy: ImputeStrategy,
               axis: UtahAxis)
-              -> Impute<'a, MutableDataFrameIterator<'a, f64, String>, f64, String> {
+              -> ImputeIter<'a, f64, String> {
 
         let index = self.index.clone();
         let columns = self.columns.clone();
