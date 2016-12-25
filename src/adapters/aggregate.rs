@@ -1,9 +1,9 @@
 
-use types::*;
-use traits::*;
+use util::types::*;
+use util::traits::*;
 use dataframe::*;
 use ndarray::Array;
-use error::*;
+use util::error::*;
 
 #[derive(Clone, Debug)]
 pub struct Sum<'a, I: 'a, T: 'a, S>

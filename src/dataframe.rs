@@ -1,16 +1,16 @@
-use error::*;
-use types::*;
+use util::error::*;
+use util::types::*;
 use std::string::ToString;
 use std::iter::Iterator;
-use aggregate::*;
-use transform::*;
-use ndarray::Axis;
-use types::UtahAxis;
-use process::*;
-use join::*;
-use std::fmt::Debug;
-use traits::*;
-use ndarray::AxisIter;
+use adapters::aggregate::*;
+use adapters::process::*;
+use adapters::join::*;
+use adapters::transform::*;
+
+use ndarray::{Axis, AxisIter, AxisIterMut};
+use util::types::UtahAxis;
+use util::traits::*;
+use std::slice::Iter;
 
 /// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
@@ -35,13 +35,78 @@ pub struct MutableDataFrame<'a, T: 'a, S>
 }
 
 
+#[derive(Clone)]
+pub struct DataFrameIterator<'a, T: 'a, S: 'a>
+    where T: Num,
+          S: Identifier
+{
+    pub names: Iter<'a, S>,
+    pub data: AxisIter<'a, T, usize>,
+    pub other: Vec<S>,
+    pub axis: UtahAxis,
+}
 
 
 
 
-impl<'a, T, S> Constructor<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
-    where T: Num + 'a + Clone + Debug,
-          S: Identifier + Clone + Debug
+impl<'a, T, S> Iterator for DataFrameIterator<'a, T, S>
+    where T: Num,
+          S: Identifier
+{
+    type Item = (S, RowView<'a, T>);
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.names.next() {
+            Some(val) => {
+                match self.data.next() {
+                    Some(dat) => Some((val.clone(), dat)),
+                    None => None,
+                }
+            }
+            None => None,
+        }
+    }
+}
+
+
+pub struct MutableDataFrameIterator<'a, T, S>
+    where T: Num + 'a,
+          S: Identifier + 'a
+{
+    pub names: Iter<'a, S>,
+    pub data: AxisIterMut<'a, T, usize>,
+    pub other: Vec<S>,
+    pub axis: UtahAxis,
+}
+
+
+impl<'a, T, S> Iterator for MutableDataFrameIterator<'a, T, S>
+    where T: Num,
+          S: Identifier
+{
+    type Item = (S, RowViewMut<'a, T>);
+
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.names.next() {
+            Some(val) => {
+                match self.data.next() {
+                    Some(dat) => Some((val.clone(), dat)),
+                    None => None,
+                }
+            }
+            None => None,
+        }
+    }
+}
+
+
+
+
+
+
+impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
+    where T: Num + 'a,
+          S: Identifier
 {
     /// Create a new dataframe. The only required argument is data to populate the dataframe.
     /// The data's elements can be any of `InnerType`.
@@ -241,9 +306,9 @@ impl<'a, T, S> Constructor<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     }
 }
 
-impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
-    where T: 'a + Num + Clone + Debug,
-          S: Identifier + Clone + Debug
+impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
+    where T: 'a + Num,
+          S: Identifier
 {
     /// Get the dimensions of the dataframe.
     default fn shape(self) -> (usize, usize) {
@@ -662,7 +727,7 @@ impl<'a, T, S> Operations<'a, AxisIter<'a, T, usize>, T, S> for DataFrame<T, S>
     // }
 }
 
-impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64, String> {
+impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     /// Get the dimensions of the dataframe.
     fn shape(self) -> (usize, usize) {
         self.data.dim()
@@ -1090,8 +1155,8 @@ impl<'a> Operations<'a, AxisIter<'a, f64, usize>, f64, String> for DataFrame<f64
 
 
 impl<'a, T, S> MutableDataFrame<'a, T, S>
-    where T: 'a + Num + Clone + Debug,
-          S: Identifier + Clone + Debug
+    where T: 'a + Num,
+          S: Identifier
 {
     /// Create a new dataframe. The only required argument is data to populate the dataframe. The data's elements can be any of `InnerType`.
     /// By default, the columns and index of the dataframe are `["1", "2", "3"..."N"]`, where *N* is

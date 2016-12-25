@@ -1,7 +1,7 @@
 use chrono::*;
-use types::*;
+use util::types::*;
 use std::str::FromStr;
-use error::ErrorKind;
+use util::error::ErrorKind;
 
 impl From<f64> for InnerType {
     fn from(f: f64) -> InnerType {

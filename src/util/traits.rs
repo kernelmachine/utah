@@ -1,17 +1,18 @@
 
-use types::*;
+use util::types::*;
 use std::iter::{Iterator, Chain};
-use aggregate::*;
-use transform::*;
-use process::*;
-use dataframe::{DataFrame, MutableDataFrame};
+use adapters::aggregate::*;
+use adapters::transform::*;
+use adapters::process::*;
+use dataframe::{DataFrame, MutableDataFrame, DataFrameIterator, MutableDataFrameIterator};
 use std::hash::Hash;
 use std::fmt::Debug;
-use error::*;
-use join::*;
+use util::error::*;
+use adapters::join::*;
 use std::ops::{Add, Sub, Mul, Div};
 use num::traits::{One, Zero};
 use std::collections::BTreeMap;
+
 
 pub trait Num
     : Add<Output = Self> +
@@ -59,9 +60,8 @@ pub trait MixedDataframeConstructor<'a, I, T, S>
 }
 
 
-pub trait Constructor<'a, I, T, S>
-    where I: Iterator<Item = RowView<'a, T>> + Clone,
-          T: 'a + Num,
+pub trait Constructor<'a, T, S>
+    where T: 'a + Num,
           S: Identifier,
           Self: Sized
 {
@@ -74,9 +74,8 @@ pub trait Constructor<'a, I, T, S>
 }
 
 
-pub trait Operations<'a, I, T, S>
-    where I: Iterator<Item = RowView<'a, T>> + Clone,
-          T: 'a + Num,
+pub trait Operations<'a, T, S>
+    where T: 'a + Num,
           S: Identifier
 {
     fn shape(self) -> (usize, usize);

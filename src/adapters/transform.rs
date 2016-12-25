@@ -1,47 +1,13 @@
 
-use types::*;
+use util::types::*;
 use std::iter::Iterator;
 use itertools::PutBack;
-use std::slice::Iter;
 use ndarray::Array;
-use aggregate::*;
-use traits::*;
+use adapters::aggregate::*;
+use util::traits::*;
 use dataframe::*;
 use std::fmt::Debug;
-use error::*;
-use ndarray::AxisIter;
-
-#[derive(Clone)]
-pub struct DataFrameIterator<'a, T: 'a, S: 'a>
-    where T: Num,
-          S: Identifier
-{
-    pub names: Iter<'a, S>,
-    pub data: AxisIter<'a, T, usize>,
-    pub other: Vec<S>,
-    pub axis: UtahAxis,
-}
-
-
-
-
-impl<'a, T, S> Iterator for DataFrameIterator<'a, T, S>
-    where T: Num,
-          S: Identifier
-{
-    type Item = (S, RowView<'a, T>);
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.names.next() {
-            Some(val) => {
-                match self.data.next() {
-                    Some(dat) => Some((val.clone(), dat)),
-                    None => None,
-                }
-            }
-            None => None,
-        }
-    }
-}
+use util::error::*;
 
 #[derive(Clone, Debug)]
 pub struct MapDF<'a, T: 'a, S, I, F, B: 'a>

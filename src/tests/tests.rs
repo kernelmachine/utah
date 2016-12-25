@@ -13,15 +13,15 @@ pub mod tests {
     use rand::{thread_rng, Rng};
     use std::collections::{HashMap, BTreeMap};
     use chrono::*;
-    use types::*;
-    use from::*;
-    use error::*;
-    use aggregate::*;
-    use transform::*;
-    use traits::*;
+    use util::types::*;
+    use util::from::*;
+    use util::error::*;
+    use adapters::aggregate::*;
+    use adapters::transform::*;
+    use util::traits::*;
     use std::f64::NAN;
     use ndarray::Axis;
-    use join::*;
+    use adapters::join::*;
 
     #[test]
     fn outer_left_join() {

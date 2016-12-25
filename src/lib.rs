@@ -41,16 +41,8 @@ extern crate itertools;
 
 /// ## Imputation
 
+pub mod adapters;
 pub mod dataframe;
-mod tests;
+pub mod tests;
 #[macro_use]
-pub mod error;
-mod from;
-pub mod types;
-pub mod aggregate;
-pub mod transform;
-pub mod traits;
-pub mod process;
-pub mod join;
-#[macro_use]
-pub mod macros;
+pub mod util;

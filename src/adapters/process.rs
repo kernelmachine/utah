@@ -1,46 +1,13 @@
-use types::*;
+use util::types::*;
 use std::iter::Iterator;
-use ndarray::AxisIterMut;
-use std::slice::Iter;
-use dataframe::{DataFrame, MutableDataFrame};
-use traits::*;
+use dataframe::{DataFrame, MutableDataFrame, MutableDataFrameIterator};
+use util::traits::*;
 use ndarray::Array;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::{Add, Sub, Mul, Div};
 use num::traits::{One, Zero};
-use error::*;
-
-pub struct MutableDataFrameIterator<'a, T, S>
-where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>,
-      S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a {
-    pub names: Iter<'a, S>,
-    pub data: AxisIterMut<'a, T, usize>,
-    pub other: Vec<S>,
-    pub axis: UtahAxis,
-}
-
-
-impl<'a, T, S> Iterator for MutableDataFrameIterator<'a, T, S>
-where T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>,
-      S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug +'a{
-    type Item = (S, RowViewMut<'a, T>);
-
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.names.next() {
-            Some(val) => {
-                match self.data.next() {
-                    Some(dat) => Some((val.clone(), dat)),
-                    None => None,
-                }
-            }
-            None => None,
-        }
-    }
-}
-
-
+use util::error::*;
 
 #[derive(Clone)]
 pub struct Impute<'a, I, T, S>

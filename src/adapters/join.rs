@@ -1,13 +1,13 @@
-use traits::ToDataFrame;
-use types::*;
+use util::traits::ToDataFrame;
+use util::types::*;
 use std::iter::Iterator;
 use std::iter::repeat;
 use std::collections::HashMap;
 use ndarray::Array;
 use dataframe::*;
 use std::iter::Chain;
-use error::*;
-use traits::*;
+use util::error::*;
+use util::traits::*;
 
 #[derive(Clone, Debug)]
 pub struct Concat<'a, I, T: 'a, S>

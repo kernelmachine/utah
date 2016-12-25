@@ -2,16 +2,16 @@ use chrono::*;
 use ndarray::{Array, ArrayView, ArrayViewMut, Ix};
 use std::ops::{Mul, Add, Sub, Div};
 use std::cmp::Ordering;
-use traits::Empty;
+use util::traits::Empty;
 use std::f64::NAN;
 use std::default::Default;
 use num::traits::{One, Zero};
-use transform::*;
-use join::*;
-use aggregate::*;
-use process::*;
+use adapters::transform::*;
+use adapters::join::*;
+use adapters::aggregate::*;
+use adapters::process::*;
 use std::iter::Chain;
-
+use dataframe::{DataFrameIterator, MutableDataFrameIterator};
 #[derive(Hash, PartialOrd, PartialEq, Eq , Ord , Clone,  Debug)]
 pub enum OuterType {
     Str(String),

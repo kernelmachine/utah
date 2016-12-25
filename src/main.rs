@@ -13,27 +13,21 @@ extern crate chrono;
 extern crate error_chain;
 extern crate itertools;
 
-pub mod dataframe;
-pub mod error;
-mod from;
-pub mod types;
-pub mod read;
-pub mod traits;
-pub mod transform;
-pub mod aggregate;
-pub mod process;
-pub mod join;
 
+pub mod adapters;
+pub mod dataframe;
+pub mod tests;
 #[macro_use]
-pub mod macros;
+pub mod util;
 
 use ndarray::arr2;
 use dataframe::*;
-use types::*;
+use util::types::*;
 
 use std::f64::NAN;
-use traits::{Transform, Operations, Constructor, Aggregate, ToDataFrame};
-use error::*;
+use util::traits::*;
+use util::error::*;
+
 use ndarray::{Axis, ArrayView};
 use ndarray::stack;
 
