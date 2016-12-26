@@ -4,7 +4,7 @@
 
 **Utah** is a Rust crate for type-conscious tabular data manipulation with an expressive, functional interface. 
 
-**Note**: Requires nightly for specialization to dataframes with `f64` data and `String` column/index labels. This will likely change in the future, as API stabilizes.
+**Note**: This crate requires nightly for specialization to dataframes with `f64` data and `String` column/index labels. This will likely change in the future, as API stabilizes.
 
 API currently in development and subject to change. 
 
