@@ -12,14 +12,13 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
           S: Identifier
 {
     /// Create a new dataframe. The only required argument is data to populate the dataframe.
-    /// The data's elements can be any of `InnerType`.
     /// By default, the columns and index of the dataframe are `["1", "2", "3"..."N"]`, where *N* is
     /// the number of columns (or rows) in the data.
     ///
     /// ```
     /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
+    /// use utah::dataframe::DataFrame;
+    /// use utah::util::traits::Constructor;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
     /// let df = DataFrame::new(a);
     /// ```
@@ -28,8 +27,8 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     ///
     /// ```
     /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
+    /// use utah::dataframe::DataFrame;
+    /// use utah::util::traits::Constructor;
     /// let a = arr2(&[[InnerType::Float(2.0), InnerType::Str("ak".into())],
     ///                [InnerType::Int32(6), InnerType::Int64(10)]]);
     /// let df = DataFrame::new(a);
@@ -59,7 +58,17 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
             index: index,
         }
     }
-
+    /// Generate a 1-dimensional DataFrame from an 1-D array of data.
+    /// When populating the dataframe with mixed-types, wrap the elements with `InnerType` enum.
+    ///
+    /// ```
+    /// use ndarray::arr2;
+    /// use utah::dataframe::DataFrame;
+    /// use utah::util::traits::Constructor;
+    /// let a = arr1(&[2.0, 7.0]);
+    /// let df = DataFrame::from_array(a);
+    /// ```
+    ///
     fn from_array<U: Clone>(data: Row<U>, axis: UtahAxis) -> DataFrame<T, S>
         where T: From<U>
     {
@@ -93,8 +102,8 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     ///
     /// ```
     /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
+    /// use utah::dataframe::DataFrame;
+    /// use utah::util::traits::Constructor;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
     /// let df = DataFrame::new(a).columns(&["a", "b"]);
     /// df.is_ok();
@@ -120,8 +129,8 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     ///
     /// ```
     /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
+    /// use utah::dataframe::DataFrame;
+    /// use utah::util::traits::Constructor;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
     /// let df = DataFrame::new(a).index(&[1, 2]);
     /// df.is_ok();
@@ -131,10 +140,11 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     ///
     /// ```
     /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
+    /// use utah::dataframe::DataFrame;
+    /// use utah::util::traits::Constructor;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2]).columns(&["a", "b"]).unwrap();
+    /// let df = DataFrame::new(a).index(&[1, 2]).unwrap().columns(&["a", "b"]);
+    /// df.is_ok();
     /// ```
     fn index<U: Clone>(mut self, index: &'a [U]) -> Result<DataFrame<T, S>>
         where S: From<U>
@@ -156,15 +166,17 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
 
     /// Return a dataframe iterator over the specified `UtahAxis`.
     ///
-    /// The dataframe iterator yields a mutable view of a row or column of the dataframe for
-    /// computation. Example:
+    /// The dataframe iterator yields a view of a row or column of the dataframe for eventual
+    /// processing. Example:
     ///
     /// ```
     /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
+    /// use utah::dataframe::DataFrame;
+    /// use utah::util::traits::Constructor;
+    /// use utah::util::types::UtahAxis;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2]).columns(&["a", "b"]).unwrap();
+    /// let df = DataFrame::new(a).index(&[1, 2]).unwrap().columns(&["a", "b"]).unwrap();
+    /// let df_iter = df.df_iter(UtahAxis::Row);
     /// ```
     fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, T, S> {
         match axis {
@@ -187,6 +199,30 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
         }
     }
 
+    /// Return a mutable dataframe iterator over the specified `UtahAxis`.
+    ///
+    /// The mutable dataframe iterator yields a view of a row or column of the dataframe for eventual
+    /// processing. Example:
+    ///
+    /// ```
+    /// extern crate ndarray;
+    /// #[macro_use]
+    /// extern crate utah;
+    /// use ndarray::arr2;
+    /// use utah::dataframe::DataFrame;
+    /// use utah::util::traits::Constructor;
+    /// use utah::util::types::UtahAxis;
+    /// use utah::util::macros::*;
+    /// fn main() {
+    /// let mut df: DataFrame<f64, String> = dataframe!(
+    /// {
+    ///     "a" =>  column!([2., 3., 2.]),
+    ///     "b" =>  column!([2., NAN, 2.])
+    /// });
+    ///     let mut df : DataFrame<f64, String> = DataFrame::new(a);
+    ///     let df_iter_mut = df.df_iter_mut(UtahAxis::Column);
+    /// }
+    /// ```
     fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a, T, S> {
         match axis {
             UtahAxis::Row => {

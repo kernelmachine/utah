@@ -7,7 +7,6 @@
 
 #[macro_use]
 
-
 extern crate ndarray;
 extern crate ndarray_rand;
 extern crate rand;
@@ -20,6 +19,8 @@ extern crate itertools;
 extern crate rustc_serialize;
 extern crate csv;
 
+
+
 /// # Utah
 ///
 /// ## Table of contents
@@ -28,7 +29,6 @@ extern crate csv;
 /// + [Transformation](#transformation)
 /// + [Aggregation](#aggregation)
 /// + [Imputation](#imputation)
-
 ///
 /// ## DataFrame
 /// Utah is a dataframe crate for Rust.
@@ -45,9 +45,10 @@ extern crate csv;
 
 pub mod adapters;
 pub mod dataframe;
-pub mod tests;
+mod tests;
 #[macro_use]
 pub mod util;
-pub mod implement;
+mod implement;
 pub mod mixedtypes;
-pub mod bench;
+mod bench;
+pub mod prelude;

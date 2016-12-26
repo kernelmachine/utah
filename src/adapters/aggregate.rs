@@ -5,6 +5,7 @@ use dataframe::*;
 use ndarray::Array;
 use util::error::*;
 
+
 #[derive(Clone, Debug)]
 pub struct Sum<'a, I: 'a, T: 'a, S>
     where I: Iterator<Item = (S, RowView<'a, T>)> + 'a,

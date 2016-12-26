@@ -10,6 +10,15 @@ use dataframe::*;
 
 impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     /// Get the dimensions of the dataframe.
+    /// ```
+    /// use ndarray::arr2;
+    /// use dataframe::DataFrame;
+    ///
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2]).unwrap().columns(&["a", "b"]).unwrap();
+    /// assert_eq!(df.shape(), (2,2));
+    /// ```
+    ///
     fn shape(self) -> (usize, usize) {
         self.data.dim()
     }
@@ -17,18 +26,15 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
 
     /// Select rows or columns over the specified `UtahAxis`.
     ///
-    /// The Select transform adaptor yields a mutable view of a row or column of the dataframe for
-    /// computation
     ///
     /// ```
     /// use ndarray::arr2;
     /// use dataframe::DataFrame;
     ///
-    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
-    /// for (idx, row) in df.select(&["a", "c"], UtahAxis::Column) {
-    ///        assert_eq!(row, a.row(idx))
-    ///    }
+    /// let a = arr2(&[[2.0, 7.0, 8.0], [3.0, 4.0, 9.0], [2.0, 8.0, 1.0]]);
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).unwrap().columns(&["a", "b", "c"]).unwrap();
+    /// let res = df.select(&["a", "c"], UtahAxis::Column).as_df();
+    /// res.is_ok();
     /// ```
 
     fn select<U: ?Sized>(&'a self,
@@ -56,18 +62,15 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
 
     /// Remove rows or columns over the specified `UtahAxis`.
     ///
-    /// The Remove transform adaptor yields a mutable view of a row or column of the dataframe for
-    /// computation.
     ///
     /// ```
     /// use ndarray::arr2;
     /// use dataframe::DataFrame;
     ///
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
-    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
-    ///        assert_eq!(row, a.row(idx))
-    ///    }
+    /// let df = DataFrame::new(a).index(&[1, 2, 3]).unwrap().columns(&["a", "b"]).unwrap();
+    /// let res = df.remove(&["a"], UtahAxis::Column).as_df();
+    /// res.is_ok();
     /// ```
     fn remove<U: ?Sized>(&'a self,
                          names: &'a [&'a U],
@@ -94,18 +97,17 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
 
     /// Append  a row or column along the specified `UtahAxis`.
     ///
-    /// The Remove transform adaptor yields a mutable view of a row or column of the dataframe for
-    /// computation.
     ///
     /// ```
+    /// extern crate ndarray
     /// use ndarray::arr2;
     /// use dataframe::DataFrame;
     ///
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
     /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
-    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
-    ///        assert_eq!(row, a.row(idx))
-    ///    }
+    /// let new_data = df.select(&["2"], UtahAxis::Row).as_array().unwrap();
+    /// let new_df =  df.append(&["b"], UtahAxis::Column).as_df();
+    /// new_df.is_ok();
     /// ```
     fn append<U: ?Sized>(&'a mut self,
                          name: &'a U,
@@ -140,7 +142,7 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
 
     /// ```
     /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
+    /// use utah::dataframe::DataFrame;
     ///
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
     /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();

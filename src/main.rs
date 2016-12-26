@@ -66,9 +66,8 @@ fn main() {
 
 fn run() -> Result<()> {
 
-    let df: Result<DataFrame<InnerType, OuterType>> = DataFrame::read_csv("/home/suchin/Github/rust-dataframe/src/tests/test.\
+    let df: Result<DataFrame<InnerType, OuterType>> = DataFrame::read_csv("/Users/suchin/Github/rust-dataframe/src/tests/test.\
                                                                            csv");
-    println!("{:?}", df);
     let a = arr2(&[[2., 7.], [3., NAN], [2., 4.]]);
     // let b = arr2(&[[2., 6.], [3., 4.]]);
     let c = arr2(&[[2., 6.], [3., 4.], [2., 1.]]);
@@ -77,7 +76,6 @@ fn run() -> Result<()> {
     let df_1 = DataFrame::new(c).columns(&["c", "d"])?.index(&["1", "2", "3"])?;
     let new_data = df.select(&["2"], UtahAxis::Row).as_array()?;
 
-    println!("{:?}", new_data);
     // let df_iter: DataFrameIterator = df_1.df_iter(UtahAxis::Row);
     let j = df.df_iter(UtahAxis::Row)
         .remove(&["1"])
@@ -85,15 +83,11 @@ fn run() -> Result<()> {
         .append("8", new_data.view())
         .sumdf()
         .as_df()?;
-    println!("{:?}", j);
     let res: DataFrame<f64, String> = df.impute(ImputeStrategy::Mean, UtahAxis::Column)
         .as_df()?;
 
-    println!("{:?}", res);
     let res_1: DataFrame<f64, String> = df.inner_left_join(&df_1).as_df()?;
-    println!("join result - {:?}", res_1);
     let concat = df.concat(&df_1, UtahAxis::Row).as_df();
-    println!("concat result - {:?}", concat);
     // let b = arr1(&[2., 3., 2.]);
     let k: DataFrame<f64, String> = dataframe!(
     {
