@@ -1,4 +1,4 @@
-# rust-dataframe
+# Utah
 
 [![Build Status](https://travis-ci.org/pegasos1/rust-dataframe.svg?branch=master)](https://travis-ci.org/pegasos1/rust-dataframe)
 
