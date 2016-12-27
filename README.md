@@ -50,11 +50,12 @@ let res : DataFrame<f64, String> = df.remove(&["a", "c"], UtahAxis::Column).as_d
 ```rust
 use utah::prelude::*;
 let df: DataFrame<f64, String> = DataFrame::read_csv("test.csv").unwrap();       
-let res : DataFrame<f64, String> = df.df_iter(UtahAxis::Row).remove(&["1"])
-                                    .select(&["2"])
-                                    .append("8", new_data.view())
-                                    .sumdf()
-                                    .as_df()?;
+let res : DataFrame<f64, String> = df.df_iter(UtahAxis::Row)
+                                     .remove(&["1"])
+                                     .select(&["2"])
+                                     .append("8", new_data.view())
+                                     .sumdf()
+                                     .as_df()?;
 ```
 
 #### Support mixed types 
@@ -67,8 +68,8 @@ let a = DataFrame<InnerType, OuterType> = dataframe!(
                             InnerType::Str("Bob"), 
                             InnerType::Str("Jane")]),
         "data" =>  column!([InnerType::Float(2.0), 
-                              InnerType::Empty(), 
-                              InnerType::Float(3.0)])
+                            InnerType::Empty(), 
+                            InnerType::Float(3.0)])
     });
 let b: DataFrame<InnerType, OuterType> = DataFrame::read_csv("test.csv")?;
 let res : DataFrame<InnerType, OuterType> = a.left_inner_join(&b).as_df()?;
