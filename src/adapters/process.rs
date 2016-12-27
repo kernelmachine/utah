@@ -53,39 +53,23 @@ impl<'a, I, T, S> Iterator for Impute<'a, I, T, S>
                 match self.strategy {
                     ImputeStrategy::Mean =>{
 
-                        let size = dat.fold(T::one(), |acc, _| acc + T::one());
-                        let first_element = unsafe {
-                         dat.uget(0).to_owned()
-                        };
-                        let sum = dat.iter().filter(|&x| !x.is_empty()).fold(first_element, |acc, y| acc + y.clone());
-
-                        let mean = sum/size;
+                        let size = dat.iter().filter(|&x| !(*x).is_empty()).fold(T::zero(), |acc, _| acc + T::one());
+                        let nonempty = dat.iter().filter(|&x| !(*x).is_empty()).fold(T::zero(), |acc , x| acc + x.clone());
+                        let mean = nonempty / size;
 
                         dat.mapv_inplace(|x| {
                             if x.is_empty() {
-                                mean.to_owned()
+                                return mean.clone()
                             }
                             else{
-                                x.to_owned()
+                                return x.clone()
                             }
-
                         });
+
+                        println!("{:?}", dat);
                         Some((val, dat))
                     }
 
-// ImputeStrategy::Mode => {
-//     let max = dat.iter().max().map(|x| x.to_owned()).unwrap();
-//     dat.mapv_inplace(|x| {
-//         if x == emp {
-//             max.to_owned()
-//         }
-//         else{
-//             x.to_owned()
-//         }
-//
-//     });
-//     return Some((val, dat));
-// }
                 }
             }
         }
@@ -124,7 +108,6 @@ impl<'a, I, T, S> Process<'a, T, S> for Impute<'a, I, T, S>
                 UtahAxis::Row => nrows += 1,
                 UtahAxis::Column => ncols += 1,
             };
-
             c.extend(j);
             n.push(i.to_owned());
         }

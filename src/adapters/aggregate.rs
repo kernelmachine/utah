@@ -4,7 +4,7 @@ use util::traits::*;
 use dataframe::*;
 use ndarray::Array;
 use util::error::*;
-
+use std::f64;
 
 #[derive(Clone, Debug)]
 pub struct Sum<'a, I: 'a, T: 'a, S>
@@ -206,90 +206,6 @@ impl<'a, I, T, S> Stdev<'a, I, T, S>
     }
 }
 
-impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
-          T: Num,
-          S: Identifier
-{
-    type Item = T;
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.data.next() {
-
-            None => return None,
-            Some((_, dat)) => unsafe {
-                let size = dat.fold(T::zero(), |acc, _| acc + T::one());
-                let mean = dat.scalar_sum() / size;
-
-                let stdev = (0..dat.len()).fold(dat.uget(0).to_owned(), |x, y| {
-                    x +
-                    (dat.uget(y).to_owned() - mean.to_owned()) *
-                    (dat.uget(y).to_owned() - mean.to_owned())
-                });
-
-
-                Some(stdev)
-
-
-            },
-        }
-
-
-
-    }
-}
-
-
-impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Stdev<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + 'a,
-          T: Num + 'a,
-          S: Identifier
-{
-    fn as_df(self) -> Result<DataFrame<T, S>> {
-        let other = self.other.clone();
-        let axis = self.axis.clone();
-        let c: Vec<_> = self.collect();
-        let res_dim = match axis {
-            UtahAxis::Row => (1, other.len()),
-            UtahAxis::Column => (other.len(), 1),
-        };
-
-
-        let d = Array::from_shape_vec(res_dim, c).unwrap();
-        let def = vec![S::from(String::from("0"))];
-        match axis {
-            UtahAxis::Row => {
-                let df = DataFrame::new(d).columns(&other[..])?.index(&def[..])?;
-                Ok(df)
-            }
-            UtahAxis::Column => {
-                let df = DataFrame::new(d).columns(&def[..])?.index(&other[..])?;
-                Ok(df)
-            }
-
-        }
-    }
-    fn as_matrix(self) -> Result<Matrix<T>> {
-        let other = self.other.clone();
-        let axis = self.axis.clone();
-        let c: Vec<_> = self.collect();
-        let res_dim = match axis {
-            UtahAxis::Row => (1, other.len()),
-            UtahAxis::Column => (other.len(), 1),
-        };
-
-        Ok(Array::from_shape_vec(res_dim, c).unwrap())
-
-
-    }
-
-    fn as_array(self) -> Result<Row<T>> {
-
-        let c: Vec<_> = self.collect();
-        Ok(Array::from_vec(c))
-    }
-}
-
-
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
     where I: Iterator<Item = (S, RowView<'a, T>)>,
@@ -301,8 +217,8 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
         let res_dim = match axis {
-            UtahAxis::Row => (1, other.len()),
-            UtahAxis::Column => (other.len(), 1),
+            UtahAxis::Row => (other.len(), 1),
+            UtahAxis::Column => (1, other.len()),
         };
 
 
@@ -311,11 +227,11 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
         let def = vec![S::from(String::from("0"))];
         match axis {
             UtahAxis::Row => {
-                let df = DataFrame::new(d).columns(&other[..])?.index(&def[..])?;
+                let df = DataFrame::new(d).columns(&def[..])?.index(&other[..])?;
                 Ok(df)
             }
             UtahAxis::Column => {
-                let df = DataFrame::new(d).columns(&def[..])?.index(&other[..])?;
+                let df = DataFrame::new(d).columns(&other[..])?.index(&def[..])?;
                 Ok(df)
             }
 
@@ -326,8 +242,8 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
         let res_dim = match axis {
-            UtahAxis::Row => (1, other.len()),
-            UtahAxis::Column => (other.len(), 1),
+            UtahAxis::Row => (other.len(), 1),
+            UtahAxis::Column => (1, other.len()),
         };
 
         Ok(Array::from_shape_vec(res_dim, c).unwrap())
@@ -354,8 +270,8 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Max<'a, I, T, S>
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
         let res_dim = match axis {
-            UtahAxis::Row => (1, other.len()),
-            UtahAxis::Column => (other.len(), 1),
+            UtahAxis::Row => (other.len(), 1),
+            UtahAxis::Column => (1, other.len()),
         };
 
 
@@ -364,11 +280,11 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Max<'a, I, T, S>
         let def = vec![S::from(String::from("0"))];
         match axis {
             UtahAxis::Row => {
-                let df = DataFrame::new(d).columns(&other[..])?.index(&def[..])?;
+                let df = DataFrame::new(d).columns(&def[..])?.index(&other[..])?;
                 Ok(df)
             }
             UtahAxis::Column => {
-                let df = DataFrame::new(d).columns(&def[..])?.index(&other[..])?;
+                let df = DataFrame::new(d).columns(&other[..])?.index(&def[..])?;
                 Ok(df)
             }
 
@@ -380,8 +296,8 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Max<'a, I, T, S>
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
         let res_dim = match axis {
-            UtahAxis::Row => (1, other.len()),
-            UtahAxis::Column => (other.len(), 1),
+            UtahAxis::Row => (other.len(), 1),
+            UtahAxis::Column => (1, other.len()),
         };
 
         Ok(Array::from_shape_vec(res_dim, c).unwrap())
@@ -406,8 +322,8 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Min<'a, I, T, S>
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
         let res_dim = match axis {
-            UtahAxis::Row => (1, other.len()),
-            UtahAxis::Column => (other.len(), 1),
+            UtahAxis::Row => (other.len(), 1),
+            UtahAxis::Column => (1, other.len()),
         };
 
 
@@ -416,11 +332,11 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Min<'a, I, T, S>
         let def = vec![S::from(String::from("0"))];
         match axis {
             UtahAxis::Row => {
-                let df = DataFrame::new(d).columns(&other[..])?.index(&def[..])?;
+                let df = DataFrame::new(d).columns(&def[..])?.index(&other[..])?;
                 Ok(df)
             }
             UtahAxis::Column => {
-                let df = DataFrame::new(d).columns(&def[..])?.index(&other[..])?;
+                let df = DataFrame::new(d).columns(&other[..])?.index(&def[..])?;
                 Ok(df)
             }
 
@@ -431,8 +347,8 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Min<'a, I, T, S>
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
         let res_dim = match axis {
-            UtahAxis::Row => (1, other.len()),
-            UtahAxis::Column => (other.len(), 1),
+            UtahAxis::Row => (other.len(), 1),
+            UtahAxis::Column => (1, other.len()),
         };
 
         Ok(Array::from_shape_vec(res_dim, c).unwrap())
@@ -458,19 +374,19 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Sum<'a, I, T, S>
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
         let res_dim = match axis {
-            UtahAxis::Row => (1, other.len()),
-            UtahAxis::Column => (other.len(), 1),
+            UtahAxis::Row => (other.len(), 1),
+            UtahAxis::Column => (1, other.len()),
         };
 
         let d = Array::from_shape_vec(res_dim, c).unwrap();
         let def = vec![S::from(String::from("0"))];
         match axis {
             UtahAxis::Row => {
-                let df = DataFrame::new(d).columns(&other[..])?.index(&def[..])?;
+                let df = DataFrame::new(d).columns(&def[..])?.index(&other[..])?;
                 Ok(df)
             }
             UtahAxis::Column => {
-                let df = DataFrame::new(d).columns(&def[..])?.index(&other[..])?;
+                let df = DataFrame::new(d).columns(&other[..])?.index(&def[..])?;
                 Ok(df)
             }
 
@@ -481,8 +397,8 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Sum<'a, I, T, S>
         let axis = self.axis.clone();
         let c: Vec<_> = self.collect();
         let res_dim = match axis {
-            UtahAxis::Row => (1, other.len()),
-            UtahAxis::Column => (other.len(), 1),
+            UtahAxis::Row => (other.len(), 1),
+            UtahAxis::Column => (1, other.len()),
         };
 
         Ok(Array::from_shape_vec(res_dim, c).unwrap())

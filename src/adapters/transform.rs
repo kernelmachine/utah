@@ -244,14 +244,6 @@ impl<'a, T, S> Aggregate<'a, T, S> for DataFrameIterator<'a, T, S>
         let axis = self.axis.clone();
         Mean::new(self, other, axis)
     }
-
-    fn stdev(self) -> Stdev<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
-    {
-        let other = self.other.clone();
-        let axis = self.axis.clone();
-        Stdev::new(self, other, axis)
-    }
 }
 
 
@@ -349,14 +341,6 @@ impl<'a, I, T, S> Aggregate<'a, T, S> for Select<'a, I, T, S>
         let axis = self.axis.clone();
         Mean::new(self, other, axis)
     }
-
-    fn stdev(self) -> Stdev<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone
-    {
-        let other = self.other.clone();
-        let axis = self.axis.clone();
-        Stdev::new(self, other, axis)
-    }
 }
 
 impl<'a, I, T, S> Transform<'a, T, S> for Select<'a, I, T, S>
@@ -450,14 +434,6 @@ impl<'a, I, T, S> Aggregate<'a, T, S> for Remove<'a, I, T, S>
         let axis = self.axis.clone();
         Mean::new(self, other, axis)
     }
-
-    fn stdev(self) -> Stdev<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
-    {
-        let other = self.other.clone();
-        let axis = self.axis.clone();
-        Stdev::new(self, other, axis)
-    }
 }
 
 impl<'a, I, T, S> Transform<'a, T, S> for Remove<'a, I, T, S>
@@ -547,14 +523,6 @@ impl<'a, I, T, S> Aggregate<'a, T, S> for Append<'a, I, T, S>
         let other = self.other.clone();
         let axis = self.axis.clone();
         Mean::new(self, other, axis)
-    }
-
-    fn stdev(self) -> Stdev<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>
-    {
-        let other = self.other.clone();
-        let axis = self.axis.clone();
-        Stdev::new(self, other, axis)
     }
 }
 impl<'a, I, T, S> Transform<'a, T, S> for Append<'a, I, T, S>

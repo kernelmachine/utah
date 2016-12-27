@@ -264,8 +264,8 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
         let columns = self.columns.clone();
         let index = self.index.clone();
         match axis {
-            UtahAxis::Row => Sum::new(self.df_iter(UtahAxis::Column), columns, UtahAxis::Row),
-            UtahAxis::Column => Sum::new(self.df_iter(UtahAxis::Row), index, UtahAxis::Column),
+            UtahAxis::Row => Sum::new(self.df_iter(UtahAxis::Row), index, UtahAxis::Row),
+            UtahAxis::Column => Sum::new(self.df_iter(UtahAxis::Column), columns, UtahAxis::Column),
 
         }
     }
@@ -311,8 +311,10 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
         let columns = self.columns.clone();
         let index = self.index.clone();
         match axis {
-            UtahAxis::Row => Mean::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
-            UtahAxis::Column => Mean::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Column),
+            UtahAxis::Row => Mean::new(self.df_iter(UtahAxis::Row), index, UtahAxis::Row),
+            UtahAxis::Column => {
+                Mean::new(self.df_iter(UtahAxis::Column), columns, UtahAxis::Column)
+            }
 
         }
     }
@@ -335,8 +337,8 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
         let columns = self.columns.clone();
         let index = self.index.clone();
         match axis {
-            UtahAxis::Row => Max::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
-            UtahAxis::Column => Max::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Column),
+            UtahAxis::Row => Max::new(self.df_iter(UtahAxis::Row), index, UtahAxis::Row),
+            UtahAxis::Column => Max::new(self.df_iter(UtahAxis::Column), columns, UtahAxis::Column),
 
         }
     }
@@ -359,37 +361,13 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
         let columns = self.columns.clone();
         let index = self.index.clone();
         match axis {
-            UtahAxis::Row => Min::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
-            UtahAxis::Column => Min::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Column),
+            UtahAxis::Row => Min::new(self.df_iter(UtahAxis::Row), index, UtahAxis::Row),
+            UtahAxis::Column => Min::new(self.df_iter(UtahAxis::Column), columns, UtahAxis::Column),
 
         }
 
     }
 
-    /// Get the standard deviation along the specified `UtahAxis`.
-    ///
-    ///
-    /// ```
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
-    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
-    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
-    ///        assert_eq!(row, a.row(idx))
-    ///    }
-    /// ```
-    default fn stdev(&'a self, axis: UtahAxis) -> StdevIter<'a, T, S> {
-        let columns = self.columns.clone();
-        let index = self.index.clone();
-        match axis {
-            UtahAxis::Row => Stdev::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
-            UtahAxis::Column => Stdev::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Column),
-
-        }
-
-
-    }
     /// Get the standard deviation along the specified `UtahAxis`.
     ///
     ///
@@ -426,5 +404,4 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
 
         }
     }
-    // }
 }

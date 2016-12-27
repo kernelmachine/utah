@@ -85,7 +85,7 @@ fn run() -> Result<()> {
         .as_df()?;
     let res: DataFrame<f64, String> = df.impute(ImputeStrategy::Mean, UtahAxis::Column)
         .as_df()?;
-
+    println!("{:?}", df);
     let res_1: DataFrame<f64, String> = df.inner_left_join(&df_1).as_df()?;
     let concat = df.concat(&df_1, UtahAxis::Row).as_df();
     // let b = arr1(&[2., 3., 2.]);

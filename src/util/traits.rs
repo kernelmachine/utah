@@ -122,7 +122,6 @@ pub trait Operations<'a, T, S>
     fn mean(&'a mut self, axis: UtahAxis) -> Mean<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn maxdf(&'a mut self, axis: UtahAxis) -> Max<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn mindf(&'a mut self, axis: UtahAxis) -> Min<'a, DataFrameIterator<'a, T, S>, T, S>;
-    fn stdev(&'a self, axis: UtahAxis) -> Stdev<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn impute(&'a mut self,
               strategy: ImputeStrategy,
               axis: UtahAxis)
@@ -140,8 +139,6 @@ pub trait Aggregate<'a, T, S>
     fn mindf(self) -> Min<'a, Self, T, S> where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>;
 
     fn mean(self) -> Mean<'a, Self, T, S> where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>;
-
-    fn stdev(self) -> Stdev<'a, Self, T, S> where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>;
 }
 
 pub trait Process<'a, T, S>
