@@ -2,7 +2,7 @@
 extern crate rand;
 extern crate test;
 
-use ndarray::{arr2, arr1, stack};
+use ndarray::{arr2, arr1};
 use dataframe::*;
 use test::Bencher;
 use ndarray::Array;
@@ -22,6 +22,9 @@ use ndarray::Axis;
 use combinators::interact::*;
 use mixedtypes::*;
 use util::readcsv::*;
+use util::macros::*;
+use prelude::*;
+
 #[test]
 fn outer_left_join() {
     let a = arr2(&[["Alice"], ["Bob"]]);
@@ -258,13 +261,29 @@ fn dataframe_impute() {
         let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         df.impute(ImputeStrategy::Mean, UtahAxis::Column).as_df();
         let b = arr2(&[[2., 8.], [3., 8.]]);
-        let mut expected = DataFrame::new(b).columns(&["a", "b"]).unwrap();
+        let mut expected: DataFrame<f64, String> = DataFrame::new(b).columns(&["a", "b"]).unwrap();
         assert_eq!(df, expected);
     }
-
+    {
+        let a = arr2(&[[2., NAN], [3., 8.]]);
+        let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
+        df.impute(ImputeStrategy::Mean, UtahAxis::Row).as_df();
+        let b = arr2(&[[2., 2.], [3., 8.]]);
+        let mut expected: DataFrame<f64, String> = DataFrame::new(b).columns(&["a", "b"]).unwrap();
+        assert_eq!(df, expected);
+    }
 }
 
-
+#[test]
+fn dataframe_macro() {
+    let k: DataFrame<f64, String> = dataframe!(
+      {
+      "a" =>  column!([2., 3., 5.]),
+      "b" =>  column!([2., NAN, 6.])
+      });
+    let a = arr2(&[[2., 2.], [3., NAN], [5., 6.]]);
+    let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
+}
 // #[test]
 // fn read_csv() {
 //     {

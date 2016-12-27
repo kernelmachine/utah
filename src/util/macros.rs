@@ -9,7 +9,7 @@ macro_rules! dataframe {
     )*
     let a  = stack(Axis(1), &[ $(ArrayView::from(&$data) ),+ ]).unwrap();
     let new_index : Vec<String> = (0..a.dim().0).map(|x| x.to_string()).collect();
-    DataFrame::new(a).index(&new_index[..])?.columns(&n[..])?
+    DataFrame::new(a).index(&new_index[..]).unwrap().columns(&n[..]).unwrap()
 
 }
 }

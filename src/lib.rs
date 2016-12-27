@@ -19,7 +19,7 @@
 //!
 //! There are multiple ways to create a dataframe. The most straightforward way is to use a builder pattern:
 //!
-//! ```
+//! ```ignore
 //! use utah::prelude::*;
 //! let c = arr2(&[[2., 6.], [3., 4.], [2., 1.]]);
 //! let mut df: Result<DataFrame<f64, String>> = DataFrame::new(c)
@@ -202,11 +202,12 @@ extern crate csv;
 
 pub mod combinators;
 pub mod dataframe;
-mod tests;
 #[macro_use]
 pub mod util;
 mod implement;
 pub mod mixedtypes;
 mod bench;
+#[macro_use]
+mod tests;
 
 pub mod prelude;
