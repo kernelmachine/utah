@@ -11,11 +11,9 @@ use dataframe::*;
 impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     /// Get the dimensions of the dataframe.
     /// ```
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
+    /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2]).unwrap().columns(&["a", "b"]).unwrap();
+    /// let df = DataFrame::new(a).index(&["1", "2"]).unwrap().columns(&["a", "b"]).unwrap();
     /// assert_eq!(df.shape(), (2,2));
     /// ```
     ///
@@ -28,11 +26,9 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     ///
     ///
     /// ```
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
+    /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0, 8.0], [3.0, 4.0, 9.0], [2.0, 8.0, 1.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).unwrap().columns(&["a", "b", "c"]).unwrap();
+    /// let df = DataFrame::new(a).index(&["1", "2", "3"]).unwrap().columns(&["a", "b", "c"]).unwrap();
     /// let res = df.select(&["a", "c"], UtahAxis::Column).as_df();
     /// res.is_ok();
     /// ```
@@ -64,11 +60,9 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     ///
     ///
     /// ```
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
+    /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).unwrap().columns(&["a", "b"]).unwrap();
+    /// let df = DataFrame::new(a).index(&["1", "2", "3"]).unwrap().columns(&["a", "b"]).unwrap();
     /// let res = df.remove(&["a"], UtahAxis::Column).as_df();
     /// res.is_ok();
     /// ```
@@ -99,14 +93,11 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     ///
     ///
     /// ```
-    /// extern crate ndarray
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
+    /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
+    /// let mut df = DataFrame::new(a).index(&["1", "2", "3"]).unwrap().columns(&["a", "b"]).unwrap();
     /// let new_data = df.select(&["2"], UtahAxis::Row).as_array().unwrap();
-    /// let new_df =  df.append(&["b"], UtahAxis::Column).as_df();
+    /// let new_df =  df.append("4", new_data.view(), UtahAxis::Row).as_df();
     /// new_df.is_ok();
     /// ```
     fn append<U: ?Sized>(&'a mut self,
@@ -141,14 +132,20 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     ///
 
     /// ```
-    /// use ndarray::arr2;
-    /// use utah::dataframe::DataFrame;
-    ///
-    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
-    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
-    ///        assert_eq!(row, a.row(idx))
-    ///    }
+    /// use utah::prelude::*;
+    /// let a = arr2(&[["Alice"], ["Bob"], ["John"]]);
+    /// let left: DataFrame<InnerType, OuterType> =
+    ///     DataFrame::new(a).index(&[1, 2, 3]).unwrap().columns(&["a"]).unwrap();
+    /// let b = arr2(&[["Programmer"], ["Data Scientist"]]);
+    /// let right = DataFrame::new(b).index(&[1, 3]).unwrap().columns(&["b"]).unwrap();
+    /// let res = left.inner_left_join(&right).as_df();
+    /// let expected_data = arr2(&[[InnerType::Str(String::from("Alice")),
+    ///                             InnerType::Str(String::from("Programmer"))],
+    ///                            [InnerType::Str(String::from("John")),
+    ///                             InnerType::Str(String::from("Data Scientist"))]]);
+    /// let expected =
+    ///     DataFrame::new(expected_data).index(&[1, 3]).unwrap().columns(&["a", "b"]).unwrap();
+    /// assert_eq!(res.unwrap(), expected);
     /// ```
     fn inner_left_join(&'a self,
                        other: &'a DataFrame<f64, String>)
@@ -160,18 +157,6 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     }
 
     /// Perform an outer left join between two dataframes along the specified `UtahAxis`.
-    ///
-    ///
-    /// ```
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
-    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
-    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
-    ///        assert_eq!(row, a.row(idx))
-    ///    }
-    /// ```
     fn outer_left_join(&'a self,
                        other: &'a DataFrame<f64, String>)
                        -> OuterJoinIter<'a, f64, String> {
@@ -187,18 +172,7 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     }
 
     /// Perform an inner right join between two dataframes along the specified `UtahAxis`.
-    ///
-    ///
-    /// ```
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
-    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
-    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
-    ///        assert_eq!(row, a.row(idx))
-    ///    }
-    /// ```
+
     fn inner_right_join(&'a self,
                         other: &'a DataFrame<f64, String>)
                         -> InnerJoinIter<'a, f64, String> {
@@ -210,18 +184,6 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     }
 
     /// Perform an outer right join between two dataframes along the specified `UtahAxis`.
-    ///
-    ///
-    /// ```
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
-    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
-    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
-    ///        assert_eq!(row, a.row(idx))
-    ///    }
-    /// ```
     fn outer_right_join(&'a self,
                         other: &'a DataFrame<f64, String>)
                         -> OuterJoinIter<'a, f64, String> {
@@ -232,7 +194,7 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
 
     }
 
-
+    /// Concatenate two dataframes along the specified `UtahAxis`
     fn concat(&'a self,
               other: &'a DataFrame<f64, String>,
               axis: UtahAxis)
@@ -257,14 +219,11 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     ///
     ///
     /// ```
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
+    /// use utah::prelude::*;
     ///
-    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
-    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
-    ///        assert_eq!(row, a.row(idx))
-    ///    }
+    /// let a = arr2(&[[2., 6.], [3., 4.]]);
+    /// let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
+    /// let z: Result<DataFrame<f64, String>> = df.sumdf(UtahAxis::Row).as_df();
     /// ```
     fn sumdf(&'a mut self, axis: UtahAxis) -> SumIter<'a, f64, String> {
         let columns = self.columns.clone();
@@ -280,14 +239,10 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     ///
     ///
     /// ```
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
-    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
-    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
-    ///        assert_eq!(row, a.row(idx))
-    ///    }
+    /// use utah::prelude::*;
+    /// let a = arr2(&[[2., 3.], [3., 4.]]);
+    /// let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
+    /// let z: Vec<(String, Row<f64>)> = df.map(|x| x * 2.0, UtahAxis::Row).collect();
     /// ```
     fn map<F, B>(&'a mut self, f: F, axis: UtahAxis) -> MapDFIter<'a, f64, String, F, B>
         where F: Fn(&f64) -> B,
@@ -301,18 +256,7 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
         }
     }
     /// Get the average of entries along the specified `UtahAxis`.
-    ///
-    ///
-    /// ```
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
-    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
-    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
-    ///        assert_eq!(row, a.row(idx))
-    ///    }
-    /// ```
+
     fn mean(&'a mut self, axis: UtahAxis) -> MeanIter<'a, f64, String> {
 
         let columns = self.columns.clone();
@@ -327,18 +271,6 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     }
 
     /// Get the maximum of entries along the specified `UtahAxis`.
-    ///
-    ///
-    /// ```no_run
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
-    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
-    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
-    ///        assert_eq!(row, a.row(idx))
-    ///    }
-    /// ```
     fn maxdf(&'a mut self, axis: UtahAxis) -> MaxIter<'a, f64, String> {
 
         let columns = self.columns.clone();
@@ -351,18 +283,6 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     }
 
     /// Get the minimum of entries along the specified `UtahAxis`.
-    ///
-    ///
-    /// ```
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
-    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
-    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
-    ///        assert_eq!(row, a.row(idx))
-    ///    }
-    /// ```
     fn mindf(&'a mut self, axis: UtahAxis) -> MinIter<'a, f64, String> {
 
         let columns = self.columns.clone();
@@ -377,19 +297,7 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
 
 
 
-    /// Get the standard deviation along the specified `UtahAxis`.
-    ///
-    ///
-    /// ```
-    /// use ndarray::arr2;
-    /// use dataframe::DataFrame;
-    ///
-    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2, 3]).columns(&["a", "b"]).unwrap();
-    /// for (idx, row) in df.remove(&["b"], UtahAxis::Column) {
-    ///        assert_eq!(row, a.row(idx))
-    ///    }
-    /// ```
+    /// Replace empty values with specified ImputeStrategy and along a `UtahAxis`.
     fn impute(&'a mut self,
               strategy: ImputeStrategy,
               axis: UtahAxis)

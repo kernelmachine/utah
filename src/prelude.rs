@@ -10,3 +10,10 @@
 //! use utah::prelude::*;
 //! # fn main() { }
 //! ```
+pub use dataframe::DataFrame;
+pub use util::traits::*;
+pub use util::types::*;
+pub use ndarray::*;
+pub use mixedtypes::*;
+pub use util::macros::*;
+pub use util::error::*;

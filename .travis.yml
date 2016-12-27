@@ -7,7 +7,7 @@ rust:
 
 script:
   - |
-      cargo test --lib
+      cargo test
 notifications:
   email:
     - sgrangan01@gmail.com

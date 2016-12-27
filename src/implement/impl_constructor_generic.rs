@@ -16,22 +16,18 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     /// the number of columns (or rows) in the data.
     ///
     /// ```
-    /// use ndarray::arr2;
-    /// use utah::dataframe::DataFrame;
-    /// use utah::util::traits::Constructor;
+    /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df = DataFrame::new(a);
+    /// let df : DataFrame<f64, String> = DataFrame::new(a);
     /// ```
     ///
     /// When populating the dataframe with mixed-types, wrap the elements with `InnerType` enum:
     ///
     /// ```
-    /// use ndarray::arr2;
-    /// use utah::dataframe::DataFrame;
-    /// use utah::util::traits::Constructor;
+    /// use utah::prelude::*;
     /// let a = arr2(&[[InnerType::Float(2.0), InnerType::Str("ak".into())],
     ///                [InnerType::Int32(6), InnerType::Int64(10)]]);
-    /// let df = DataFrame::new(a);
+    /// let df : DataFrame<InnerType, OuterType> = DataFrame::new(a);
     /// ```
     fn new<U: Clone>(data: Matrix<U>) -> DataFrame<T, S>
         where T: From<U>
@@ -62,11 +58,9 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     /// When populating the dataframe with mixed-types, wrap the elements with `InnerType` enum.
     ///
     /// ```
-    /// use ndarray::arr2;
-    /// use utah::dataframe::DataFrame;
-    /// use utah::util::traits::Constructor;
+    /// use utah::prelude::*;
     /// let a = arr1(&[2.0, 7.0]);
-    /// let df = DataFrame::from_array(a);
+    /// let df : DataFrame<f64, String> = DataFrame::from_array(a, UtahAxis::Column);
     /// ```
     ///
     fn from_array<U: Clone>(data: Row<U>, axis: UtahAxis) -> DataFrame<T, S>
@@ -101,11 +95,9 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     /// Populate the dataframe with a set of columns. The column elements can be any of `OuterType`. Example:
     ///
     /// ```
-    /// use ndarray::arr2;
-    /// use utah::dataframe::DataFrame;
-    /// use utah::util::traits::Constructor;
+    /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df = DataFrame::new(a).columns(&["a", "b"]);
+    /// let df : Result<DataFrame<f64, String>> = DataFrame::new(a).columns(&["a", "b"]);
     /// df.is_ok();
     /// ```
     fn columns<U: Clone>(mut self, columns: &'a [U]) -> Result<DataFrame<T, S>>
@@ -128,22 +120,18 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     /// Populate the dataframe with an index. The index elements can be any of `OuterType`. Example:
     ///
     /// ```
-    /// use ndarray::arr2;
-    /// use utah::dataframe::DataFrame;
-    /// use utah::util::traits::Constructor;
+    /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2]);
+    /// let df : Result<DataFrame<f64, String>> = DataFrame::new(a).index(&["1", "2"]);
     /// df.is_ok();
     /// ```
     ///
     /// You can also populate the dataframe with both column names and index names, like so:
     ///
     /// ```
-    /// use ndarray::arr2;
-    /// use utah::dataframe::DataFrame;
-    /// use utah::util::traits::Constructor;
+    /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2]).unwrap().columns(&["a", "b"]);
+    /// let df : Result<DataFrame<f64, String>> = DataFrame::new(a).index(&["1", "2"]).unwrap().columns(&["a", "b"]);
     /// df.is_ok();
     /// ```
     fn index<U: Clone>(mut self, index: &'a [U]) -> Result<DataFrame<T, S>>
@@ -170,12 +158,9 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     /// processing. Example:
     ///
     /// ```
-    /// use ndarray::arr2;
-    /// use utah::dataframe::DataFrame;
-    /// use utah::util::traits::Constructor;
-    /// use utah::util::types::UtahAxis;
+    /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df = DataFrame::new(a).index(&[1, 2]).unwrap().columns(&["a", "b"]).unwrap();
+    /// let df : DataFrame<f64, String> = DataFrame::new(a).index(&["1", "2"]).unwrap().columns(&["a", "b"]).unwrap();
     /// let df_iter = df.df_iter(UtahAxis::Row);
     /// ```
     fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, T, S> {
@@ -205,23 +190,10 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     /// processing. Example:
     ///
     /// ```
-    /// extern crate ndarray;
-    /// #[macro_use]
-    /// extern crate utah;
-    /// use ndarray::arr2;
-    /// use utah::dataframe::DataFrame;
-    /// use utah::util::traits::Constructor;
-    /// use utah::util::types::UtahAxis;
-    /// use utah::util::macros::*;
-    /// fn main() {
-    /// let mut df: DataFrame<f64, String> = dataframe!(
-    /// {
-    ///     "a" =>  column!([2., 3., 2.]),
-    ///     "b" =>  column!([2., NAN, 2.])
-    /// });
-    ///     let mut df : DataFrame<f64, String> = DataFrame::new(a);
-    ///     let df_iter_mut = df.df_iter_mut(UtahAxis::Column);
-    /// }
+    /// use utah::prelude::*;
+    /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
+    /// let mut df : DataFrame<f64, String> = DataFrame::new(a);
+    /// let df_iter_mut = df.df_iter_mut(UtahAxis::Column);
     /// ```
     fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a, T, S> {
         match axis {
