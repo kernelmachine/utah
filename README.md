@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/pegasos1/utah.svg?branch=master)](https://travis-ci.org/pegasos1/utah)
 
-**Utah** is a Rust crate for type-conscious tabular data manipulation with an expressive, functional interface. 
+**Utah** is a Rust crate backed by [ndarray](https://github.com/bluss/rust-ndarray) for type-conscious tabular data manipulation with an expressive, functional interface. 
 
 **Note**: This crate requires nightly for specialization to dataframes with `f64` data and `String` column/index labels. This will likely change in the future, as API stabilizes.
 
