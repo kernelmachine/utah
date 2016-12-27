@@ -42,7 +42,7 @@ let df : Result<DataFrame<f64, String>> = DataFrame::new(a).index(&["1", "2"]);
 ```rust
 use utah::prelude::*;
 let df: DataFrame<f64, String> = DataFrame::read_csv("test.csv")?;       
-let res : DataFrame<f64, String> = df.df_iter(UtahAxis::Row).remove(&["1"]).as_df()?;
+let res : DataFrame<f64, String> = df.remove(&["1"], UtahAxis::Row).as_df()?;
 ```
 
 #### Chain operations
