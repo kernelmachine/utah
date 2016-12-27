@@ -10,6 +10,16 @@ API currently in development and subject to change.
 
 For an in-depth introduction to the mechanics of this crate, as well as future goals, read this blog post: PLACEHOLDER
 
+## Install
+
+Add the following to cargo.toml:
+
+```
+utah="*"
+```
+
+`extern crate utah` in `lib.rs` and you're good to go. 
+
 ## Examples
 
 
