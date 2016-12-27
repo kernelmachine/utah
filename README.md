@@ -1,6 +1,6 @@
 # Utah
 
-[![Build Status](https://travis-ci.org/pegasos1/rust-dataframe.svg?branch=master)](https://travis-ci.org/pegasos1/rust-dataframe)
+[![Build Status](https://travis-ci.org/pegasos1/utah.svg?branch=master)](https://travis-ci.org/pegasos1/utah)
 
 **Utah** is a Rust crate for type-conscious tabular data manipulation with an expressive, functional interface. 
 
