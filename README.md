@@ -12,10 +12,10 @@ For an in-depth introduction to the mechanics of this crate, as well as future g
 
 ## Install
 
-Add the following to cargo.toml:
+Add the following to your Cargo.toml:
 
 ```
-utah="*"
+utah="0.0.1"
 ```
 
 `extern crate utah` in `lib.rs` and you're good to go. 
