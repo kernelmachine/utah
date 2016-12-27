@@ -1,8 +1,8 @@
 use ndarray::{Array, ArrayView, ArrayViewMut, Ix};
-use adapters::transform::*;
-use adapters::join::*;
-use adapters::aggregate::*;
-use adapters::process::*;
+use combinators::transform::*;
+use combinators::interact::*;
+use combinators::aggregate::*;
+use combinators::process::*;
 use std::iter::Chain;
 use dataframe::{DataFrameIterator, MutableDataFrameIterator};
 

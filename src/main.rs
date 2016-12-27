@@ -16,7 +16,7 @@ extern crate rustc_serialize;
 extern crate csv;
 
 
-pub mod adapters;
+pub mod combinators;
 pub mod dataframe;
 pub mod tests;
 #[macro_use]

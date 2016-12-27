@@ -1,5 +1,5 @@
 
-//! utah prelude.
+//! Utah prelude
 //!
 //! This module contains the most used types, type aliases, traits and
 //! functions that you can import easily as a group.
@@ -13,7 +13,7 @@
 pub use dataframe::DataFrame;
 pub use util::traits::*;
 pub use util::types::*;
-pub use ndarray::*;
+pub use ndarray::{arr2, arr1};
 pub use mixedtypes::*;
 pub use util::macros::*;
 pub use util::error::*;

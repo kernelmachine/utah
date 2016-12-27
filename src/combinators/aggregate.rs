@@ -1,10 +1,11 @@
+//! Utah aggregation combinators.
+
 
 use util::types::*;
 use util::traits::*;
 use dataframe::*;
 use ndarray::Array;
 use util::error::*;
-use std::f64;
 
 #[derive(Clone, Debug)]
 pub struct Sum<'a, I: 'a, T: 'a, S>

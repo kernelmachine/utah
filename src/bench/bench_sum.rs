@@ -10,12 +10,12 @@ use std::collections::{HashMap, BTreeMap};
 use chrono::*;
 use util::types::*;
 use util::error::*;
-use adapters::aggregate::*;
-use adapters::transform::*;
+use combinators::aggregate::*;
+use combinators::transform::*;
 use util::traits::*;
 use std::f64::NAN;
 use ndarray::Axis;
-use adapters::join::*;
+use combinators::interact::*;
 use mixedtypes::*;
 
 #[bench]

@@ -21,29 +21,8 @@ extern crate csv;
 
 
 
-/// # Utah
-///
-/// ## Table of contents
-///
-/// + [DataFrame](#dataframe)
-/// + [Transformation](#transformation)
-/// + [Aggregation](#aggregation)
-/// + [Imputation](#imputation)
-///
-/// ## DataFrame
-/// Utah is a dataframe crate for Rust.
-/// ### What's a dataframe?
-/// ### Why use this crate?
 
-/// ## Transformation
-///
-
-/// ## Aggregation
-///
-
-/// ## Imputation
-
-pub mod adapters;
+pub mod combinators;
 pub mod dataframe;
 mod tests;
 #[macro_use]

@@ -1,9 +1,9 @@
 use util::types::*;
 use std::iter::Iterator;
-use adapters::aggregate::*;
-use adapters::process::*;
-use adapters::join::*;
-use adapters::transform::*;
+use combinators::aggregate::*;
+use combinators::process::*;
+use combinators::interact::*;
+use combinators::transform::*;
 use util::types::UtahAxis;
 use util::traits::*;
 use dataframe::*;

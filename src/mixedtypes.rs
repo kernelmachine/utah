@@ -1,3 +1,5 @@
+//! Utah mixed types support
+
 use std::ops::{Mul, Add, Sub, Div};
 use std::cmp::Ordering;
 use num::traits::{One, Zero};

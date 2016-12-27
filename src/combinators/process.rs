@@ -1,3 +1,5 @@
+//! Utah process combinators.
+
 use util::types::*;
 use std::iter::Iterator;
 use dataframe::{DataFrame, MutableDataFrame, MutableDataFrameIterator};

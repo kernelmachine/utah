@@ -1,3 +1,5 @@
+//! Utah utilities
+
 #[macro_use]
 pub mod error;
 #[macro_use]

@@ -1,14 +1,14 @@
 
 use util::types::*;
 use std::iter::{Iterator, Chain};
-use adapters::aggregate::*;
-use adapters::transform::*;
-use adapters::process::*;
+use combinators::aggregate::*;
+use combinators::transform::*;
+use combinators::process::*;
 use dataframe::{DataFrame, MutableDataFrame, DataFrameIterator, MutableDataFrameIterator};
 use std::hash::Hash;
 use std::fmt::Debug;
 use util::error::*;
-use adapters::join::*;
+use combinators::interact::*;
 use std::ops::{Add, Sub, Mul, Div};
 use num::traits::{One, Zero};
 use std::collections::BTreeMap;

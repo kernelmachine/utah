@@ -1,3 +1,5 @@
+//! Utah dataframe
+
 use util::error::*;
 use util::types::*;
 use std::iter::Iterator;

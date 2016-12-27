@@ -1,9 +1,9 @@
 use util::types::*;
 use std::iter::Iterator;
-use adapters::aggregate::*;
-use adapters::process::*;
-use adapters::join::*;
-use adapters::transform::*;
+use combinators::aggregate::*;
+use combinators::process::*;
+use combinators::interact::*;
+use combinators::transform::*;
 use util::types::UtahAxis;
 use util::traits::*;
 use dataframe::*;
@@ -129,24 +129,6 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
 
 
     /// Perform an inner left join between two dataframes along the specified `UtahAxis`.
-    ///
-
-    /// ```
-    /// use utah::prelude::*;
-    /// let a = arr2(&[["Alice"], ["Bob"], ["John"]]);
-    /// let left: DataFrame<InnerType, OuterType> =
-    ///     DataFrame::new(a).index(&[1, 2, 3]).unwrap().columns(&["a"]).unwrap();
-    /// let b = arr2(&[["Programmer"], ["Data Scientist"]]);
-    /// let right = DataFrame::new(b).index(&[1, 3]).unwrap().columns(&["b"]).unwrap();
-    /// let res = left.inner_left_join(&right).as_df();
-    /// let expected_data = arr2(&[[InnerType::Str(String::from("Alice")),
-    ///                             InnerType::Str(String::from("Programmer"))],
-    ///                            [InnerType::Str(String::from("John")),
-    ///                             InnerType::Str(String::from("Data Scientist"))]]);
-    /// let expected =
-    ///     DataFrame::new(expected_data).index(&[1, 3]).unwrap().columns(&["a", "b"]).unwrap();
-    /// assert_eq!(res.unwrap(), expected);
-    /// ```
     fn inner_left_join(&'a self,
                        other: &'a DataFrame<f64, String>)
                        -> InnerJoinIter<'a, f64, String> {

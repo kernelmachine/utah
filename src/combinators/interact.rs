@@ -1,3 +1,5 @@
+//! Utah join combinators.
+
 use util::traits::ToDataFrame;
 use util::types::*;
 use std::iter::Iterator;

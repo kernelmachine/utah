@@ -1,9 +1,10 @@
+//! Utah transform combinators.
 
 use util::types::*;
 use std::iter::Iterator;
 use itertools::PutBack;
 use ndarray::Array;
-use adapters::aggregate::*;
+use combinators::aggregate::*;
 use util::traits::*;
 use dataframe::*;
 use std::fmt::Debug;
