@@ -171,21 +171,80 @@ fn dataframe_mapdf() {
 #[test]
 fn dataframe_mean() {
     {
-        let a = arr2(&[[2., 3.], [3., 4.]]);
+        let a = arr2(&[[2., 3.], [6., 4.]]);
         let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         let z: DataFrame<f64, String> = df.mean(UtahAxis::Row).as_df().unwrap();
-        let b = arr2(&[[2.5], [3.5]]);
+        let b = arr2(&[[2.5], [5.]]);
+        let mut expected = DataFrame::new(b);
+        assert_eq!(z, expected);
+    }
+    {
+        let a = arr2(&[[2., 3.], [6., 4.]]);
+        let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
+        let z: DataFrame<f64, String> = df.mean(UtahAxis::Column).as_df().unwrap();
+        let b = arr2(&[[4., 3.5]]);
+        let mut expected = DataFrame::new(b).columns(&["a", "b"]).unwrap();
+        assert_eq!(z, expected);
+    }
+}
+
+#[test]
+fn dataframe_sum() {
+    {
+        let a = arr2(&[[2., 3.], [3., 4.]]);
+        let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
+        let z: DataFrame<f64, String> = df.sumdf(UtahAxis::Row).as_df().unwrap();
+        let b = arr2(&[[5., 7.]]);
         let mut expected = DataFrame::new(b).columns(&["a", "b"]).unwrap();
         assert_eq!(z, expected);
     }
     {
         let a = arr2(&[[2., 3.], [3., 4.]]);
         let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
-        let z: Vec<(String, Row<f64>)> = df.map(|x| x * 2.0, UtahAxis::Column).collect();
-        let b = arr2(&[[4., 6.], [6., 8.]]);
-        let mut expected = Vec::new();
-        expected.push(("a".to_string(), b.row(0).to_owned()));
-        expected.push(("b".to_string(), b.row(1).to_owned()));
+        let z: DataFrame<f64, String> = df.sumdf(UtahAxis::Column).as_df().unwrap();
+        let b = arr2(&[[5.], [7.]]);
+        let mut expected = DataFrame::new(b);
+        assert_eq!(z, expected);
+    }
+}
+
+
+#[test]
+fn dataframe_max() {
+    {
+        let a = arr2(&[[2, 2], [3, 4]]);
+        let mut df: DataFrame<i32, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
+        let z: DataFrame<i32, String> = df.maxdf(UtahAxis::Row).as_df().unwrap();
+        let b = arr2(&[[3, 4]]);
+        let mut expected = DataFrame::new(b).columns(&["a", "b"]).unwrap();
+        assert_eq!(z, expected);
+    }
+    {
+        let a = arr2(&[[2, 3], [3, 4]]);
+        let mut df: DataFrame<i32, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
+        let z: DataFrame<i32, String> = df.maxdf(UtahAxis::Column).as_df().unwrap();
+        let b = arr2(&[[3], [4]]);
+        let mut expected = DataFrame::new(b);
+        assert_eq!(z, expected);
+    }
+}
+
+#[test]
+fn dataframe_min() {
+    {
+        let a = arr2(&[[2, 2], [3, 4]]);
+        let mut df: DataFrame<i32, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
+        let z: DataFrame<i32, String> = df.mindf(UtahAxis::Row).as_df().unwrap();
+        let b = arr2(&[[2, 2]]);
+        let mut expected = DataFrame::new(b).columns(&["a", "b"]).unwrap();
+        assert_eq!(z, expected);
+    }
+    {
+        let a = arr2(&[[2, 3], [3, 4]]);
+        let mut df: DataFrame<i32, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
+        let z: DataFrame<i32, String> = df.mindf(UtahAxis::Column).as_df().unwrap();
+        let b = arr2(&[[2], [3]]);
+        let mut expected = DataFrame::new(b);
         assert_eq!(z, expected);
     }
 }

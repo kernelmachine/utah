@@ -18,3 +18,22 @@ impl Empty<i32> for i32 {
         *self == 0
     }
 }
+
+impl Empty<Option<i32>> for Option<i32> {
+    fn empty() -> Option<i32> {
+        None
+    }
+    fn is_empty(&self) -> bool {
+        self.is_none()
+    }
+}
+
+
+impl Empty<Option<f64>> for Option<f64> {
+    fn empty() -> Option<f64> {
+        None
+    }
+    fn is_empty(&self) -> bool {
+        self.is_none()
+    }
+}

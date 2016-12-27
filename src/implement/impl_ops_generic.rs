@@ -264,8 +264,8 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
         let columns = self.columns.clone();
         let index = self.index.clone();
         match axis {
-            UtahAxis::Row => Sum::new(self.df_iter(UtahAxis::Column), columns, UtahAxis::Column),
-            UtahAxis::Column => Sum::new(self.df_iter(UtahAxis::Row), index, UtahAxis::Row),
+            UtahAxis::Row => Sum::new(self.df_iter(UtahAxis::Column), columns, UtahAxis::Row),
+            UtahAxis::Column => Sum::new(self.df_iter(UtahAxis::Row), index, UtahAxis::Column),
 
         }
     }
@@ -312,7 +312,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
         let index = self.index.clone();
         match axis {
             UtahAxis::Row => Mean::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
-            UtahAxis::Column => Mean::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Row),
+            UtahAxis::Column => Mean::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Column),
 
         }
     }
@@ -336,7 +336,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
         let index = self.index.clone();
         match axis {
             UtahAxis::Row => Max::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
-            UtahAxis::Column => Max::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Row),
+            UtahAxis::Column => Max::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Column),
 
         }
     }
@@ -354,13 +354,13 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     ///        assert_eq!(row, a.row(idx))
     ///    }
     /// ```
-    default fn min(&'a mut self, axis: UtahAxis) -> MinIter<'a, T, S> {
+    default fn mindf(&'a mut self, axis: UtahAxis) -> MinIter<'a, T, S> {
 
         let columns = self.columns.clone();
         let index = self.index.clone();
         match axis {
             UtahAxis::Row => Min::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
-            UtahAxis::Column => Min::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Row),
+            UtahAxis::Column => Min::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Column),
 
         }
 
@@ -384,7 +384,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
         let index = self.index.clone();
         match axis {
             UtahAxis::Row => Stdev::new(self.df_iter(UtahAxis::Row), columns, UtahAxis::Row),
-            UtahAxis::Column => Stdev::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Row),
+            UtahAxis::Column => Stdev::new(self.df_iter(UtahAxis::Column), index, UtahAxis::Column),
 
         }
 

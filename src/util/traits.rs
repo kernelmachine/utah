@@ -121,7 +121,7 @@ pub trait Operations<'a, T, S>
               for<'r> F: Fn(&T) -> B;
     fn mean(&'a mut self, axis: UtahAxis) -> Mean<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn maxdf(&'a mut self, axis: UtahAxis) -> Max<'a, DataFrameIterator<'a, T, S>, T, S>;
-    fn min(&'a mut self, axis: UtahAxis) -> Min<'a, DataFrameIterator<'a, T, S>, T, S>;
+    fn mindf(&'a mut self, axis: UtahAxis) -> Min<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn stdev(&'a self, axis: UtahAxis) -> Stdev<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn impute(&'a mut self,
               strategy: ImputeStrategy,

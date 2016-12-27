@@ -82,7 +82,7 @@ impl<'a, I, T, S> Iterator for Mean<'a, I, T, S>
     fn next(&mut self) -> Option<Self::Item> {
         match self.data.next() {
             Some((_, dat)) => {
-                let size = dat.fold(T::one(), |acc, _| acc + T::one());
+                let size = dat.fold(T::zero(), |acc, _| acc + T::one());
                 let mean = dat.scalar_sum() / size;
                 Some(mean)
             }
@@ -217,7 +217,7 @@ impl<'a, I, T, S> Iterator for Stdev<'a, I, T, S>
 
             None => return None,
             Some((_, dat)) => unsafe {
-                let size = dat.fold(T::one(), |acc, _| acc + T::one());
+                let size = dat.fold(T::zero(), |acc, _| acc + T::one());
                 let mean = dat.scalar_sum() / size;
 
                 let stdev = (0..dat.len()).fold(dat.uget(0).to_owned(), |x, y| {
@@ -255,7 +255,7 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Stdev<'a, I, T, S>
 
 
         let d = Array::from_shape_vec(res_dim, c).unwrap();
-        let def = vec![S::default()];
+        let def = vec![S::from(String::from("0"))];
         match axis {
             UtahAxis::Row => {
                 let df = DataFrame::new(d).columns(&other[..])?.index(&def[..])?;
@@ -308,7 +308,7 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
 
 
         let d = Array::from_shape_vec(res_dim, c).unwrap();
-        let def = vec![S::default()];
+        let def = vec![S::from(String::from("0"))];
         match axis {
             UtahAxis::Row => {
                 let df = DataFrame::new(d).columns(&other[..])?.index(&def[..])?;
@@ -361,7 +361,7 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Max<'a, I, T, S>
 
 
         let d = Array::from_shape_vec(res_dim, c).unwrap();
-        let def = vec![S::default()];
+        let def = vec![S::from(String::from("0"))];
         match axis {
             UtahAxis::Row => {
                 let df = DataFrame::new(d).columns(&other[..])?.index(&def[..])?;
@@ -413,7 +413,7 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Min<'a, I, T, S>
 
 
         let d = Array::from_shape_vec(res_dim, c).unwrap();
-        let def = vec![S::default()];
+        let def = vec![S::from(String::from("0"))];
         match axis {
             UtahAxis::Row => {
                 let df = DataFrame::new(d).columns(&other[..])?.index(&def[..])?;
@@ -463,7 +463,7 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Sum<'a, I, T, S>
         };
 
         let d = Array::from_shape_vec(res_dim, c).unwrap();
-        let def = vec![S::default()];
+        let def = vec![S::from(String::from("0"))];
         match axis {
             UtahAxis::Row => {
                 let df = DataFrame::new(d).columns(&other[..])?.index(&def[..])?;
