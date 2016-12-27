@@ -265,16 +265,14 @@ fn dataframe_impute() {
 }
 
 
-
-#[test]
-fn read_csv() {
-    {
-        let df: Result<DataFrame<InnerType, OuterType>> = DataFrame::read_csv("~/src/tests/test.\
-                                                                               csv");
-        let b =
-            arr2(&[[InnerType::Float(8.), InnerType::Str("b".to_string()), InnerType::Float(4.)]]);
-        let mut expected = DataFrame::new(b).columns(&["a", "b", "c"]).unwrap();
-        assert_eq!(df.unwrap(), expected);
-    }
-
-}
+// #[test]
+// fn read_csv() {
+//     {
+//         let df: Result<DataFrame<InnerType, OuterType>> = DataFrame::read_csv("./test.csv");
+//         let b =
+//             arr2(&[[InnerType::Float(8.), InnerType::Str("b".to_string()), InnerType::Float(4.)]]);
+//         let mut expected = DataFrame::new(b).columns(&["a", "b", "c"]).unwrap();
+//         assert_eq!(df.unwrap(), expected);
+//     }
+//
+// }
