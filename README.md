@@ -72,5 +72,5 @@ let a = DataFrame<InnerType, OuterType> = dataframe!(
                               InnerType::Float(3.0)])
     });
 let b: Result<DataFrame<InnerType, OuterType>> = DataFrame::read_csv("test.csv");
-let res : DataFrame<InnerType, OuterType> = a.left_inner_join(&b).as_df();
+let res : DataFrame<InnerType, OuterType> = a.left_inner_join(&b).as_df()?;
 ```
