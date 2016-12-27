@@ -269,7 +269,7 @@ fn dataframe_impute() {
 #[test]
 fn read_csv() {
     {
-        let df: Result<DataFrame<InnerType, OuterType>> = DataFrame::read_csv("/Users/suchin/Github/rust-dataframe/src/tests/test.\
+        let df: Result<DataFrame<InnerType, OuterType>> = DataFrame::read_csv("~/src/tests/test.\
                                                                                csv");
         let b =
             arr2(&[[InnerType::Float(8.), InnerType::Str("b".to_string()), InnerType::Float(4.)]]);
