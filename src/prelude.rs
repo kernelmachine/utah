@@ -1,15 +1,15 @@
+// Utah prelude
+//
+// This module contains the most used types, type aliases, traits and
+// functions that you can import easily as a group.
+//
+// ```
+// extern crate utah;
+//
+// use utah::prelude::*;
+// # fn main() { }
+// ```
 
-//! Utah prelude
-//!
-//! This module contains the most used types, type aliases, traits and
-//! functions that you can import easily as a group.
-//!
-//! ```
-//! extern crate utah;
-//!
-//! use utah::prelude::*;
-//! # fn main() { }
-//! ```
 pub use dataframe::DataFrame;
 pub use util::traits::*;
 pub use util::types::*;

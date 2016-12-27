@@ -13,9 +13,6 @@ error-chain="*"
 itertools = "*"
 csv = "*"
 rustc-serialize = "*"
-[[bin]]
-name="df"
-path='src/main.rs'
 
 [lib]
 path='src/lib.rs'
