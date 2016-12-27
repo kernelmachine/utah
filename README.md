@@ -14,7 +14,7 @@ For an in-depth introduction to the mechanics of this crate, as well as future g
 
 #### Remove a row from a dataframe
 
-```
+```rust
 use utah::prelude::*;
 let df: DataFrame<f64, String> = DataFrame::read_csv("test.csv").unwrap();       
 let res = df.df_iter(UtahAxis::Row).remove(&["1"]).as_df();
@@ -22,7 +22,7 @@ let res = df.df_iter(UtahAxis::Row).remove(&["1"]).as_df();
 
 #### Chain operations
 
-```
+```rust
 use utah::prelude::*;
 let df: DataFrame<f64, String> = DataFrame::read_csv("test.csv").unwrap();       
 let res = df.df_iter(UtahAxis::Row).remove(&["1"])
@@ -34,7 +34,7 @@ let res = df.df_iter(UtahAxis::Row).remove(&["1"])
 
 #### Create dataframes on the fly
 
-```
+```rust
 use utah::util::macros::dataframe;
 let df = DataFrame<f64, String> = dataframe!(
     {
@@ -45,7 +45,7 @@ let df = DataFrame<f64, String> = dataframe!(
 
 #### Support mixed types 
 
-```
+```rust
 use utah::prelude::*;
 let a = DataFrame<InnerType, OuterType> = dataframe!(
     {
