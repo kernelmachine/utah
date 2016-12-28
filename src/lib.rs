@@ -175,11 +175,10 @@
 //! let file_name = "test.csv";
 //! let df: Result<DataFrame<f64, String>> = DataFrame::read_csv(file_name);
 //! ```
-#![feature(test)]
-#![feature(custom_derive)]
-#![feature(stmt_expr_attributes)]
-#![feature(conservative_impl_trait)]
-#![feature(specialization)]
+#![cfg_attr(nightly,test)]
+#![cfg_attr(nightly,custom_derive)]
+#![cfg_attr(nightly,stmt_expr_attributes)]
+#![cfg_attr(nightly,specialization)]
 #![recursion_limit = "1024"]
 
 #[macro_use]
@@ -188,6 +187,7 @@
 extern crate ndarray;
 extern crate ndarray_rand;
 extern crate rand;
+#[cfg(nightly)]
 extern crate test;
 extern crate num;
 #[macro_use]

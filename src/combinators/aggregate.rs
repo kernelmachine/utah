@@ -4,12 +4,12 @@
 use util::types::*;
 use util::traits::*;
 use dataframe::*;
-use ndarray::Array;
+use ndarray::{Array, ArrayView1};
 use util::error::*;
 
 #[derive(Clone, Debug)]
 pub struct Sum<'a, I: 'a, T: 'a, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + 'a,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)> + 'a,
           T: Num,
           S: Identifier
 {
@@ -19,7 +19,7 @@ pub struct Sum<'a, I: 'a, T: 'a, S>
 }
 
 impl<'a, I, T, S> Sum<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num,
           S: Identifier
 {
@@ -34,7 +34,7 @@ impl<'a, I, T, S> Sum<'a, I, T, S>
 }
 
 impl<'a, I, T, S> Iterator for Sum<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num,
           S: Identifier
 {
@@ -50,7 +50,7 @@ impl<'a, I, T, S> Iterator for Sum<'a, I, T, S>
 
 #[derive(Clone, Debug)]
 pub struct Mean<'a, I: 'a, T: 'a, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num,
           S: Identifier
 {
@@ -60,7 +60,7 @@ pub struct Mean<'a, I: 'a, T: 'a, S>
 }
 
 impl<'a, I, T, S> Mean<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num + 'a,
           S: Identifier
 {
@@ -75,7 +75,7 @@ impl<'a, I, T, S> Mean<'a, I, T, S>
 }
 
 impl<'a, I, T, S> Iterator for Mean<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num + 'a,
           S: Identifier
 {
@@ -96,7 +96,7 @@ impl<'a, I, T, S> Iterator for Mean<'a, I, T, S>
 
 #[derive(Clone)]
 pub struct Max<'a, I: 'a, T: 'a, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num,
           S: Identifier
 {
@@ -106,7 +106,7 @@ pub struct Max<'a, I: 'a, T: 'a, S>
 }
 
 impl<'a, I, T, S> Max<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num + 'a,
           S: Identifier
 {
@@ -121,12 +121,12 @@ impl<'a, I, T, S> Max<'a, I, T, S>
 }
 
 impl<'a, I, T, S> Iterator for Max<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num + Ord + 'a,
           S: Identifier
 {
     type Item = T;
-    default fn next(&mut self) -> Option<Self::Item> {
+    fn next(&mut self) -> Option<Self::Item> {
         match self.data.next() {
             None => return None,
             Some((_, dat)) => return dat.iter().max().map(|x| x.clone()),
@@ -140,7 +140,7 @@ impl<'a, I, T, S> Iterator for Max<'a, I, T, S>
 
 #[derive(Clone, Debug)]
 pub struct Min<'a, I: 'a, T: 'a, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num,
           S: Identifier
 {
@@ -150,7 +150,7 @@ pub struct Min<'a, I: 'a, T: 'a, S>
 }
 
 impl<'a, I, T, S> Min<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num + 'a,
           S: Identifier
 {
@@ -165,7 +165,7 @@ impl<'a, I, T, S> Min<'a, I, T, S>
 }
 
 impl<'a, I, T, S> Iterator for Min<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num + Ord,
           S: Identifier
 {
@@ -183,7 +183,7 @@ impl<'a, I, T, S> Iterator for Min<'a, I, T, S>
 
 #[derive(Clone)]
 pub struct Stdev<'a, I: 'a, T: 'a, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num,
           S: Identifier
 {
@@ -193,7 +193,7 @@ pub struct Stdev<'a, I: 'a, T: 'a, S>
 }
 
 impl<'a, I, T, S> Stdev<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num + 'a,
           S: Identifier
 {
@@ -209,7 +209,7 @@ impl<'a, I, T, S> Stdev<'a, I, T, S>
 
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num,
           S: Identifier
 {
@@ -262,7 +262,7 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Mean<'a, I, T, S>
 
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Max<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num + Ord,
           S: Identifier
 {
@@ -314,7 +314,7 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Max<'a, I, T, S>
 
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Min<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num + Ord,
           S: Identifier
 {
@@ -366,7 +366,7 @@ impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Min<'a, I, T, S>
 
 
 impl<'a, I, T, S> ToDataFrame<'a, T, T, S> for Sum<'a, I, T, S>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
+    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
           T: Num,
           S: Identifier
 {

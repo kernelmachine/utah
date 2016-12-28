@@ -4,10 +4,9 @@ use util::error::*;
 use util::types::*;
 use std::iter::Iterator;
 use ndarray::{AxisIter, AxisIterMut};
-use util::types::UtahAxis;
 use util::traits::*;
 use std::slice::Iter;
-
+use ndarray::{ArrayView1, ArrayViewMut1, Dim, Ix};
 
 /// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
@@ -39,7 +38,7 @@ pub struct DataFrameIterator<'a, T: 'a, S: 'a>
           S: Identifier
 {
     pub names: Iter<'a, S>,
-    pub data: AxisIter<'a, T, usize>,
+    pub data: AxisIter<'a, T, Dim<[Ix; 1]>>,
     pub other: Vec<S>,
     pub axis: UtahAxis,
 }
@@ -51,7 +50,7 @@ impl<'a, T, S> Iterator for DataFrameIterator<'a, T, S>
     where T: Num,
           S: Identifier
 {
-    type Item = (S, RowView<'a, T>);
+    type Item = (S, ArrayView1<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         match self.names.next() {
             Some(val) => {
@@ -71,7 +70,7 @@ pub struct MutableDataFrameIterator<'a, T, S>
           S: Identifier + 'a
 {
     pub names: Iter<'a, S>,
-    pub data: AxisIterMut<'a, T, usize>,
+    pub data: AxisIterMut<'a, T, Dim<[Ix; 1]>>,
     pub other: Vec<S>,
     pub axis: UtahAxis,
 }
@@ -81,7 +80,7 @@ impl<'a, T, S> Iterator for MutableDataFrameIterator<'a, T, S>
     where T: Num,
           S: Identifier
 {
-    type Item = (S, RowViewMut<'a, T>);
+    type Item = (S, ArrayViewMut1<'a, T>);
 
 
     fn next(&mut self) -> Option<Self::Item> {

@@ -1,5 +1,6 @@
 use ndarray::{arr2, arr1, stack};
 use dataframe::*;
+#[cfg(nightly)]
 use test::Bencher;
 use ndarray::Array;
 use rand::distributions::Range;

@@ -12,7 +12,7 @@ use combinators::interact::*;
 use std::ops::{Add, Sub, Mul, Div};
 use num::traits::{One, Zero};
 use std::collections::BTreeMap;
-
+use ndarray::{ArrayView1, ArrayViewMut1};
 
 pub trait Num
     : Add<Output = Self> +
@@ -44,7 +44,7 @@ pub trait Empty<T> {
 
 
 pub trait MixedDataframeConstructor<'a, I, T, S>
-    where I: Iterator<Item = RowView<'a, T>> + Clone,
+    where I: Iterator<Item = ArrayView1<'a, T>> + Clone,
           T: 'a + Num,
           S: Identifier,
           Self: Sized
@@ -91,7 +91,7 @@ pub trait Operations<'a, T, S>
         where S: From<&'a U>;
     fn append<U: ?Sized>(&'a mut self,
                          name: &'a U,
-                         data: RowView<'a, T>,
+                         data: ArrayView1<'a, T>,
                          axis: UtahAxis)
                          -> Append<'a, DataFrameIterator<'a, T, S>, T, S>
         where S: From<&'a U>;
@@ -132,13 +132,17 @@ pub trait Aggregate<'a, T, S>
     where T: Num,
           S: Identifier
 {
-    fn sumdf(self) -> Sum<'a, Self, T, S> where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>;
+    fn sumdf(self) -> Sum<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>;
 
-    fn maxdf(self) -> Max<'a, Self, T, S> where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>;
+    fn maxdf(self) -> Max<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>;
 
-    fn mindf(self) -> Min<'a, Self, T, S> where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>;
+    fn mindf(self) -> Min<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>;
 
-    fn mean(self) -> Mean<'a, Self, T, S> where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>;
+    fn mean(self) -> Mean<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>;
 }
 
 pub trait Process<'a, T, S, F>
@@ -147,11 +151,11 @@ pub trait Process<'a, T, S, F>
           F: Fn(T) -> T
 {
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, RowViewMut<'a, T>)>;
+        where Self: Sized + Iterator<Item = (S, ArrayViewMut1<'a, T>)>;
     fn to_mut_df(self) -> MutableDataFrame<'a, T, S>
-        where Self: Sized + Iterator<Item = (S, RowViewMut<'a, T>)>;
+        where Self: Sized + Iterator<Item = (S, ArrayViewMut1<'a, T>)>;
     fn mapdf(self, f: F) -> MapDF<'a, T, S, Self, F>
-        where Self: Sized + Iterator<Item = (S, RowViewMut<'a, T>)> + Clone;
+        where Self: Sized + Iterator<Item = (S, ArrayViewMut1<'a, T>)> + Clone;
 }
 
 pub trait Transform<'a, T, S>
@@ -159,15 +163,15 @@ pub trait Transform<'a, T, S>
           S: Identifier
 {
     fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
+        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
               S: From<&'a U>,
               T: 'a;
     fn remove<U: ?Sized>(self, names: &'a [&'a U]) -> Remove<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
+        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
               S: From<&'a U>,
               T: 'a;
-    fn append<U: ?Sized>(self, name: &'a U, data: RowView<'a, T>) -> Append<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
+    fn append<U: ?Sized>(self, name: &'a U, data: ArrayView1<'a, T>) -> Append<'a, Self, T, S>
+        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
               S: From<&'a U>,
               T: 'a;
 }

@@ -1,9 +1,8 @@
 
 extern crate rand;
+#[cfg(nightly)]
 extern crate test;
-
-use ndarray::{arr2, arr1};
-use dataframe::*;
+#[cfg(nightly)]
 use test::Bencher;
 use ndarray::Array;
 use rand::distributions::Range;
@@ -11,31 +10,25 @@ use ndarray_rand::RandomExt;
 use std::rc::Rc;
 use rand::{thread_rng, Rng};
 use std::collections::{HashMap, BTreeMap};
-use util::types::*;
-use util::error::*;
-use combinators::aggregate::*;
-use combinators::transform::*;
-use util::traits::*;
 use std::f64::NAN;
-use ndarray::Axis;
-use combinators::interact::*;
-use mixedtypes::*;
-use util::readcsv::*;
-use util::macros::*;
 use prelude::*;
 
 #[test]
 fn outer_left_join() {
-    let a = arr2(&[["Alice"], ["Bob"]]);
+    let a = arr2(&[[1.], [4.]]);
     let left: DataFrame<InnerType, OuterType> =
         DataFrame::new(a).index(&[1, 2]).unwrap().columns(&["a"]).unwrap();
-    let b = arr2(&[["Programmer"]]);
+    let b = arr2(&[[5.]]);
     let right: DataFrame<InnerType, OuterType> =
         DataFrame::new(b).index(&[1]).unwrap().columns(&["b"]).unwrap();
     let res = left.outer_left_join(&right).as_df();
-    let expected_data = arr2(&[[InnerType::Str(String::from("Alice")),
-                                InnerType::Str(String::from("Programmer"))],
-                               [InnerType::Str(String::from("Bob")), InnerType::Empty]]);
+    let expected_data = arr2(&[[InnerType::Float(1.), InnerType::Float(5.)],
+                               [InnerType::Float(4.), InnerType::Empty]]);
+    // let expected = DataFrame {
+    //     index: vec![OuterType::Int32(1), OuterType::Int32(2)],
+    //     data: expected_data,
+    //     columns: vec![OuterType::Str(String::from("a")), OuterType::Str(String::from("b"))],
+    // };
     let expected =
         DataFrame::new(expected_data).index(&[1, 2]).unwrap().columns(&["a", "b"]).unwrap();
     assert_eq!(res.unwrap(), expected);
@@ -43,18 +36,17 @@ fn outer_left_join() {
 }
 #[test]
 fn inner_join() {
-    let a = arr2(&[["Alice"], ["Bob"], ["Suchin"]]);
-    let left: DataFrame<InnerType, OuterType> =
+    let a = arr2(&[[1], [2], [3]]);
+    let left: DataFrame<i32, OuterType> =
         DataFrame::new(a).index(&[1, 2, 3]).unwrap().columns(&["a"]).unwrap();
-    let b = arr2(&[["Programmer"], ["Data Scientist"]]);
+
+    let b = arr2(&[[5], [6]]);
     let right = DataFrame::new(b).index(&[1, 3]).unwrap().columns(&["b"]).unwrap();
     let res = left.inner_left_join(&right).as_df();
-    let expected_data = arr2(&[[InnerType::Str(String::from("Alice")),
-                                InnerType::Str(String::from("Programmer"))],
-                               [InnerType::Str(String::from("Suchin")),
-                                InnerType::Str(String::from("Data Scientist"))]]);
-    let expected =
+    let expected_data = arr2(&[[1, 5], [3, 6]]);
+    let expected: DataFrame<i32, OuterType> =
         DataFrame::new(expected_data).index(&[1, 3]).unwrap().columns(&["a", "b"]).unwrap();
+
     assert_eq!(res.unwrap(), expected);
 }
 

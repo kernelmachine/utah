@@ -3,7 +3,6 @@ use util::types::*;
 use std::string::ToString;
 use std::iter::Iterator;
 use ndarray::Axis;
-use util::types::UtahAxis;
 use util::traits::*;
 use dataframe::*;
 
@@ -32,14 +31,16 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     fn new<U: Clone>(data: Matrix<U>) -> DataFrame<T, S>
         where T: From<U>
     {
-        let data: Matrix<T> = data.mapv(T::from);
-        let data: Matrix<T> = data.mapv_into(|x| {
+        let mut data: Matrix<T> = data.mapv(T::from);
+        data.mapv_inplace(|x| {
             if x.is_empty() {
                 return T::empty();
             } else {
                 return x;
             }
         });
+        println!("{:?}", data);
+
         let columns: Vec<S> = (0..data.shape()[1])
             .map(|x| x.to_string().into())
             .collect();

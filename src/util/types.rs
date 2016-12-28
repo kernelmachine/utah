@@ -1,4 +1,4 @@
-use ndarray::{Array, ArrayView, ArrayViewMut, Ix};
+use ndarray::{Array2, Array1, ArrayView1, ArrayView2};
 use combinators::transform::*;
 use combinators::interact::*;
 use combinators::aggregate::*;
@@ -19,18 +19,16 @@ pub enum ImputeStrategy {
 }
 
 
-pub type Column<T> = Array<T, Ix>;
-pub type Row<T> = Array<T, Ix>;
-pub type RowMut<'a, T> = Array<&'a mut T, Ix>;
+pub type Column<T> = Array1<T>;
+pub type Row<T> = Array1<T>;
+pub type RowMut<'a, T> = Array1<&'a mut T>;
 
-pub type Matrix<T> = Array<T, (Ix, Ix)>;
-pub type MatrixMut<'a, T> = Array<&'a mut T, (Ix, Ix)>;
+pub type Matrix<T> = Array2<T>;
+pub type MatrixMut<'a, T> = Array2<&'a mut T>;
 
-pub type ColumnView<'a, T> = ArrayView<'a, T, Ix>;
-pub type RowView<'a, T> = ArrayView<'a, T, Ix>;
-pub type RowViewMut<'a, T> = ArrayViewMut<'a, T, Ix>;
+pub type ColumnView<'a, T> = ArrayView1<'a, T>;
 
-pub type MatrixView<'a, T> = ArrayView<'a, T, (Ix, Ix)>;
+pub type MatrixView<'a, T> = ArrayView2<'a, T>;
 
 pub type DFIter<'a, T, S> = DataFrameIterator<'a, T, S>;
 pub type AppendIter<'a, T, S> = Append<'a, DFIter<'a, T, S>, T, S>;
