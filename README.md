@@ -49,7 +49,7 @@ let df : Result<DataFrame<f64>> = DataFrame::new(a).index(&["1", "2"]);
 
 ```rust
 use utah::prelude::*;
-let df: DataFrame<f64> = DataFrame::read_csv("test.csv")?;       
+let df: DataFrame<f64> = DataFrame::read_csv("test.csv").unwrap();       
 let res : DataFrame<f64> = df.remove(&["a", "c"], UtahAxis::Column).as_df()?;
 ```
 
@@ -79,6 +79,6 @@ let a = DataFrame<InnerType> = dataframe!(
                             InnerType::Empty(),
                             InnerType::Float(3.0)])
     });
-let b: DataFrame<InnerType> = DataFrame::read_csv("test.csv")?;
-let res : DataFrame<InnerType> = a.left_inner_join(&b).as_df()?;
+let b: DataFrame<InnerType> = DataFrame::read_csv("test.csv").unwrap();
+let res : DataFrame<InnerType> = a.concat(&b).as_df()?;
 ```
