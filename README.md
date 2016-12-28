@@ -4,7 +4,7 @@
 
 [**Utah**](http://crates.io/crates/utah) is a Rust crate backed by [ndarray](https://github.com/bluss/rust-ndarray) for type-conscious, tabular data manipulation with an expressive, functional interface.
 
-**Note**: This crate works on stable. However, if you are working with dataframes with `f64` data and `String` column/index labels, use nightly, because you will get the performance benefits of specialization. 
+**Note**: This crate works on stable. However, if you are working with dataframes with `f64` data, use nightly, because you will get performance benefits of specialization. 
 
 API currently in development and subject to change.
 
