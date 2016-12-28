@@ -218,22 +218,20 @@ impl<'a> Operations<'a, f64, String> for DataFrame<f64, String> {
     }
 
     /// Map a function along the specified `UtahAxis`.
-    ///
-    ///
-    /// ```
-    /// use utah::prelude::*;
-    /// let a = arr2(&[[2., 3.], [3., 4.]]);
-    /// let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
-    /// let z: Vec<(String, Row<f64>)> = df.map(|x| x * 2.0, UtahAxis::Row).collect();
-    /// ```
-    fn map<F, B>(&'a mut self, f: F, axis: UtahAxis) -> MapDFIter<'a, f64, String, F, B>
-        where F: Fn(&f64) -> B,
-              for<'r> F: Fn(&f64) -> B
+    fn map<F>(&'a mut self, f: F, axis: UtahAxis) -> MapDFIter<'a, f64, String, F>
+        where F: Fn(f64) -> f64,
+              for<'r> F: Fn(f64) -> f64
     {
-
+        let columns = self.columns.clone();
+        let index = self.index.clone();
         match axis {
-            UtahAxis::Row => MapDF::new(self.df_iter(UtahAxis::Row), f, UtahAxis::Row),
-            UtahAxis::Column => MapDF::new(self.df_iter(UtahAxis::Column), f, UtahAxis::Column),
+            UtahAxis::Row => MapDF::new(self.df_iter_mut(UtahAxis::Row), f, columns, UtahAxis::Row),
+            UtahAxis::Column => {
+                MapDF::new(self.df_iter_mut(UtahAxis::Column),
+                           f,
+                           index,
+                           UtahAxis::Column)
+            }
 
         }
     }

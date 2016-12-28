@@ -113,12 +113,12 @@ pub trait Operations<'a, T, S>
          axis: UtahAxis)
          -> Concat<'a, Chain<DataFrameIterator<'a, T, S>, DataFrameIterator<'a, T, S>>, T, S>;
     fn sumdf(&'a mut self, axis: UtahAxis) -> Sum<'a, DataFrameIterator<'a, T, S>, T, S>;
-    fn map<F, B>(&'a mut self,
-                 f: F,
-                 axis: UtahAxis)
-                 -> MapDF<'a, T, S, DataFrameIterator<'a, T, S>, F, B>
-        where F: Fn(&T) -> B,
-              for<'r> F: Fn(&T) -> B;
+    fn map<F>(&'a mut self,
+              f: F,
+              axis: UtahAxis)
+              -> MapDF<'a, T, S, MutableDataFrameIterator<'a, T, S>, F>
+        where F: Fn(T) -> T,
+              for<'r> F: Fn(T) -> T;
     fn mean(&'a mut self, axis: UtahAxis) -> Mean<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn maxdf(&'a mut self, axis: UtahAxis) -> Max<'a, DataFrameIterator<'a, T, S>, T, S>;
     fn mindf(&'a mut self, axis: UtahAxis) -> Min<'a, DataFrameIterator<'a, T, S>, T, S>;
@@ -141,14 +141,17 @@ pub trait Aggregate<'a, T, S>
     fn mean(self) -> Mean<'a, Self, T, S> where Self: Sized + Iterator<Item = (S, RowView<'a, T>)>;
 }
 
-pub trait Process<'a, T, S>
+pub trait Process<'a, T, S, F>
     where T: Num,
-          S: Identifier
+          S: Identifier,
+          F: Fn(T) -> T
 {
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T, S>
         where Self: Sized + Iterator<Item = (S, RowViewMut<'a, T>)>;
     fn to_mut_df(self) -> MutableDataFrame<'a, T, S>
         where Self: Sized + Iterator<Item = (S, RowViewMut<'a, T>)>;
+    fn mapdf(self, f: F) -> MapDF<'a, T, S, Self, F>
+        where Self: Sized + Iterator<Item = (S, RowViewMut<'a, T>)> + Clone;
 }
 
 pub trait Transform<'a, T, S>
@@ -167,11 +170,6 @@ pub trait Transform<'a, T, S>
         where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
               S: From<&'a U>,
               T: 'a;
-
-
-    fn mapdf<F, B>(self, f: F) -> MapDF<'a, T, S, Self, F, B>
-        where Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone,
-              F: Fn(&T) -> B;
 }
 
 

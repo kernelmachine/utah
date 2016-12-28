@@ -30,7 +30,7 @@
 //! There's also a `dataframe!` macro which you can use to create new dataframes on the fly:
 //!
 //! ```ignore
-//! use utah::util::macros::dataframe;
+//! use utah::prelude::*;
 //! let k: DataFrame<f64, String> = dataframe!(
 //!    {
 //!        "a" =>  column!([2., 3., 2.]),

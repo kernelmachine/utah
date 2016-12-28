@@ -168,13 +168,19 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Map a function along the specified `UtahAxis`.
-    default fn map<F, B>(&'a mut self, f: F, axis: UtahAxis) -> MapDFIter<'a, T, S, F, B>
-        where F: Fn(&T) -> B
+    default fn map<F>(&'a mut self, f: F, axis: UtahAxis) -> MapDFIter<'a, T, S, F>
+        where F: Fn(T) -> T
     {
-
+        let columns = self.columns.clone();
+        let index = self.index.clone();
         match axis {
-            UtahAxis::Row => MapDF::new(self.df_iter(UtahAxis::Row), f, UtahAxis::Row),
-            UtahAxis::Column => MapDF::new(self.df_iter(UtahAxis::Column), f, UtahAxis::Column),
+            UtahAxis::Row => MapDF::new(self.df_iter_mut(UtahAxis::Row), f, columns, UtahAxis::Row),
+            UtahAxis::Column => {
+                MapDF::new(self.df_iter_mut(UtahAxis::Column),
+                           f,
+                           index,
+                           UtahAxis::Column)
+            }
 
         }
     }

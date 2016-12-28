@@ -44,5 +44,5 @@ pub type MaxIter<'a, T, S> = Max<'a, DFIter<'a, T, S>, T, S>;
 pub type MinIter<'a, T, S> = Min<'a, DFIter<'a, T, S>, T, S>;
 pub type StdevIter<'a, T, S> = Stdev<'a, DFIter<'a, T, S>, T, S>;
 pub type MeanIter<'a, T, S> = Mean<'a, DFIter<'a, T, S>, T, S>;
-pub type MapDFIter<'a, T, S, F, B> = MapDF<'a, T, S, DFIter<'a, T, S>, F, B>;
+pub type MapDFIter<'a, T, S, F> = MapDF<'a, T, S, MutableDataFrameIterator<'a, T, S>, F>;
 pub type ImputeIter<'a, T, S> = Impute<'a, MutableDataFrameIterator<'a, T, S>, T, S>;

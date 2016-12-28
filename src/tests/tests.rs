@@ -151,22 +151,18 @@ fn dataframe_mapdf() {
     {
         let a = arr2(&[[2., 3.], [3., 4.]]);
         let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
-        let z: Vec<(String, Row<f64>)> = df.map(|x| x * 2.0, UtahAxis::Row).collect();
+        let _ = df.map(|x| x * 2.0, UtahAxis::Row).as_df();
         let b = arr2(&[[4., 6.], [6., 8.]]);
-        let mut expected = Vec::new();
-        expected.push(("0".to_string(), b.row(0).to_owned()));
-        expected.push(("1".to_string(), b.row(1).to_owned()));
-        assert_eq!(z, expected);
+        let expected: DataFrame<f64, String> = DataFrame::new(b).columns(&["a", "b"]).unwrap();
+        assert_eq!(df, expected);
     }
     {
         let a = arr2(&[[2., 3.], [3., 4.]]);
         let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
-        let z: Vec<(String, Row<f64>)> = df.map(|x| x * 2.0, UtahAxis::Column).collect();
+        let _ = df.map(|x| x * 2.0, UtahAxis::Column).as_df();
         let b = arr2(&[[4., 6.], [6., 8.]]);
-        let mut expected = Vec::new();
-        expected.push(("a".to_string(), b.row(0).to_owned()));
-        expected.push(("b".to_string(), b.row(1).to_owned()));
-        assert_eq!(z, expected);
+        let expected: DataFrame<f64, String> = DataFrame::new(b).columns(&["a", "b"]).unwrap();
+        assert_eq!(df, expected);
     }
 }
 

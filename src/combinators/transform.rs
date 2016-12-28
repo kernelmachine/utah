@@ -10,49 +10,6 @@ use dataframe::*;
 use std::fmt::Debug;
 use util::error::*;
 
-#[derive(Clone, Debug)]
-pub struct MapDF<'a, T: 'a, S, I, F, B: 'a>
-    where I: Iterator<Item = (S, RowView<'a, T>)>,
-          F: Fn(&T) -> B,
-          S: Identifier
-{
-    data: I,
-    func: F,
-    axis: UtahAxis,
-}
-
-impl<'a, T, S, I, F, B> MapDF<'a, T, S, I, F, B>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          F: Fn(&T) -> B,
-          S: Identifier
-{
-    pub fn new(df: I, f: F, axis: UtahAxis) -> MapDF<'a, T, S, I, F, B> {
-
-        MapDF {
-            data: df,
-            func: f,
-            axis: axis,
-        }
-    }
-}
-
-impl<'a, T, S, I, F, B> Iterator for MapDF<'a, T, S, I, F, B>
-    where I: Iterator<Item = (S, RowView<'a, T>)> + Clone,
-          F: Fn(&T) -> B,
-          S: Identifier
-{
-    type Item = (S, Row<B>);
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.data.next() {
-            None => return None,
-            Some((val, dat)) => return Some((val, dat.map(&self.func))),
-        }
-    }
-}
-
-
-
-
 
 #[derive(Clone, Debug)]
 pub struct Select<'a, I, T: 'a, S>
@@ -288,17 +245,6 @@ impl<'a, T, S> Transform<'a, T, S> for DataFrameIterator<'a, T, S>
         Append::new(self, name, data, other, axis)
 
     }
-
-
-
-
-
-    fn mapdf<F, B>(self, f: F) -> MapDF<'a, T, S, Self, F, B>
-        where F: Fn(&T) -> B
-    {
-        let axis = self.axis.clone();
-        MapDF::new(self, f, axis)
-    }
 }
 
 
@@ -384,15 +330,6 @@ impl<'a, I, T, S> Transform<'a, T, S> for Select<'a, I, T, S>
         Append::new(self, name, data, other, axis)
 
     }
-
-
-
-    fn mapdf<F, B>(self, f: F) -> MapDF<'a, T, S, Self, F, B>
-        where F: Fn(&T) -> B
-    {
-        let axis = self.axis.clone();
-        MapDF::new(self, f, axis)
-    }
 }
 
 
@@ -475,16 +412,6 @@ impl<'a, I, T, S> Transform<'a, T, S> for Remove<'a, I, T, S>
         Append::new(self, name, data, other, axis)
 
     }
-
-
-
-
-    fn mapdf<F, B>(self, f: F) -> MapDF<'a, T, S, Self, F, B>
-        where F: Fn(&T) -> B
-    {
-        let axis = self.axis.clone();
-        MapDF::new(self, f, axis)
-    }
 }
 
 
@@ -566,16 +493,6 @@ impl<'a, I, T, S> Transform<'a, T, S> for Append<'a, I, T, S>
         let name = S::from(name);
         Append::new(self, name, data, other, axis)
 
-    }
-
-
-
-    fn mapdf<F, B>(self, f: F) -> MapDF<'a, T, S, Self, F, B>
-        where F: Fn(&T) -> B,
-              Self: Sized + Iterator<Item = (S, RowView<'a, T>)> + Clone
-    {
-        let axis = self.axis.clone();
-        MapDF::new(self, f, axis)
     }
 }
 
