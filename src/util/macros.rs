@@ -15,6 +15,7 @@ macro_rules! dataframe {
 }
 }
 
+#[macro_export]
 macro_rules! col {
     {
         $($element : expr),+
