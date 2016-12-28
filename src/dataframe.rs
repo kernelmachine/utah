@@ -20,7 +20,7 @@ pub struct DataFrame<T>
 
 /// A read-write dataframe
 #[derive(Debug, PartialEq)]
-pub struct MutableDataFrame<'a, T: 'a>
+pub struct DataFrameMut<'a, T: 'a>
     where T: UtahNum
 {
     pub columns: Vec<String>,
@@ -61,7 +61,7 @@ impl<'a, T> Iterator for DataFrameIterator<'a, T>
 }
 
 /// The read-write dataframe iterator
-pub struct MutableDataFrameIterator<'a, T>
+pub struct DataFrameMutIterator<'a, T>
     where T: UtahNum + 'a
 {
     pub names: Iter<'a, String>,
@@ -71,7 +71,7 @@ pub struct MutableDataFrameIterator<'a, T>
 }
 
 
-impl<'a, T> Iterator for MutableDataFrameIterator<'a, T>
+impl<'a, T> Iterator for DataFrameMutIterator<'a, T>
     where T: UtahNum
 {
     type Item = (String, ArrayViewMut1<'a, T>);
@@ -91,7 +91,7 @@ impl<'a, T> Iterator for MutableDataFrameIterator<'a, T>
 }
 
 
-impl<'a, T> MutableDataFrame<'a, T>
+impl<'a, T> DataFrameMut<'a, T>
     where T: 'a + UtahNum
 {
     /// Dereference a mutable dataframe as an owned dataframe.

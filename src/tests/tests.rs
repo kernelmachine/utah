@@ -143,7 +143,7 @@ fn dataframe_mapdf() {
     {
         let a = arr2(&[[2., 3.], [3., 4.]]);
         let mut df: DataFrame<f64> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
-        let _ = df.map(|x| x * 2.0, UtahAxis::Row).as_df();
+        let _ = df.mapdf(|x| x * 2.0, UtahAxis::Row).as_df();
         let b = arr2(&[[4., 6.], [6., 8.]]);
         let expected: DataFrame<f64> = DataFrame::new(b).columns(&["a", "b"]).unwrap();
         assert_eq!(df, expected);
@@ -151,7 +151,7 @@ fn dataframe_mapdf() {
     {
         let a = arr2(&[[2., 3.], [3., 4.]]);
         let mut df: DataFrame<f64> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
-        let _ = df.map(|x| x * 2.0, UtahAxis::Column).as_df();
+        let _ = df.mapdf(|x| x * 2.0, UtahAxis::Column).as_df();
         let b = arr2(&[[4., 6.], [6., 8.]]);
         let expected: DataFrame<f64> = DataFrame::new(b).columns(&["a", "b"]).unwrap();
         assert_eq!(df, expected);

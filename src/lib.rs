@@ -59,11 +59,11 @@
 //!
 //! ### Process combinators
 //!
-//! Process combinators are meant for changing the original data you're working with. Combinators in this class include `impute` and `mapdf`. Impute replaces missing values of a dataframe with the mean of the corresponding column. Not that these operations require the use of a `MutableDataFrame`.
+//! Process combinators are meant for changing the original data you're working with. Combinators in this class include `impute` and `mapdf`. Impute replaces missing values of a dataframe with the mean of the corresponding column. Not that these operations require the use of a `DataFrameMut`.
 //!
 //! ```ignore
 //! use utah::prelude::*;
-//! let mut a: MutableDataFrame<f64> = dataframe!(
+//! let mut a: DataFrameMut<f64> = dataframe!(
 //!     {
 //!         "a" =>  column!([NAN, 3., 2.]),
 //!         "b" =>  column!([2., NAN, 2.])

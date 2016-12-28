@@ -4,12 +4,12 @@
 use util::types::*;
 use util::traits::*;
 use dataframe::*;
-use ndarray::{Array, ArrayView1};
+use ndarray::Array;
 use util::error::*;
 
 #[derive(Clone, Debug)]
 pub struct Sum<'a, I: 'a, T: 'a>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)> + 'a,
+    where I: Iterator<Item = Window<'a, T>> + 'a,
           T: UtahNum
 {
     data: I,
@@ -18,7 +18,7 @@ pub struct Sum<'a, I: 'a, T: 'a>
 }
 
 impl<'a, I, T> Sum<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum
 {
     pub fn new(df: I, other: Vec<String>, axis: UtahAxis) -> Sum<'a, I, T> {
@@ -32,7 +32,7 @@ impl<'a, I, T> Sum<'a, I, T>
 }
 
 impl<'a, I, T> Iterator for Sum<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum
 {
     type Item = T;
@@ -47,7 +47,7 @@ impl<'a, I, T> Iterator for Sum<'a, I, T>
 
 #[derive(Clone, Debug)]
 pub struct Mean<'a, I: 'a, T: 'a>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum
 {
     data: I,
@@ -56,7 +56,7 @@ pub struct Mean<'a, I: 'a, T: 'a>
 }
 
 impl<'a, I, T> Mean<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum + 'a
 {
     pub fn new(df: I, other: Vec<String>, axis: UtahAxis) -> Mean<'a, I, T> {
@@ -70,7 +70,7 @@ impl<'a, I, T> Mean<'a, I, T>
 }
 
 impl<'a, I, T> Iterator for Mean<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum + 'a
 {
     type Item = T;
@@ -90,7 +90,7 @@ impl<'a, I, T> Iterator for Mean<'a, I, T>
 
 #[derive(Clone)]
 pub struct Max<'a, I: 'a, T: 'a>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum
 {
     data: I,
@@ -99,7 +99,7 @@ pub struct Max<'a, I: 'a, T: 'a>
 }
 
 impl<'a, I, T> Max<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum + 'a
 {
     pub fn new(df: I, other: Vec<String>, axis: UtahAxis) -> Max<'a, I, T> {
@@ -113,7 +113,7 @@ impl<'a, I, T> Max<'a, I, T>
 }
 
 impl<'a, I, T> Iterator for Max<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum + Ord + 'a
 {
     type Item = T;
@@ -131,7 +131,7 @@ impl<'a, I, T> Iterator for Max<'a, I, T>
 
 #[derive(Clone, Debug)]
 pub struct Min<'a, I: 'a, T: 'a>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum
 {
     data: I,
@@ -140,7 +140,7 @@ pub struct Min<'a, I: 'a, T: 'a>
 }
 
 impl<'a, I, T> Min<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum + 'a
 {
     pub fn new(df: I, other: Vec<String>, axis: UtahAxis) -> Min<'a, I, T> {
@@ -154,7 +154,7 @@ impl<'a, I, T> Min<'a, I, T>
 }
 
 impl<'a, I, T> Iterator for Min<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum + Ord
 {
     type Item = T;
@@ -171,7 +171,7 @@ impl<'a, I, T> Iterator for Min<'a, I, T>
 
 #[derive(Clone)]
 pub struct Stdev<'a, I: 'a, T: 'a>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum
 {
     data: I,
@@ -180,7 +180,7 @@ pub struct Stdev<'a, I: 'a, T: 'a>
 }
 
 impl<'a, I, T> Stdev<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum + 'a
 {
     pub fn new(df: I, other: Vec<String>, axis: UtahAxis) -> Stdev<'a, I, T> {
@@ -195,7 +195,7 @@ impl<'a, I, T> Stdev<'a, I, T>
 
 
 impl<'a, I, T> ToDataFrame<'a, T, T> for Mean<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum
 {
     fn as_df(self) -> Result<DataFrame<T>> {
@@ -247,7 +247,7 @@ impl<'a, I, T> ToDataFrame<'a, T, T> for Mean<'a, I, T>
 
 
 impl<'a, I, T> ToDataFrame<'a, T, T> for Max<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum + Ord
 {
     fn as_df(self) -> Result<DataFrame<T>> {
@@ -298,7 +298,7 @@ impl<'a, I, T> ToDataFrame<'a, T, T> for Max<'a, I, T>
 
 
 impl<'a, I, T> ToDataFrame<'a, T, T> for Min<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum + Ord
 {
     fn as_df(self) -> Result<DataFrame<T>> {
@@ -349,7 +349,7 @@ impl<'a, I, T> ToDataFrame<'a, T, T> for Min<'a, I, T>
 
 
 impl<'a, I, T> ToDataFrame<'a, T, T> for Sum<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+    where I: Iterator<Item = Window<'a, T>>,
           T: UtahNum
 {
     fn as_df(self) -> Result<DataFrame<T>> {

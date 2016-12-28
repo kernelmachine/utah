@@ -159,7 +159,7 @@ impl<'a, T> Operations<'a, T> for DataFrame<T>
     }
 
     /// Map a function along the specified `UtahAxis`.
-    fn map<F>(&'a mut self, f: F, axis: UtahAxis) -> MapDFIter<'a, T, F>
+    fn mapdf<F>(&'a mut self, f: F, axis: UtahAxis) -> MapDFIter<'a, T, F>
         where F: Fn(T) -> T
     {
         let columns = self.columns.clone();

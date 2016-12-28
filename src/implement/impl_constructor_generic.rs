@@ -186,10 +186,10 @@ impl<'a, T> Constructor<'a, T> for DataFrame<T>
     /// let mut df : DataFrame<f64> = DataFrame::new(a);
     /// let df_iter_mut = df.df_iter_mut(UtahAxis::Column);
     /// ```
-    fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a, T> {
+    fn df_iter_mut(&'a mut self, axis: UtahAxis) -> DataFrameMutIterator<'a, T> {
         match axis {
             UtahAxis::Row => {
-                MutableDataFrameIterator {
+                DataFrameMutIterator {
                     names: self.index.iter(),
                     data: self.data.axis_iter_mut(Axis(0)),
                     axis: UtahAxis::Row,
@@ -197,7 +197,7 @@ impl<'a, T> Constructor<'a, T> for DataFrame<T>
                 }
             }
             UtahAxis::Column => {
-                MutableDataFrameIterator {
+                DataFrameMutIterator {
                     names: self.columns.iter(),
                     data: self.data.axis_iter_mut(Axis(1)),
                     axis: UtahAxis::Row,

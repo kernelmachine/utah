@@ -12,7 +12,7 @@ use util::traits::*;
 
 #[derive(Clone, Debug)]
 pub struct Concat<'a, I, T: 'a>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>
+    where I: Iterator<Item = Window<'a, T>>
 {
     pub concat_data: I,
     pub concat_other: Vec<String>,
@@ -23,7 +23,7 @@ pub struct Concat<'a, I, T: 'a>
 
 
 impl<'a, I, T> Concat<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>
+    where I: Iterator<Item = Window<'a, T>>
 {
     pub fn new(left_df: I,
                right_df: I,
@@ -42,9 +42,9 @@ impl<'a, I, T> Concat<'a, I, T>
 }
 
 impl<'a, I, T> Iterator for Concat<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)>
+    where I: Iterator<Item = Window<'a, T>>
 {
-    type Item = (String, ArrayView1<'a, T>);
+    type Item = Window<'a, T>;
     fn next(&mut self) -> Option<Self::Item> {
         self.concat_data.next()
     }
@@ -52,7 +52,7 @@ impl<'a, I, T> Iterator for Concat<'a, I, T>
 
 #[derive(Clone)]
 pub struct InnerJoin<'a, L, T>
-    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+    where L: Iterator<Item = Window<'a, T>> + Clone,
           T: UtahNum + 'a
 {
     pub left: L,
@@ -62,7 +62,7 @@ pub struct InnerJoin<'a, L, T>
 }
 
 impl<'a, L, T> InnerJoin<'a, L, T>
-    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+    where L: Iterator<Item = Window<'a, T>> + Clone,
           T: UtahNum + 'a
 {
     pub fn new<RI>(left: L,
@@ -70,7 +70,7 @@ impl<'a, L, T> InnerJoin<'a, L, T>
                    left_columns: Vec<String>,
                    right_columns: Vec<String>)
                    -> Self
-        where RI: Iterator<Item = (String, ArrayView1<'a, T>)>
+        where RI: Iterator<Item = Window<'a, T>>
     {
         InnerJoin {
             left: left,
@@ -84,7 +84,7 @@ impl<'a, L, T> InnerJoin<'a, L, T>
 
 
 impl<'a, L, T> Iterator for InnerJoin<'a, L, T>
-    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+    where L: Iterator<Item = Window<'a, T>> + Clone,
           T: UtahNum + 'a
 {
     type Item = (String, ArrayView1<'a, T>, ArrayView1<'a, T>);
@@ -111,7 +111,7 @@ impl<'a, L, T> Iterator for InnerJoin<'a, L, T>
 
 #[derive(Clone)]
 pub struct OuterJoin<'a, L, T>
-    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+    where L: Iterator<Item = Window<'a, T>> + Clone,
           T: UtahNum + 'a
 {
     left: L,
@@ -122,7 +122,7 @@ pub struct OuterJoin<'a, L, T>
 
 
 impl<'a, L, T> OuterJoin<'a, L, T>
-    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+    where L: Iterator<Item = Window<'a, T>> + Clone,
           T: UtahNum + 'a
 {
     pub fn new<RI>(left: L,
@@ -130,7 +130,7 @@ impl<'a, L, T> OuterJoin<'a, L, T>
                    left_columns: Vec<String>,
                    right_columns: Vec<String>)
                    -> Self
-        where RI: Iterator<Item = (String, ArrayView1<'a, T>)>
+        where RI: Iterator<Item = Window<'a, T>>
     {
         OuterJoin {
             left: left,
@@ -143,7 +143,7 @@ impl<'a, L, T> OuterJoin<'a, L, T>
 
 
 impl<'a, L, T> Iterator for OuterJoin<'a, L, T>
-    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+    where L: Iterator<Item = Window<'a, T>> + Clone,
           T: UtahNum + 'a
 {
     type Item = (String, ArrayView1<'a, T>, Option<ArrayView1<'a, T>>);
@@ -168,7 +168,7 @@ impl<'a, L, T> Iterator for OuterJoin<'a, L, T>
 
 impl<'a, L, T> ToDataFrame<'a, (String, ArrayView1<'a, T>, ArrayView1<'a, T>), T>
     for InnerJoin<'a, L, T>
-    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+    where L: Iterator<Item = Window<'a, T>> + Clone,
           T: UtahNum{
     fn as_df(self) -> Result<DataFrame<T>> {
 
@@ -234,7 +234,7 @@ impl<'a, L, T> ToDataFrame<'a, (String, ArrayView1<'a, T>, ArrayView1<'a, T>), T
 
 impl<'a, L,T> ToDataFrame<'a, (String, ArrayView1<'a, T>, Option<ArrayView1<'a, T>>), T>
     for OuterJoin<'a, L, T>
-    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+    where L: Iterator<Item = Window<'a, T>> + Clone,
           T: UtahNum{
     fn as_df(self) -> Result<DataFrame<T>> {
 
@@ -312,8 +312,8 @@ impl<'a, L,T> ToDataFrame<'a, (String, ArrayView1<'a, T>, Option<ArrayView1<'a, 
 
 
 
-impl<'a, I, T> ToDataFrame<'a, (String, ArrayView1<'a, T>), T> for Concat<'a, I, T>
-    where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+impl<'a, I, T> ToDataFrame<'a, Window<'a, T>, T> for Concat<'a, I, T>
+    where I: Iterator<Item = Window<'a, T>> + Clone,
           T: UtahNum
 {
     fn as_df(self) -> Result<DataFrame<T>> {

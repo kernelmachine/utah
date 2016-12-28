@@ -1,10 +1,10 @@
-use ndarray::{Array2, Array1, ArrayView1, ArrayView2};
+use ndarray::{Array2, Array1, ArrayView1, ArrayView2, ArrayViewMut1};
 use combinators::transform::*;
 use combinators::interact::*;
 use combinators::aggregate::*;
 use combinators::process::*;
 use std::iter::Chain;
-use dataframe::{DataFrameIterator, MutableDataFrameIterator};
+use dataframe::{DataFrameIterator, DataFrameMutIterator};
 
 
 #[derive( Clone, Debug, Copy)]
@@ -42,5 +42,8 @@ pub type MaxIter<'a, T> = Max<'a, DFIter<'a, T>, T>;
 pub type MinIter<'a, T> = Min<'a, DFIter<'a, T>, T>;
 pub type StdevIter<'a, T> = Stdev<'a, DFIter<'a, T>, T>;
 pub type MeanIter<'a, T> = Mean<'a, DFIter<'a, T>, T>;
-pub type MapDFIter<'a, T, F> = MapDF<'a, T, MutableDataFrameIterator<'a, T>, F>;
-pub type ImputeIter<'a, T> = Impute<'a, MutableDataFrameIterator<'a, T>, T>;
+pub type MapDFIter<'a, T, F> = MapDF<'a, T, DataFrameMutIterator<'a, T>, F>;
+pub type ImputeIter<'a, T> = Impute<'a, DataFrameMutIterator<'a, T>, T>;
+
+pub type WindowMut<'a, T> = (String, ArrayViewMut1<'a, T>);
+pub type Window<'a, T> = (String, ArrayView1<'a, T>);
