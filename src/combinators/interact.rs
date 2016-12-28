@@ -11,27 +11,25 @@ use util::error::*;
 use util::traits::*;
 
 #[derive(Clone, Debug)]
-pub struct Concat<'a, I, T: 'a, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
-          S: Identifier
+pub struct Concat<'a, I, T: 'a>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)>
 {
     pub concat_data: I,
-    pub concat_other: Vec<S>,
+    pub concat_other: Vec<String>,
     pub axis: UtahAxis,
 }
 
 
 
 
-impl<'a, I, T, S> Concat<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
-          S: Identifier
+impl<'a, I, T> Concat<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)>
 {
     pub fn new(left_df: I,
                right_df: I,
-               left_other: Vec<S>,
+               left_other: Vec<String>,
                axis: UtahAxis)
-               -> Concat<'a, Chain<I, I>, T, S> {
+               -> Concat<'a, Chain<I, I>, T> {
 
         let it = left_df.chain(right_df);
 
@@ -43,35 +41,36 @@ impl<'a, I, T, S> Concat<'a, I, T, S>
     }
 }
 
-impl<'a, I, T, S> Iterator for Concat<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
-          S: Identifier
+impl<'a, I, T> Iterator for Concat<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)>
 {
-    type Item = (S, ArrayView1<'a, T>);
+    type Item = (String, ArrayView1<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         self.concat_data.next()
     }
 }
 
 #[derive(Clone)]
-pub struct InnerJoin<'a, L, T, S>
-    where L: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num + 'a,
-          S: Identifier
+pub struct InnerJoin<'a, L, T>
+    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num + 'a
 {
     pub left: L,
-    pub right: HashMap<S, ArrayView1<'a, T>>,
-    pub left_columns: Vec<S>,
-    pub right_columns: Vec<S>,
+    pub right: HashMap<String, ArrayView1<'a, T>>,
+    pub left_columns: Vec<String>,
+    pub right_columns: Vec<String>,
 }
 
-impl<'a, L, T, S> InnerJoin<'a, L, T, S>
-    where L: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num + 'a,
-          S: Identifier
+impl<'a, L, T> InnerJoin<'a, L, T>
+    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num + 'a
 {
-    pub fn new<RI>(left: L, right: RI, left_columns: Vec<S>, right_columns: Vec<S>) -> Self
-        where RI: Iterator<Item = (S, ArrayView1<'a, T>)>
+    pub fn new<RI>(left: L,
+                   right: RI,
+                   left_columns: Vec<String>,
+                   right_columns: Vec<String>)
+                   -> Self
+        where RI: Iterator<Item = (String, ArrayView1<'a, T>)>
     {
         InnerJoin {
             left: left,
@@ -84,12 +83,11 @@ impl<'a, L, T, S> InnerJoin<'a, L, T, S>
 
 
 
-impl<'a, L, T, S> Iterator for InnerJoin<'a, L, T, S>
-    where L: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num + 'a,
-          S: Identifier
+impl<'a, L, T> Iterator for InnerJoin<'a, L, T>
+    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num + 'a
 {
-    type Item = (S, ArrayView1<'a, T>, ArrayView1<'a, T>);
+    type Item = (String, ArrayView1<'a, T>, ArrayView1<'a, T>);
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -112,25 +110,27 @@ impl<'a, L, T, S> Iterator for InnerJoin<'a, L, T, S>
 }
 
 #[derive(Clone)]
-pub struct OuterJoin<'a, L, T, S>
-    where L: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num + 'a,
-          S: Identifier
+pub struct OuterJoin<'a, L, T>
+    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num + 'a
 {
     left: L,
-    right: HashMap<S, ArrayView1<'a, T>>,
-    left_columns: Vec<S>,
-    right_columns: Vec<S>,
+    right: HashMap<String, ArrayView1<'a, T>>,
+    left_columns: Vec<String>,
+    right_columns: Vec<String>,
 }
 
 
-impl<'a, L, T, S> OuterJoin<'a, L, T, S>
-    where L: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num + 'a,
-          S: Identifier
+impl<'a, L, T> OuterJoin<'a, L, T>
+    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num + 'a
 {
-    pub fn new<RI>(left: L, right: RI, left_columns: Vec<S>, right_columns: Vec<S>) -> Self
-        where RI: Iterator<Item = (S, ArrayView1<'a, T>)>
+    pub fn new<RI>(left: L,
+                   right: RI,
+                   left_columns: Vec<String>,
+                   right_columns: Vec<String>)
+                   -> Self
+        where RI: Iterator<Item = (String, ArrayView1<'a, T>)>
     {
         OuterJoin {
             left: left,
@@ -142,12 +142,11 @@ impl<'a, L, T, S> OuterJoin<'a, L, T, S>
 }
 
 
-impl<'a, L, T, S> Iterator for OuterJoin<'a, L, T, S>
-    where L: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num + 'a,
-          S: Identifier
+impl<'a, L, T> Iterator for OuterJoin<'a, L, T>
+    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num + 'a
 {
-    type Item = (S, ArrayView1<'a, T>, Option<ArrayView1<'a, T>>);
+    type Item = (String, ArrayView1<'a, T>, Option<ArrayView1<'a, T>>);
 
     fn next(&mut self) -> Option<Self::Item> {
 
@@ -167,13 +166,11 @@ impl<'a, L, T, S> Iterator for OuterJoin<'a, L, T, S>
 }
 
 
-impl<'a, L, T, S> ToDataFrame<'a, (S, ArrayView1<'a, T>, ArrayView1<'a, T>), T, S>
-    for InnerJoin<'a, L, T, S>
-    where L: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num,
-          S: Identifier
-{
-    fn as_df(self) -> Result<DataFrame<T, S>> {
+impl<'a, L, T> ToDataFrame<'a, (String, ArrayView1<'a, T>, ArrayView1<'a, T>), T>
+    for InnerJoin<'a, L, T>
+    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num{
+    fn as_df(self) -> Result<DataFrame<T>> {
 
         let s = self.clone();
         let right_columns = self.right_columns.clone();
@@ -197,7 +194,6 @@ impl<'a, L, T, S> ToDataFrame<'a, (S, ArrayView1<'a, T>, ArrayView1<'a, T>), T, 
 
         let d = Array::from_shape_vec(res_dim, c).unwrap().mapv(|x| x.to_owned());
         let df = DataFrame::new(d).columns(&columns[..])?.index(&n[..])?;
-        println!("{:?}", df);
 
         Ok(df)
 
@@ -236,13 +232,13 @@ impl<'a, L, T, S> ToDataFrame<'a, (S, ArrayView1<'a, T>, ArrayView1<'a, T>), T, 
 }
 
 
-impl<'a, L,T,S> ToDataFrame<'a, (S, ArrayView1<'a, T>, Option<ArrayView1<'a, T>>), T, S>
-    for OuterJoin<'a, L, T, S>
-    where L: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
+impl<'a, L,T,S> ToDataFrame<'a, (S, ArrayView1<'a, T>, Option<ArrayView1<'a, T>>), T>
+    for OuterJoin<'a, L, T>
+    where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
           T: Num,
           S: Identifier
 {
-    fn as_df(self) -> Result<DataFrame<T, S>> {
+    fn as_df(self) -> Result<DataFrame<T>> {
 
         let s = self.clone();
         let right_columns = self.right_columns.clone();
@@ -318,12 +314,11 @@ impl<'a, L,T,S> ToDataFrame<'a, (S, ArrayView1<'a, T>, Option<ArrayView1<'a, T>>
 
 
 
-impl<'a, I, T, S> ToDataFrame<'a, (S, ArrayView1<'a, T>), T, S> for Concat<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num,
-          S: Identifier
+impl<'a, I, T> ToDataFrame<'a, (String, ArrayView1<'a, T>), T> for Concat<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num
 {
-    fn as_df(self) -> Result<DataFrame<T, S>> {
+    fn as_df(self) -> Result<DataFrame<T>> {
 
         let s = self.clone();
         let axis = self.axis.clone();

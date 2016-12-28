@@ -9,9 +9,8 @@ use dataframe::*;
 use ndarray::ArrayView1;
 
 #[cfg(not(feature = "specialization"))]
-impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
-    where T: 'a + Num,
-          S: Identifier
+impl<'a, T> Operations<'a, T> for DataFrame<T>
+    where T: 'a + Num
 {
     /// Get the dimensions of the dataframe.
     fn shape(self) -> (usize, usize) {
@@ -21,10 +20,10 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
 
 
     /// Select rows or columns over the specified `UtahAxis`.
-    fn select<U: ?Sized>(&'a self, names: &'a [&'a U], axis: UtahAxis) -> SelectIter<'a, T, S>
-        where S: From<&'a U>
+    fn select<U: ?Sized>(&'a self, names: &'a [&'a U], axis: UtahAxis) -> SelectIter<'a, T>
+        where String: From<&'a U>
     {
-        let names: Vec<S> = names.iter()
+        let names: Vec<String> = names.iter()
             .map(|x| (*x).into())
             .collect();
         match axis {
@@ -44,10 +43,10 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Remove rows or columns over the specified `UtahAxis`.
-    fn remove<U: ?Sized>(&'a self, names: &'a [&'a U], axis: UtahAxis) -> RemoveIter<'a, T, S>
-        where S: From<&'a U>
+    fn remove<U: ?Sized>(&'a self, names: &'a [&'a U], axis: UtahAxis) -> RemoveIter<'a, T>
+        where String: From<&'a U>
     {
-        let names: Vec<S> = names.iter()
+        let names: Vec<String> = names.iter()
             .map(|x| (*x).into())
             .collect();
         match axis {
@@ -71,10 +70,10 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
                          name: &'a U,
                          data: ArrayView1<'a, T>,
                          axis: UtahAxis)
-                         -> AppendIter<'a, T, S>
-        where S: From<&'a U>
+                         -> AppendIter<'a, T>
+        where String: From<&'a U>
     {
-        let name: S = name.into();
+        let name: String = name.into();
         match axis {
             UtahAxis::Row => {
                 Append::new(self.df_iter(UtahAxis::Row),
@@ -96,7 +95,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
 
 
     /// Perform an inner left join between two dataframes along the specified `UtahAxis`.
-    fn inner_left_join(&'a self, other: &'a DataFrame<T, S>) -> InnerJoinIter<'a, T, S> {
+    fn inner_left_join(&'a self, other: &'a DataFrame<T>) -> InnerJoinIter<'a, T> {
         InnerJoin::new(self.df_iter(UtahAxis::Row),
                        other.df_iter(UtahAxis::Row),
                        self.columns.clone(),
@@ -104,7 +103,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Perform an outer left join between two dataframes along the specified `UtahAxis`.
-    fn outer_left_join(&'a self, other: &'a DataFrame<T, S>) -> OuterJoinIter<'a, T, S> {
+    fn outer_left_join(&'a self, other: &'a DataFrame<T>) -> OuterJoinIter<'a, T> {
 
         OuterJoin::new(self.df_iter(UtahAxis::Row),
                        other.df_iter(UtahAxis::Row),
@@ -113,7 +112,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Perform an inner right join between two dataframes along the specified `UtahAxis`.
-    fn inner_right_join(&'a self, other: &'a DataFrame<T, S>) -> InnerJoinIter<'a, T, S> {
+    fn inner_right_join(&'a self, other: &'a DataFrame<T>) -> InnerJoinIter<'a, T> {
         InnerJoin::new(other.df_iter(UtahAxis::Row),
                        self.df_iter(UtahAxis::Row),
                        other.columns.clone(),
@@ -122,7 +121,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Perform an outer right join between two dataframes along the specified `UtahAxis`.
-    fn outer_right_join(&'a self, other: &'a DataFrame<T, S>) -> OuterJoinIter<'a, T, S> {
+    fn outer_right_join(&'a self, other: &'a DataFrame<T>) -> OuterJoinIter<'a, T> {
         OuterJoin::new(other.df_iter(UtahAxis::Row),
                        self.df_iter(UtahAxis::Row),
                        other.columns.clone(),
@@ -130,7 +129,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
 
     }
 
-    fn concat(&'a self, other: &'a DataFrame<T, S>, axis: UtahAxis) -> ConcatIter<'a, T, S> {
+    fn concat(&'a self, other: &'a DataFrame<T>, axis: UtahAxis) -> ConcatIter<'a, T> {
         match axis {
             UtahAxis::Row => {
                 Concat::new(self.df_iter(UtahAxis::Column),
@@ -149,7 +148,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
 
 
     /// Sum along the specified `UtahAxis`.
-    fn sumdf(&'a mut self, axis: UtahAxis) -> SumIter<'a, T, S> {
+    fn sumdf(&'a mut self, axis: UtahAxis) -> SumIter<'a, T> {
         let columns = self.columns.clone();
         let index = self.index.clone();
         match axis {
@@ -160,7 +159,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Map a function along the specified `UtahAxis`.
-    fn map<F>(&'a mut self, f: F, axis: UtahAxis) -> MapDFIter<'a, T, S, F>
+    fn map<F>(&'a mut self, f: F, axis: UtahAxis) -> MapDFIter<'a, T, F>
         where F: Fn(T) -> T
     {
         let columns = self.columns.clone();
@@ -177,7 +176,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
         }
     }
     /// Get the average of entries along the specified `UtahAxis`.
-    fn mean(&'a mut self, axis: UtahAxis) -> MeanIter<'a, T, S> {
+    fn mean(&'a mut self, axis: UtahAxis) -> MeanIter<'a, T> {
 
         let columns = self.columns.clone();
         let index = self.index.clone();
@@ -191,7 +190,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Get the maximum of entries along the specified `UtahAxis`.
-    fn maxdf(&'a mut self, axis: UtahAxis) -> MaxIter<'a, T, S> {
+    fn maxdf(&'a mut self, axis: UtahAxis) -> MaxIter<'a, T> {
 
         let columns = self.columns.clone();
         let index = self.index.clone();
@@ -203,7 +202,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Get the minimum of entries along the specified `UtahAxis`.
-    fn mindf(&'a mut self, axis: UtahAxis) -> MinIter<'a, T, S> {
+    fn mindf(&'a mut self, axis: UtahAxis) -> MinIter<'a, T> {
 
         let columns = self.columns.clone();
         let index = self.index.clone();
@@ -216,7 +215,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Replace empty values with specified ImputeStrategy along the specified `UtahAxis`.
-    fn impute(&'a mut self, strategy: ImputeStrategy, axis: UtahAxis) -> ImputeIter<'a, T, S> {
+    fn impute(&'a mut self, strategy: ImputeStrategy, axis: UtahAxis) -> ImputeIter<'a, T> {
 
         let index = self.index.clone();
         let columns = self.columns.clone();
@@ -240,7 +239,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
 
 
 #[cfg(feature = "specialization")]
-impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
+impl<'a, T> Operations<'a, T> for DataFrame<T>
     where T: 'a + Num,
           S: Identifier
 {
@@ -252,11 +251,8 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
 
 
     /// Select rows or columns over the specified `UtahAxis`.
-    default fn select<U: ?Sized>(&'a self,
-                                 names: &'a [&'a U],
-                                 axis: UtahAxis)
-                                 -> SelectIter<'a, T, S>
-        where S: From<&'a U>
+    default fn select<U: ?Sized>(&'a self, names: &'a [&'a U], axis: UtahAxis) -> SelectIter<'a, T>
+        where String: From<&'a U>
     {
         let names: Vec<S> = names.iter()
             .map(|x| (*x).into())
@@ -278,11 +274,8 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Remove rows or columns over the specified `UtahAxis`.
-    default fn remove<U: ?Sized>(&'a self,
-                                 names: &'a [&'a U],
-                                 axis: UtahAxis)
-                                 -> RemoveIter<'a, T, S>
-        where S: From<&'a U>
+    default fn remove<U: ?Sized>(&'a self, names: &'a [&'a U], axis: UtahAxis) -> RemoveIter<'a, T>
+        where String: From<&'a U>
     {
         let names: Vec<S> = names.iter()
             .map(|x| (*x).into())
@@ -308,8 +301,8 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
                                  name: &'a U,
                                  data: ArrayView1<'a, T>,
                                  axis: UtahAxis)
-                                 -> AppendIter<'a, T, S>
-        where S: From<&'a U>
+                                 -> AppendIter<'a, T>
+        where String: From<&'a U>
     {
         let name: S = name.into();
         match axis {
@@ -333,7 +326,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
 
 
     /// Perform an inner left join between two dataframes along the specified `UtahAxis`.
-    default fn inner_left_join(&'a self, other: &'a DataFrame<T, S>) -> InnerJoinIter<'a, T, S> {
+    default fn inner_left_join(&'a self, other: &'a DataFrame<T>) -> InnerJoinIter<'a, T> {
         InnerJoin::new(self.df_iter(UtahAxis::Row),
                        other.df_iter(UtahAxis::Row),
                        self.columns.clone(),
@@ -341,7 +334,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Perform an outer left join between two dataframes along the specified `UtahAxis`.
-    default fn outer_left_join(&'a self, other: &'a DataFrame<T, S>) -> OuterJoinIter<'a, T, S> {
+    default fn outer_left_join(&'a self, other: &'a DataFrame<T>) -> OuterJoinIter<'a, T> {
 
         OuterJoin::new(self.df_iter(UtahAxis::Row),
                        other.df_iter(UtahAxis::Row),
@@ -350,7 +343,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Perform an inner right join between two dataframes along the specified `UtahAxis`.
-    default fn inner_right_join(&'a self, other: &'a DataFrame<T, S>) -> InnerJoinIter<'a, T, S> {
+    default fn inner_right_join(&'a self, other: &'a DataFrame<T>) -> InnerJoinIter<'a, T> {
         InnerJoin::new(other.df_iter(UtahAxis::Row),
                        self.df_iter(UtahAxis::Row),
                        other.columns.clone(),
@@ -359,7 +352,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Perform an outer right join between two dataframes along the specified `UtahAxis`.
-    default fn outer_right_join(&'a self, other: &'a DataFrame<T, S>) -> OuterJoinIter<'a, T, S> {
+    default fn outer_right_join(&'a self, other: &'a DataFrame<T>) -> OuterJoinIter<'a, T> {
         OuterJoin::new(other.df_iter(UtahAxis::Row),
                        self.df_iter(UtahAxis::Row),
                        other.columns.clone(),
@@ -367,10 +360,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
 
     }
 
-    default fn concat(&'a self,
-                      other: &'a DataFrame<T, S>,
-                      axis: UtahAxis)
-                      -> ConcatIter<'a, T, S> {
+    default fn concat(&'a self, other: &'a DataFrame<T>, axis: UtahAxis) -> ConcatIter<'a, T> {
         match axis {
             UtahAxis::Row => {
                 Concat::new(self.df_iter(UtahAxis::Column),
@@ -389,7 +379,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
 
 
     /// Sum along the specified `UtahAxis`.
-    default fn sumdf(&'a mut self, axis: UtahAxis) -> SumIter<'a, T, S> {
+    default fn sumdf(&'a mut self, axis: UtahAxis) -> SumIter<'a, T> {
         let columns = self.columns.clone();
         let index = self.index.clone();
         match axis {
@@ -400,7 +390,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Map a function along the specified `UtahAxis`.
-    default fn map<F>(&'a mut self, f: F, axis: UtahAxis) -> MapDFIter<'a, T, S, F>
+    default fn map<F>(&'a mut self, f: F, axis: UtahAxis) -> MapDFIter<'a, T, F>
         where F: Fn(T) -> T
     {
         let columns = self.columns.clone();
@@ -417,7 +407,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
         }
     }
     /// Get the average of entries along the specified `UtahAxis`.
-    default fn mean(&'a mut self, axis: UtahAxis) -> MeanIter<'a, T, S> {
+    default fn mean(&'a mut self, axis: UtahAxis) -> MeanIter<'a, T> {
 
         let columns = self.columns.clone();
         let index = self.index.clone();
@@ -431,7 +421,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Get the maximum of entries along the specified `UtahAxis`.
-    default fn maxdf(&'a mut self, axis: UtahAxis) -> MaxIter<'a, T, S> {
+    default fn maxdf(&'a mut self, axis: UtahAxis) -> MaxIter<'a, T> {
 
         let columns = self.columns.clone();
         let index = self.index.clone();
@@ -443,7 +433,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Get the minimum of entries along the specified `UtahAxis`.
-    default fn mindf(&'a mut self, axis: UtahAxis) -> MinIter<'a, T, S> {
+    default fn mindf(&'a mut self, axis: UtahAxis) -> MinIter<'a, T> {
 
         let columns = self.columns.clone();
         let index = self.index.clone();
@@ -456,10 +446,7 @@ impl<'a, T, S> Operations<'a, T, S> for DataFrame<T, S>
     }
 
     /// Replace empty values with specified ImputeStrategy along the specified `UtahAxis`.
-    default fn impute(&'a mut self,
-                      strategy: ImputeStrategy,
-                      axis: UtahAxis)
-                      -> ImputeIter<'a, T, S> {
+    default fn impute(&'a mut self, strategy: ImputeStrategy, axis: UtahAxis) -> ImputeIter<'a, T> {
 
         let index = self.index.clone();
         let columns = self.columns.clone();

@@ -10,47 +10,43 @@ use ndarray::{ArrayView1, ArrayViewMut1, Dim, Ix};
 
 /// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
-pub struct DataFrame<T, S>
-    where T: Num,
-          S: Identifier
+pub struct DataFrame<T>
+    where T: Num
 {
-    pub columns: Vec<S>,
+    pub columns: Vec<String>,
     pub data: Matrix<T>,
-    pub index: Vec<S>,
+    pub index: Vec<String>,
 }
 
 /// A read-write dataframe
 #[derive(Debug, PartialEq)]
-pub struct MutableDataFrame<'a, T: 'a, S>
-    where T: Num,
-          S: Identifier + Clone
+pub struct MutableDataFrame<'a, T: 'a>
+    where T: Num
 {
-    pub columns: Vec<S>,
+    pub columns: Vec<String>,
     pub data: MatrixMut<'a, T>,
-    pub index: Vec<S>,
+    pub index: Vec<String>,
 }
 
 
 /// The read-only dataframe iterator
 #[derive(Clone)]
-pub struct DataFrameIterator<'a, T: 'a, S: 'a>
-    where T: Num,
-          S: Identifier
+pub struct DataFrameIterator<'a, T: 'a>
+    where T: Num
 {
-    pub names: Iter<'a, S>,
+    pub names: Iter<'a, String>,
     pub data: AxisIter<'a, T, Dim<[Ix; 1]>>,
-    pub other: Vec<S>,
+    pub other: Vec<String>,
     pub axis: UtahAxis,
 }
 
 
 
 
-impl<'a, T, S> Iterator for DataFrameIterator<'a, T, S>
-    where T: Num,
-          S: Identifier
+impl<'a, T> Iterator for DataFrameIterator<'a, T>
+    where T: Num
 {
-    type Item = (S, ArrayView1<'a, T>);
+    type Item = (String, ArrayView1<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         match self.names.next() {
             Some(val) => {
@@ -65,22 +61,20 @@ impl<'a, T, S> Iterator for DataFrameIterator<'a, T, S>
 }
 
 /// The read-write dataframe iterator
-pub struct MutableDataFrameIterator<'a, T, S>
-    where T: Num + 'a,
-          S: Identifier + 'a
+pub struct MutableDataFrameIterator<'a, T>
+    where T: Num + 'a
 {
-    pub names: Iter<'a, S>,
+    pub names: Iter<'a, String>,
     pub data: AxisIterMut<'a, T, Dim<[Ix; 1]>>,
-    pub other: Vec<S>,
+    pub other: Vec<String>,
     pub axis: UtahAxis,
 }
 
 
-impl<'a, T, S> Iterator for MutableDataFrameIterator<'a, T, S>
-    where T: Num,
-          S: Identifier
+impl<'a, T> Iterator for MutableDataFrameIterator<'a, T>
+    where T: Num
 {
-    type Item = (S, ArrayViewMut1<'a, T>);
+    type Item = (String, ArrayViewMut1<'a, T>);
 
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -97,12 +91,11 @@ impl<'a, T, S> Iterator for MutableDataFrameIterator<'a, T, S>
 }
 
 
-impl<'a, T, S> MutableDataFrame<'a, T, S>
-    where T: 'a + Num,
-          S: Identifier
+impl<'a, T> MutableDataFrame<'a, T>
+    where T: 'a + Num
 {
     /// Dereference a mutable dataframe as an owned dataframe.
-    pub fn to_df(self) -> Result<DataFrame<T, S>> {
+    pub fn to_df(self) -> Result<DataFrame<T>> {
         let d = self.data.map(|x| ((*x).clone()));
         let df = DataFrame::new(d).columns(&self.columns[..])?.index(&self.index[..])?;
         Ok(df)

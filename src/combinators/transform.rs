@@ -12,22 +12,20 @@ use util::error::*;
 
 
 #[derive(Clone, Debug)]
-pub struct Select<'a, I, T: 'a, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
-          S: Identifier
+pub struct Select<'a, I, T: 'a>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)>
 {
     pub data: I,
-    pub ind: Vec<S>,
-    pub other: Vec<S>,
+    pub ind: Vec<String>,
+    pub other: Vec<String>,
     pub axis: UtahAxis,
 }
 
 
-impl<'a, I, T, S> Select<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
-          S: Identifier
+impl<'a, I, T> Select<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)>
 {
-    pub fn new(df: I, ind: Vec<S>, other: Vec<S>, axis: UtahAxis) -> Select<'a, I, T, S> {
+    pub fn new(df: I, ind: Vec<String>, other: Vec<String>, axis: UtahAxis) -> Select<'a, I, T> {
 
         Select {
             data: df,
@@ -41,11 +39,10 @@ impl<'a, I, T, S> Select<'a, I, T, S>
 
 
 
-impl<'a, I, T, S> Iterator for Select<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
-          S: Identifier
+impl<'a, I, T> Iterator for Select<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)>
 {
-    type Item = (S, ArrayView1<'a, T>);
+    type Item = (String, ArrayView1<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.data.next() {
@@ -65,22 +62,20 @@ impl<'a, I, T, S> Iterator for Select<'a, I, T, S>
 }
 
 #[derive(Clone, Debug)]
-pub struct Remove<'a, I, T: 'a, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
-          S: Identifier
+pub struct Remove<'a, I, T: 'a>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)>
 {
     pub data: I,
-    pub ind: Vec<S>,
-    pub other: Vec<S>,
+    pub ind: Vec<String>,
+    pub other: Vec<String>,
     pub axis: UtahAxis,
 }
 
 
-impl<'a, I, T, S> Remove<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
-          S: Identifier
+impl<'a, I, T> Remove<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)>
 {
-    pub fn new(df: I, ind: Vec<S>, other: Vec<S>, axis: UtahAxis) -> Remove<'a, I, T, S> {
+    pub fn new(df: I, ind: Vec<String>, other: Vec<String>, axis: UtahAxis) -> Remove<'a, I, T> {
 
         Remove {
             data: df,
@@ -93,11 +88,10 @@ impl<'a, I, T, S> Remove<'a, I, T, S>
 
 
 
-impl<'a, I, T, S> Iterator for Remove<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
-          S: Identifier
+impl<'a, I, T> Iterator for Remove<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)>
 {
-    type Item = (S, ArrayView1<'a, T>);
+    type Item = (String, ArrayView1<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.data.next() {
@@ -115,30 +109,28 @@ impl<'a, I, T, S> Iterator for Remove<'a, I, T, S>
 }
 
 #[derive(Clone)]
-pub struct Append<'a, I, T: 'a, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
-          T: Num,
-          S: Identifier
+pub struct Append<'a, I, T: 'a>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+          T: Num
 {
     pub new_data: PutBack<I>,
-    pub other: Vec<S>,
+    pub other: Vec<String>,
     pub axis: UtahAxis,
 }
 
 
 
 
-impl<'a, I, T, S> Append<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
-          T: Num,
-          S: Identifier
+impl<'a, I, T> Append<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+          T: Num
 {
     pub fn new(df: I,
-               name: S,
+               name: String,
                data: ArrayView1<'a, T>,
-               other: Vec<S>,
+               other: Vec<String>,
                axis: UtahAxis)
-               -> Append<'a, I, T, S> {
+               -> Append<'a, I, T> {
         let mut it = put_back(df);
         it.put_back((name, data));
         Append {
@@ -151,12 +143,11 @@ impl<'a, I, T, S> Append<'a, I, T, S>
 
 
 
-impl<'a, I, T, S> Iterator for Append<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)>,
-          T: Num,
-          S: Identifier
+impl<'a, I, T> Iterator for Append<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
+          T: Num
 {
-    type Item = (S, ArrayView1<'a, T>);
+    type Item = (String, ArrayView1<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         self.new_data.next()
     }
@@ -167,36 +158,35 @@ impl<'a, I, T, S> Iterator for Append<'a, I, T, S>
 
 
 
-impl<'a, T, S> Aggregate<'a, T, S> for DataFrameIterator<'a, T, S>
-    where T: Num + 'a,
-          S: Identifier
+impl<'a, T> Aggregate<'a, T> for DataFrameIterator<'a, T>
+    where T: Num + 'a
 {
-    fn sumdf(self) -> Sum<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>
+    fn sumdf(self) -> Sum<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Sum::new(self, other, axis)
     }
 
-    fn maxdf(self) -> Max<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>
+    fn maxdf(self) -> Max<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Max::new(self, other, axis)
     }
 
-    fn mindf(self) -> Min<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>
+    fn mindf(self) -> Min<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Min::new(self, other, axis)
     }
 
-    fn mean(self) -> Mean<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>
+    fn mean(self) -> Mean<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -205,43 +195,42 @@ impl<'a, T, S> Aggregate<'a, T, S> for DataFrameIterator<'a, T, S>
 }
 
 
-impl<'a, T, S> Transform<'a, T, S> for DataFrameIterator<'a, T, S>
-    where T: Num,
-          S: Identifier
+impl<'a, T> Transform<'a, T> for DataFrameIterator<'a, T>
+    where T: Num
 {
-    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T, S>
-        where S: From<&'a U>,
+    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T>
+        where String: From<&'a U>,
               T: 'a
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
-        let names: Vec<S> = names.iter()
-            .map(|x| S::from(*x))
+        let names: Vec<String> = names.iter()
+            .map(|x| String::from(*x))
             .collect();
         Select::new(self, names, other, axis)
     }
 
 
-    fn remove<U: ?Sized>(self, names: &'a [&'a U]) -> Remove<'a, Self, T, S>
-        where S: From<&'a U>,
+    fn remove<U: ?Sized>(self, names: &'a [&'a U]) -> Remove<'a, Self, T>
+        where String: From<&'a U>,
               T: 'a
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
-        let names: Vec<S> = names.iter()
-            .map(|x| S::from(*x))
+        let names: Vec<String> = names.iter()
+            .map(|x| String::from(*x))
             .collect();
         Remove::new(self, names, other, axis)
 
     }
 
-    fn append<U: ?Sized>(self, name: &'a U, data: ArrayView1<'a, T>) -> Append<'a, Self, T, S>
-        where S: From<&'a U>,
+    fn append<U: ?Sized>(self, name: &'a U, data: ArrayView1<'a, T>) -> Append<'a, Self, T>
+        where String: From<&'a U>,
               T: 'a
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
-        let name = S::from(name);
+        let name = String::from(name);
         Append::new(self, name, data, other, axis)
 
     }
@@ -252,37 +241,36 @@ impl<'a, T, S> Transform<'a, T, S> for DataFrameIterator<'a, T, S>
 
 
 
-impl<'a, I, T, S> Aggregate<'a, T, S> for Select<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num + 'a,
-          S: Identifier
+impl<'a, I, T> Aggregate<'a, T> for Select<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num + 'a
 {
-    fn sumdf(self) -> Sum<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)> + Clone
+    fn sumdf(self) -> Sum<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)> + Clone
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Sum::new(self, other, axis)
     }
 
-    fn maxdf(self) -> Max<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)> + Clone
+    fn maxdf(self) -> Max<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)> + Clone
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Max::new(self, other, axis)
     }
 
-    fn mindf(self) -> Min<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)> + Clone
+    fn mindf(self) -> Min<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)> + Clone
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Min::new(self, other, axis)
     }
 
-    fn mean(self) -> Mean<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)> + Clone
+    fn mean(self) -> Mean<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)> + Clone
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -290,43 +278,42 @@ impl<'a, I, T, S> Aggregate<'a, T, S> for Select<'a, I, T, S>
     }
 }
 
-impl<'a, I, T, S> Transform<'a, T, S> for Select<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num + Clone + Debug,
-          S: Identifier + Clone + Debug
+impl<'a, I, T> Transform<'a, T> for Select<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num + Clone + Debug
 {
-    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T, S>
-        where S: From<&'a U>,
+    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T>
+        where String: From<&'a U>,
               T: 'a
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let names = names.iter()
-            .map(|x| (S::from(*x)))
+            .map(|x| (String::from(*x)))
             .collect();
         Select::new(self, names, other.clone(), axis)
     }
 
 
-    fn remove<U: ?Sized>(self, names: &'a [&'a U]) -> Remove<'a, Self, T, S>
-        where S: From<&'a U>
+    fn remove<U: ?Sized>(self, names: &'a [&'a U]) -> Remove<'a, Self, T>
+        where String: From<&'a U>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let names = names.iter()
-            .map(|x| S::from(*x))
+            .map(|x| String::from(*x))
             .collect();
         Remove::new(self, names, other.clone(), axis)
 
     }
 
-    fn append<U: ?Sized>(self, name: &'a U, data: ArrayView1<'a, T>) -> Append<'a, Self, T, S>
-        where S: From<&'a U>,
+    fn append<U: ?Sized>(self, name: &'a U, data: ArrayView1<'a, T>) -> Append<'a, Self, T>
+        where String: From<&'a U>,
               T: 'a
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
-        let name = S::from(name);
+        let name = String::from(name);
         Append::new(self, name, data, other, axis)
 
     }
@@ -336,37 +323,36 @@ impl<'a, I, T, S> Transform<'a, T, S> for Select<'a, I, T, S>
 
 
 
-impl<'a, I, T, S> Aggregate<'a, T, S> for Remove<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num,
-          S: Identifier
+impl<'a, I, T> Aggregate<'a, T> for Remove<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num
 {
-    fn sumdf(self) -> Sum<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>
+    fn sumdf(self) -> Sum<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Sum::new(self, other, axis)
     }
 
-    fn maxdf(self) -> Max<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>
+    fn maxdf(self) -> Max<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Max::new(self, other, axis)
     }
 
-    fn mindf(self) -> Min<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>
+    fn mindf(self) -> Min<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Min::new(self, other, axis)
     }
 
-    fn mean(self) -> Mean<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>
+    fn mean(self) -> Mean<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -374,41 +360,40 @@ impl<'a, I, T, S> Aggregate<'a, T, S> for Remove<'a, I, T, S>
     }
 }
 
-impl<'a, I, T, S> Transform<'a, T, S> for Remove<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num,
-          S: Identifier
+impl<'a, I, T> Transform<'a, T> for Remove<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num
 {
-    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T, S>
-        where S: From<&'a U>
+    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T>
+        where String: From<&'a U>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let names = names.iter()
-            .map(|x| S::from(*x))
+            .map(|x| String::from(*x))
             .collect();
         Select::new(self, names, other, axis)
     }
 
 
-    fn remove<U: ?Sized>(self, names: &'a [&'a U]) -> Remove<'a, Self, T, S>
-        where S: From<&'a U>
+    fn remove<U: ?Sized>(self, names: &'a [&'a U]) -> Remove<'a, Self, T>
+        where String: From<&'a U>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let names = names.iter()
-            .map(|x| S::from(*x))
+            .map(|x| String::from(*x))
             .collect();
         Remove::new(self, names, other, axis)
 
     }
 
-    fn append<U: ?Sized>(self, name: &'a U, data: ArrayView1<'a, T>) -> Append<'a, Self, T, S>
-        where S: From<&'a U>
+    fn append<U: ?Sized>(self, name: &'a U, data: ArrayView1<'a, T>) -> Append<'a, Self, T>
+        where String: From<&'a U>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
-        let name = S::from(name);
+        let name = String::from(name);
         Append::new(self, name, data, other, axis)
 
     }
@@ -416,92 +401,89 @@ impl<'a, I, T, S> Transform<'a, T, S> for Remove<'a, I, T, S>
 
 
 
-impl<'a, I, T, S> Aggregate<'a, T, S> for Append<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num,
-          S: Identifier
+impl<'a, I, T> Aggregate<'a, T> for Append<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num
 {
-    fn sumdf(self) -> Sum<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>
+    fn sumdf(self) -> Sum<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Sum::new(self, other, axis)
     }
 
-    fn maxdf(self) -> Max<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>
+    fn maxdf(self) -> Max<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Max::new(self, other, axis)
     }
 
-    fn mindf(self) -> Min<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>
+    fn mindf(self) -> Min<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Min::new(self, other, axis)
     }
 
-    fn mean(self) -> Mean<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)>
+    fn mean(self) -> Mean<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Mean::new(self, other, axis)
     }
 }
-impl<'a, I, T, S> Transform<'a, T, S> for Append<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num,
-          S: Identifier
+impl<'a, I, T> Transform<'a, T> for Append<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num
 {
-    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-              S: From<&'a U>
+    fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+              String: From<&'a U>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let names = names.iter()
-            .map(|x| S::from(*x))
+            .map(|x| String::from(*x))
             .collect();
         Select::new(self, names, other, axis)
     }
 
 
-    fn remove<U: ?Sized>(self, names: &'a [&'a U]) -> Remove<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-              S: From<&'a U>
+    fn remove<U: ?Sized>(self, names: &'a [&'a U]) -> Remove<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+              String: From<&'a U>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         let names = names.iter()
-            .map(|x| S::from(*x))
+            .map(|x| String::from(*x))
             .collect();
         Remove::new(self, names, other, axis)
 
     }
 
-    fn append<U: ?Sized>(self, name: &'a U, data: ArrayView1<'a, T>) -> Append<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-              S: From<&'a U>
+    fn append<U: ?Sized>(self, name: &'a U, data: ArrayView1<'a, T>) -> Append<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+              String: From<&'a U>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
-        let name = S::from(name);
+        let name = String::from(name);
         Append::new(self, name, data, other, axis)
 
     }
 }
 
-impl<'a, I, T, S> ToDataFrame<'a, (S, ArrayView1<'a, T>), T, S> for Remove<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num,
-          S: Identifier
+impl<'a, I, T> ToDataFrame<'a, (String, ArrayView1<'a, T>), T> for Remove<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num
 {
-    fn as_df(self) -> Result<DataFrame<T, S>> {
+    fn as_df(self) -> Result<DataFrame<T>> {
         let s = self.clone();
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -561,12 +543,11 @@ impl<'a, I, T, S> ToDataFrame<'a, (S, ArrayView1<'a, T>), T, S> for Remove<'a, I
 
 
 
-impl<'a, I, T, S> ToDataFrame<'a, (S, ArrayView1<'a, T>), T, S> for Append<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num,
-          S: Identifier
+impl<'a, I, T> ToDataFrame<'a, (String, ArrayView1<'a, T>), T> for Append<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num
 {
-    fn as_df(self) -> Result<DataFrame<T, S>> {
+    fn as_df(self) -> Result<DataFrame<T>> {
         let s = self.clone();
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -630,12 +611,11 @@ impl<'a, I, T, S> ToDataFrame<'a, (S, ArrayView1<'a, T>), T, S> for Append<'a, I
 }
 
 
-impl<'a, I, T, S> ToDataFrame<'a, (S, ArrayView1<'a, T>), T, S> for Select<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayView1<'a, T>)> + Clone,
-          T: Num,
-          S: Identifier
+impl<'a, I, T> ToDataFrame<'a, (String, ArrayView1<'a, T>), T> for Select<'a, I, T>
+    where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
+          T: Num
 {
-    fn as_df(self) -> Result<DataFrame<T, S>> {
+    fn as_df(self) -> Result<DataFrame<T>> {
         let s = self.clone();
         let other = self.other.clone();
         let axis = self.axis.clone();
@@ -696,11 +676,10 @@ impl<'a, I, T, S> ToDataFrame<'a, (S, ArrayView1<'a, T>), T, S> for Select<'a, I
 }
 
 
-impl<'a, T, S> ToDataFrame<'a, (S, ArrayView1<'a, T>), T, S> for DataFrameIterator<'a, T, S>
-    where T: Num,
-          S: Identifier
+impl<'a, T> ToDataFrame<'a, (String, ArrayView1<'a, T>), T> for DataFrameIterator<'a, T>
+    where T: Num
 {
-    fn as_df(self) -> Result<DataFrame<T, S>> {
+    fn as_df(self) -> Result<DataFrame<T>> {
         let s = self.clone();
         let other = self.other.clone();
         let axis = self.axis.clone();

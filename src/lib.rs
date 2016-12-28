@@ -6,12 +6,12 @@
 //! + [Mixed Types] (#mixed-types)
 //!
 //! ## DataFrame
-//! Languages like Python, R, and Julia have popularized the  _dataframe_, which is an abstraction over a collection of _named_ arrays.
+//!
+//! Utah is a dataframe crate backed by [ndarray](http://github.com/bluss/rust-ndarray) for type-conscious, tabular data manipulation with an expressive, functional interface.
+//!
 //! The dataframe allows users to access, transform, and compute over two-dimensional data that may or may not have mixed types.
 //!
-//! Utah is an effort to bring the dataframe paradigm to Rust.
 //!
-//! Utah is a Rust crate backed by [ndarray](http://github.com/bluss/rust-ndarray) for type-conscious, tabular data manipulation with an expressive, functional interface.
 //!
 //! Please read [this](http://suchin.co/2016/12/27/Introducing-Utah) blog post for an in-depth introduction to the internals of this project.
 //!
@@ -22,28 +22,19 @@
 //! ```ignore
 //! use utah::prelude::*;
 //! let c = arr2(&[[2., 6.], [3., 4.], [2., 1.]]);
-//! let mut df: Result<DataFrame<f64, String>> = DataFrame::new(c)
-//!                                        .columns(&["a", "b"]).unwrap()
-//!                                        .index(&["1", "2", "3"]);
+//! let mut df: DataFrame<f64> = DataFrame::new(c)
+//!                                         .columns(&["a", "b"]).unwrap()
+//!                                         .index(&["1", "2", "3"]).unwrap();
 //! ```
 //!
-//! There's also a `dataframe!` macro which you can use to create new dataframes on the fly:
-//!
-//! ```ignore
-//! use utah::prelude::*;
-//! let k: DataFrame<f64, String> = dataframe!(
-//!    {
-//!        "a" =>  column!([2., 3., 2.]),
-//!        "b" =>  column!([2., NAN, 2.])
-//!    });
-//! ```
+//! There's also a `dataframe!` macro which you can use to create new dataframes on the fly.
 //!
 //! Finally, you can import data from a CSV.
 //!
 //! ```ignore
 //! use utah::prelude::*;
 //! let file_name = "test.csv";
-//! let df: Result<DataFrame<f64, String>> = DataFrame::read_csv(file_name);
+//! let df: Result<DataFrame<f64>> = DataFrame::read_csv(file_name);
 //! ```
 //!
 //! Note that utah's `ReadCSV` trait is pretty barebones right now.
@@ -61,7 +52,7 @@
 //! ```ignore
 //! use utah::prelude::*;
 //! let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-//! let df = DataFrame::new(a).index(&[1, 2, 3]).unwrap().columns(&["a", "b"]).unwrap();
+//! let df : DataFrame<f64> = DataFrame::new(a).index(&["1","2", "3"]).unwrap().columns(&["a", "b"]).unwrap();
 //! let res = df.select(&["a", "c"], UtahAxis::Row);
 //! ```
 //!
@@ -105,7 +96,7 @@
 //!
 //! ```ignore
 //! let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-//! let df = DataFrame::new(a).index(&[1, 2, 3]).unwrap().columns(&["a", "b"]).unwrap();
+//! let df = DataFrame::new(a);
 //! let res = df.mean(UtahAxis::Row);
 //! ```
 //!

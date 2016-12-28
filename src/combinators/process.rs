@@ -5,30 +5,25 @@ use std::iter::Iterator;
 use dataframe::{DataFrame, MutableDataFrame, MutableDataFrameIterator};
 use util::traits::*;
 use ndarray::{ArrayViewMut1, Array};
-use std::fmt::Debug;
-use std::hash::Hash;
-use std::ops::{Add, Sub, Mul, Div};
 use util::error::*;
 
 
 #[derive(Clone, Debug)]
-pub struct MapDF<'a, T: 'a, S, I, F>
-    where I: Iterator<Item = (S, ArrayViewMut1<'a, T>)>,
-          F: Fn(T) -> T,
-          S: Identifier
+pub struct MapDF<'a, T: 'a, I, F>
+    where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
+          F: Fn(T) -> T
 {
     data: I,
     func: F,
-    other: Vec<S>,
+    other: Vec<String>,
     axis: UtahAxis,
 }
 
-impl<'a, T, S, I, F> MapDF<'a, T, S, I, F>
-    where I: Iterator<Item = (S, ArrayViewMut1<'a, T>)>,
-          F: Fn(T) -> T,
-          S: Identifier
+impl<'a, T, I, F> MapDF<'a, T, I, F>
+    where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
+          F: Fn(T) -> T
 {
-    pub fn new(df: I, f: F, other: Vec<S>, axis: UtahAxis) -> MapDF<'a, T, S, I, F> {
+    pub fn new(df: I, f: F, other: Vec<String>, axis: UtahAxis) -> MapDF<'a, T, I, F> {
 
         MapDF {
             data: df,
@@ -39,13 +34,12 @@ impl<'a, T, S, I, F> MapDF<'a, T, S, I, F>
     }
 }
 
-impl<'a, T, S, I, F> Iterator for MapDF<'a, T, S, I, F>
-    where I: Iterator<Item = (S, ArrayViewMut1<'a, T>)>,
+impl<'a, T, I, F> Iterator for MapDF<'a, T, I, F>
+    where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
           F: Fn(T) -> T,
-          S: Identifier,
           T: Clone
 {
-    type Item = (S, ArrayViewMut1<'a, T>);
+    type Item = (String, ArrayViewMut1<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         match self.data.next() {
             None => return None,
@@ -62,24 +56,22 @@ impl<'a, T, S, I, F> Iterator for MapDF<'a, T, S, I, F>
 
 
 #[derive(Clone)]
-pub struct Impute<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayViewMut1<'a, T>)> + 'a,
-        T: Clone + Debug + 'a + Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T>,
-          S: Hash + PartialOrd + PartialEq + Eq + Ord + Clone + Debug
+pub struct Impute<'a, I, T: 'a>
+    where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)> + 'a,
+          T: Num
 {
     pub data: I,
     pub strategy: ImputeStrategy,
-    pub other: Vec<S>,
+    pub other: Vec<String>,
     pub axis: UtahAxis,
 }
 
-impl<'a, I, T, S> Impute<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayViewMut1<'a, T>)>,
-          T: Num,
-          S: Identifier
+impl<'a, I, T> Impute<'a, I, T>
+    where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
+          T: Num
 {
-    pub fn new(df: I, s: ImputeStrategy, other: Vec<S>, axis: UtahAxis) -> Impute<'a, I, T, S>
-        where I: Iterator<Item = (S, ArrayViewMut1<'a, T>)>
+    pub fn new(df: I, s: ImputeStrategy, other: Vec<String>, axis: UtahAxis) -> Impute<'a, I, T>
+        where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>
     {
 
         Impute {
@@ -91,12 +83,11 @@ impl<'a, I, T, S> Impute<'a, I, T, S>
     }
 }
 
-impl<'a, I, T, S> Iterator for Impute<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayViewMut1<'a, T>)>,
-          T: Num,
-          S: Identifier
+impl<'a, I, T> Iterator for Impute<'a, I, T>
+    where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
+          T: Num
 {
-    type Item = (S, ArrayViewMut1<'a, T>);
+    type Item = (String, ArrayViewMut1<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         match self.data.next() {
 
@@ -131,90 +122,21 @@ impl<'a, I, T, S> Iterator for Impute<'a, I, T, S>
 }
 
 
-impl<'a, I, T, S, F> Process<'a, T, S, F> for MapDF<'a, T, S, I, F>
-    where I: Iterator<Item = (S, ArrayViewMut1<'a, T>)>,
+impl<'a, I, T, F> Process<'a, T, F> for MapDF<'a, T, I, F>
+    where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
           T: Num,
-          F: Fn(T) -> T,
-          S: Identifier
-{
-    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayViewMut1<'a, T>)>
-    {
-        let other = self.other.clone();
-        let axis = self.axis.clone();
-        Impute::new(self, strategy, other, axis)
-    }
-
-    fn to_mut_df(self) -> MutableDataFrame<'a, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayViewMut1<'a, T>)>
-    {
-
-        let axis = self.axis.clone();
-        let other = self.other.clone();
-        let mut c = Vec::new();
-        let mut n = Vec::new();
-        let (mut ncols, mut nrows) = match axis {
-            UtahAxis::Row => (other.len(), 0),
-            UtahAxis::Column => (0, other.len()),
-        };
-
-        for (i, j) in self {
-            match axis {
-                UtahAxis::Row => nrows += 1,
-                UtahAxis::Column => ncols += 1,
-            };
-            c.extend(j);
-            n.push(i.to_owned());
-        }
-
-
-
-        match axis {
-            UtahAxis::Row => {
-                MutableDataFrame {
-                    columns: other,
-                    data: Array::from_shape_vec((nrows, ncols), c).unwrap(),
-                    index: n,
-                }
-            }
-            UtahAxis::Column => {
-                MutableDataFrame {
-                    columns: n,
-                    data: Array::from_shape_vec((nrows, ncols), c).unwrap(),
-                    index: other,
-                }
-            }
-
-        }
-
-    }
-
-    fn mapdf(self, f: F) -> MapDF<'a, T, S, Self, F>
-        where Self: Sized + Iterator<Item = (S, ArrayViewMut1<'a, T>)>
-    {
-        let axis = self.axis.clone();
-        let other = self.other.clone();
-        MapDF::new(self, f, other, axis)
-    }
-}
-
-
-impl<'a, I, T, S, F> Process<'a, T, S, F> for Impute<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayViewMut1<'a, T>)>,
-          T: Num,
-          S: Identifier,
           F: Fn(T) -> T
 {
-    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayViewMut1<'a, T>)>
+    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayViewMut1<'a, T>)>
     {
         let other = self.other.clone();
         let axis = self.axis.clone();
         Impute::new(self, strategy, other, axis)
     }
 
-    fn to_mut_df(self) -> MutableDataFrame<'a, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayViewMut1<'a, T>)>
+    fn to_mut_df(self) -> MutableDataFrame<'a, T>
+        where Self: Sized + Iterator<Item = (String, ArrayViewMut1<'a, T>)>
     {
 
         let axis = self.axis.clone();
@@ -257,20 +179,86 @@ impl<'a, I, T, S, F> Process<'a, T, S, F> for Impute<'a, I, T, S>
 
     }
 
-    fn mapdf(self, f: F) -> MapDF<'a, T, S, Self, F> {
+    fn mapdf(self, f: F) -> MapDF<'a, T, Self, F>
+        where Self: Sized + Iterator<Item = (String, ArrayViewMut1<'a, T>)>
+    {
         let axis = self.axis.clone();
         let other = self.other.clone();
         MapDF::new(self, f, other, axis)
     }
 }
 
-impl<'a, T, S, F> Process<'a, T, S, F> for MutableDataFrameIterator<'a, T, S>
+
+impl<'a, I, T, F> Process<'a, T, F> for Impute<'a, I, T>
+    where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
+          T: Num,
+          F: Fn(T) -> T
+{
+    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayViewMut1<'a, T>)>
+    {
+        let other = self.other.clone();
+        let axis = self.axis.clone();
+        Impute::new(self, strategy, other, axis)
+    }
+
+    fn to_mut_df(self) -> MutableDataFrame<'a, T>
+        where Self: Sized + Iterator<Item = (String, ArrayViewMut1<'a, T>)>
+    {
+
+        let axis = self.axis.clone();
+        let other = self.other.clone();
+        let mut c = Vec::new();
+        let mut n = Vec::new();
+        let (mut ncols, mut nrows) = match axis {
+            UtahAxis::Row => (other.len(), 0),
+            UtahAxis::Column => (0, other.len()),
+        };
+
+        for (i, j) in self {
+            match axis {
+                UtahAxis::Row => nrows += 1,
+                UtahAxis::Column => ncols += 1,
+            };
+            c.extend(j);
+            n.push(i.to_owned());
+        }
+
+
+
+        match axis {
+            UtahAxis::Row => {
+                MutableDataFrame {
+                    columns: other,
+                    data: Array::from_shape_vec((nrows, ncols), c).unwrap(),
+                    index: n,
+                }
+            }
+            UtahAxis::Column => {
+                MutableDataFrame {
+                    columns: n,
+                    data: Array::from_shape_vec((nrows, ncols), c).unwrap(),
+                    index: other,
+                }
+            }
+
+        }
+
+    }
+
+    fn mapdf(self, f: F) -> MapDF<'a, T, Self, F> {
+        let axis = self.axis.clone();
+        let other = self.other.clone();
+        MapDF::new(self, f, other, axis)
+    }
+}
+
+impl<'a, T, F> Process<'a, T, F> for MutableDataFrameIterator<'a, T>
     where T: Num,
-          S: Identifier,
           F: Fn(T) -> T
 {
-    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayViewMut1<'a, T>)>
+    fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T>
+        where Self: Sized + Iterator<Item = (String, ArrayViewMut1<'a, T>)>
     {
 
         let other = self.other.clone();
@@ -278,8 +266,8 @@ impl<'a, T, S, F> Process<'a, T, S, F> for MutableDataFrameIterator<'a, T, S>
         Impute::new(self, strategy, other, axis)
     }
 
-    fn to_mut_df(self) -> MutableDataFrame<'a, T, S>
-        where Self: Sized + Iterator<Item = (S, ArrayViewMut1<'a, T>)>
+    fn to_mut_df(self) -> MutableDataFrame<'a, T>
+        where Self: Sized + Iterator<Item = (String, ArrayViewMut1<'a, T>)>
     {
         // let s = self.clone();
         let axis = self.axis.clone();
@@ -322,19 +310,17 @@ impl<'a, T, S, F> Process<'a, T, S, F> for MutableDataFrameIterator<'a, T, S>
         }
     }
 
-    fn mapdf(self, f: F) -> MapDF<'a, T, S, Self, F> {
+    fn mapdf(self, f: F) -> MapDF<'a, T, Self, F> {
         let axis = self.axis.clone();
         let other = self.other.clone();
         MapDF::new(self, f, other, axis)
     }
 }
 
-impl<'a, T, S> ToDataFrame<'a, (S, ArrayViewMut1<'a, T>), T, S>
-    for MutableDataFrameIterator<'a, T, S>
-    where T: Num,
-          S: Identifier
+impl<'a, T> ToDataFrame<'a, (String, ArrayViewMut1<'a, T>), T> for MutableDataFrameIterator<'a, T>
+    where T: Num
 {
-    fn as_df(self) -> Result<DataFrame<T, S>> {
+    fn as_df(self) -> Result<DataFrame<T>> {
         let axis = self.axis.clone();
         let other = self.other.clone();
         let mut c = Vec::new();
@@ -401,12 +387,11 @@ impl<'a, T, S> ToDataFrame<'a, (S, ArrayViewMut1<'a, T>), T, S>
     }
 }
 
-impl<'a, I, T, S> ToDataFrame<'a, (S, ArrayViewMut1<'a, T>), T, S> for Impute<'a, I, T, S>
-    where I: Iterator<Item = (S, ArrayViewMut1<'a, T>)>,
-          T: Num,
-          S: Identifier
+impl<'a, I, T> ToDataFrame<'a, (String, ArrayViewMut1<'a, T>), T> for Impute<'a, I, T>
+    where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
+          T: Num
 {
-    fn as_df(self) -> Result<DataFrame<T, S>> {
+    fn as_df(self) -> Result<DataFrame<T>> {
         let axis = self.axis.clone();
         let other = self.other.clone();
         let mut c = Vec::new();
@@ -474,13 +459,12 @@ impl<'a, I, T, S> ToDataFrame<'a, (S, ArrayViewMut1<'a, T>), T, S> for Impute<'a
 
 
 
-impl<'a, I, T, S, F> ToDataFrame<'a, (S, ArrayViewMut1<'a, T>), T, S> for MapDF<'a, T, S, I, F>
-    where I: Iterator<Item = (S, ArrayViewMut1<'a, T>)>,
+impl<'a, I, T, F> ToDataFrame<'a, (String, ArrayViewMut1<'a, T>), T> for MapDF<'a, T, I, F>
+    where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
           T: Num,
-          S: Identifier,
           F: Fn(T) -> T
 {
-    fn as_df(self) -> Result<DataFrame<T, S>> {
+    fn as_df(self) -> Result<DataFrame<T>> {
         let axis = self.axis.clone();
         let other = self.other.clone();
         let mut c = Vec::new();

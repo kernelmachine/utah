@@ -6,9 +6,8 @@ use ndarray::Axis;
 use util::traits::*;
 use dataframe::*;
 
-impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
-    where T: Num + 'a,
-          S: Identifier
+impl<'a, T> Constructor<'a, T> for DataFrame<T>
+    where T: Num + 'a
 {
     /// Create a new dataframe. The only required argument is data to populate the dataframe.
     /// By default, the columns and index of the dataframe are `["1", "2", "3"..."N"]`, where *N* is
@@ -17,7 +16,7 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     /// ```
     /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df : DataFrame<f64, String> = DataFrame::new(a);
+    /// let df : DataFrame<f64> = DataFrame::new(a);
     /// ```
     ///
     /// When populating the dataframe with mixed-types, wrap the elements with `InnerType` enum:
@@ -26,9 +25,9 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     /// use utah::prelude::*;
     /// let a = arr2(&[[InnerType::Float(2.0), InnerType::Str("ak".into())],
     ///                [InnerType::Int32(6), InnerType::Int64(10)]]);
-    /// let df : DataFrame<InnerType, OuterType> = DataFrame::new(a);
+    /// let df : DataFrame<InnerType> = DataFrame::new(a);
     /// ```
-    fn new<U: Clone>(data: Matrix<U>) -> DataFrame<T, S>
+    fn new<U: Clone>(data: Matrix<U>) -> DataFrame<T>
         where T: From<U>
     {
         let mut data: Matrix<T> = data.mapv(T::from);
@@ -39,15 +38,10 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
                 return x;
             }
         });
-        println!("{:?}", data);
 
-        let columns: Vec<S> = (0..data.shape()[1])
-            .map(|x| x.to_string().into())
-            .collect();
+        let columns: Vec<String> = (0..data.shape()[1]).map(|x| x.to_string()).collect();
 
-        let index: Vec<S> = (0..data.shape()[0])
-            .map(|x| x.to_string().into())
-            .collect();
+        let index: Vec<String> = (0..data.shape()[0]).map(|x| x.to_string()).collect();
 
         DataFrame {
             data: data,
@@ -61,10 +55,10 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     /// ```
     /// use utah::prelude::*;
     /// let a = arr1(&[2.0, 7.0]);
-    /// let df : DataFrame<f64, String> = DataFrame::from_array(a, UtahAxis::Column);
+    /// let df : DataFrame<f64> = DataFrame::from_array(a, UtahAxis::Column);
     /// ```
     ///
-    fn from_array<U: Clone>(data: Row<U>, axis: UtahAxis) -> DataFrame<T, S>
+    fn from_array<U: Clone>(data: Row<U>, axis: UtahAxis) -> DataFrame<T>
         where T: From<U>
     {
         let res_dim = match axis {
@@ -79,13 +73,9 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
                 return x;
             }
         });
-        let columns: Vec<S> = (0..res_dim.1)
-            .map(|x| x.to_string().into())
-            .collect();
+        let columns: Vec<String> = (0..res_dim.1).map(|x| x.to_string()).collect();
 
-        let index: Vec<S> = (0..res_dim.0)
-            .map(|x| x.to_string().into())
-            .collect();
+        let index: Vec<String> = (0..res_dim.0).map(|x| x.to_string()).collect();
 
         DataFrame {
             data: data,
@@ -98,11 +88,11 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     /// ```
     /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df : Result<DataFrame<f64, String>> = DataFrame::new(a).columns(&["a", "b"]);
+    /// let df : Result<DataFrame<f64>> = DataFrame::new(a).columns(&["a", "b"]);
     /// df.is_ok();
     /// ```
-    fn columns<U: Clone>(mut self, columns: &'a [U]) -> Result<DataFrame<T, S>>
-        where S: From<U>
+    fn columns<U: Clone>(mut self, columns: &'a [U]) -> Result<DataFrame<T>>
+        where String: From<U>
     {
         let data_shape = self.data.shape()[1];
         let column_shape = columns.len();
@@ -111,7 +101,7 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
                                                       column_shape.to_string())
                 .into());
         }
-        let new_columns: Vec<S> = columns.iter()
+        let new_columns: Vec<String> = columns.iter()
             .map(|x| x.clone().into())
             .collect();
         self.columns = new_columns;
@@ -123,7 +113,7 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     /// ```
     /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df : Result<DataFrame<f64, String>> = DataFrame::new(a).index(&["1", "2"]);
+    /// let df : Result<DataFrame<f64>> = DataFrame::new(a).index(&["1", "2"]);
     /// df.is_ok();
     /// ```
     ///
@@ -132,11 +122,11 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     /// ```
     /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df : Result<DataFrame<f64, String>> = DataFrame::new(a).index(&["1", "2"]).unwrap().columns(&["a", "b"]);
+    /// let df : Result<DataFrame<f64>> = DataFrame::new(a).index(&["1", "2"]).unwrap().columns(&["a", "b"]);
     /// df.is_ok();
     /// ```
-    fn index<U: Clone>(mut self, index: &'a [U]) -> Result<DataFrame<T, S>>
-        where S: From<U>
+    fn index<U: Clone>(mut self, index: &'a [U]) -> Result<DataFrame<T>>
+        where String: From<U>
     {
         let data_shape = self.data.shape()[0];
         let index_shape = index.len();
@@ -145,7 +135,7 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
                                                      index_shape.to_string())
                 .into());
         }
-        let new_index: Vec<S> = index.iter()
+        let new_index: Vec<String> = index.iter()
             .map(|x| x.clone().into())
             .collect();
         self.index = new_index;
@@ -161,10 +151,10 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     /// ```
     /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let df : DataFrame<f64, String> = DataFrame::new(a).index(&["1", "2"]).unwrap().columns(&["a", "b"]).unwrap();
+    /// let df : DataFrame<f64> = DataFrame::new(a).index(&["1", "2"]).unwrap().columns(&["a", "b"]).unwrap();
     /// let df_iter = df.df_iter(UtahAxis::Row);
     /// ```
-    fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, T, S> {
+    fn df_iter(&'a self, axis: UtahAxis) -> DataFrameIterator<'a, T> {
         match axis {
             UtahAxis::Row => {
                 DataFrameIterator {
@@ -193,10 +183,10 @@ impl<'a, T, S> Constructor<'a, T, S> for DataFrame<T, S>
     /// ```
     /// use utah::prelude::*;
     /// let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-    /// let mut df : DataFrame<f64, String> = DataFrame::new(a);
+    /// let mut df : DataFrame<f64> = DataFrame::new(a);
     /// let df_iter_mut = df.df_iter_mut(UtahAxis::Column);
     /// ```
-    fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a, T, S> {
+    fn df_iter_mut(&'a mut self, axis: UtahAxis) -> MutableDataFrameIterator<'a, T> {
         match axis {
             UtahAxis::Row => {
                 MutableDataFrameIterator {

@@ -21,14 +21,14 @@ pub trait ReadCSV<T, S>
     where T: Num + Decodable,
           S: Identifier
 {
-    fn read_csv(file: &'static str) -> Result<DataFrame<T, S>>;
+    fn read_csv(file: &'static str) -> Result<DataFrame<T>>;
 }
 
-impl<T, S> ReadCSV<T, S> for DataFrame<T, S>
+impl<T, S> ReadCSV<T, S> for DataFrame<T>
     where T: Num + Decodable,
-          S: Identifier
+          S: Identifier + From<String>
 {
-    fn read_csv(file: &'static str) -> Result<DataFrame<T, S>> {
+    fn read_csv(file: &'static str) -> Result<DataFrame<T>> {
         let mut rdr = csv::Reader::from_file(file).unwrap();
         let columns = rdr.headers().unwrap();
         let (mut nrow, ncol) = (0, columns.len());
