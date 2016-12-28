@@ -1,7 +1,11 @@
 [package]
 name = "utah"
 version = "0.1.0"
-authors = ["pegasos1 <sgrangan01@gmail.com>"]
+authors = ["pegasos1"]
+description = "dataframe structure and operations"
+documentation = "http://docs.rs/utah"
+respository = "http://github.com/pegasos1/utah"
+license = "MIT"
 
 [dependencies]
 ndarray = "*"
