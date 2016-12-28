@@ -2,13 +2,13 @@
 
 [![Build Status](https://travis-ci.org/pegasos1/utah.svg?branch=master)](https://travis-ci.org/pegasos1/utah)
 
-**Utah** is a Rust crate backed by [ndarray](https://github.com/bluss/rust-ndarray) for type-conscious, tabular data manipulation with an expressive, functional interface.
+[**Utah**](http://crates.io/crates/utah) is a Rust crate backed by [ndarray](https://github.com/bluss/rust-ndarray) for type-conscious, tabular data manipulation with an expressive, functional interface.
 
 **Note**: This crate works on stable. However, if you are working with dataframes with `f64` data and `String` column/index labels, use nightly, because you will get the performance benefits of specialization. 
 
 API currently in development and subject to change.
 
-For an in-depth introduction to the mechanics of this crate, as well as future goals, read this blog post: PLACEHOLDER
+For an in-depth introduction to the mechanics of this crate, as well as future goals, read [this]() blog post
 
 ## Install
 
@@ -24,6 +24,9 @@ And add the following to your `lib.rs` or `main.rs`
 #[macro_use]
 extern crate utah
 ```
+## Documentation
+
+Checkout docs.rs/utah for latest documentation. 
 
 ## Examples
 
