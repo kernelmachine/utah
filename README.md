@@ -26,7 +26,7 @@ extern crate utah
 ```
 ## Documentation
 
-Checkout [docs.rs](http://docs.rs/utah) for latest documentation. 
+Check out [docs.rs](http://docs.rs/utah) for latest documentation. 
 
 ## Examples
 
