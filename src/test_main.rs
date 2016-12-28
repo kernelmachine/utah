@@ -91,8 +91,8 @@ fn run() -> Result<()> {
     // let b = arr1(&[2., 3., 2.]);
     let k: DataFrame<f64, String> = dataframe!(
     {
-        "a" =>  column!([2., 3., 2.]),
-        "b" =>  column!([2., NAN, 2.])
+        "a" =>  col!([2., 3., 2.]),
+        "b" =>  col!([2., NAN, 2.])
     });
     println!("{:?}", k);
     Ok(())

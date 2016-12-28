@@ -15,7 +15,7 @@ macro_rules! dataframe {
 }
 }
 
-macro_rules! column {
+macro_rules! col {
     {
         $($element : expr),+
     } => {

@@ -265,8 +265,8 @@ fn dataframe_impute() {
 fn dataframe_macro() {
     let k: DataFrame<i32> = dataframe!(
       {
-      "a" =>  column!([2, 3, 5]),
-      "b" =>  column!([2, 0, 6])
+      "a" =>  col!([2, 3, 5]),
+      "b" =>  col!([2, 0, 6])
       });
     let a = arr2(&[[2, 2], [3, 0], [5, 6]]);
     let df: DataFrame<i32> = DataFrame::new(a).columns(&["a", "b"]).unwrap();

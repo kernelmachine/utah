@@ -65,8 +65,8 @@
 //! use utah::prelude::*;
 //! let mut a: DataFrameMut<f64> = dataframe!(
 //!     {
-//!         "a" =>  column!([NAN, 3., 2.]),
-//!         "b" =>  column!([2., NAN, 2.])
+//!         "a" =>  col!([NAN, 3., 2.]),
+//!         "b" =>  col!([2., NAN, 2.])
 //!     });
 //! let res = df.impute(ImputeStrategy::Mean, UtahAxis::Column);
 //! ```
@@ -79,13 +79,13 @@
 //! ```ignore
 //! let a: DataFrame<f64> = dataframe!(
 //!     {
-//!         "a" =>  column!([NAN, 3., 2.]),
-//!         "b" =>  column!([2., NAN, 2.])
+//!         "a" =>  col!([NAN, 3., 2.]),
+//!         "b" =>  col!([2., NAN, 2.])
 //!     });
 //! let b: DataFrame<f64> = dataframe!(
 //!     {
-//!         "b" =>  column!([NAN, 3., 2.]),
-//!         "c" =>  column!([2., NAN, 2.])
+//!         "b" =>  col!([NAN, 3., 2.]),
+//!         "c" =>  col!([2., NAN, 2.])
 //!     });
 //! let res = a.inner_left_join(b).as_df()?;
 //! ```
