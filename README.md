@@ -12,13 +12,18 @@ For an in-depth introduction to the mechanics of this crate, as well as future g
 
 ## Install
 
-Add the following to your Cargo.toml:
+Add the following to your `Cargo.toml`:
 
 ```
-utah="0.0.1"
+utah="0.1.2"
 ```
 
-`extern crate utah` in `lib.rs` and you're good to go.
+And add the following to your `lib.rs` or `main.rs`
+
+```
+#[macro_use]
+extern crate utah
+```
 
 ## Examples
 
@@ -27,30 +32,30 @@ utah="0.0.1"
 
 ```rust
 use utah::prelude::*;
-let df = DataFrame<f64, String> = dataframe!(
+let df = DataFrame<f64> = dataframe!(
     {
         "a" =>  column!([2., 3., 2.]),
         "b" =>  column!([2., NAN, 2.])
     });
 
 let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
-let df : Result<DataFrame<f64, String>> = DataFrame::new(a).index(&["1", "2"]);
+let df : Result<DataFrame<f64>> = DataFrame::new(a).index(&["1", "2"]);
 ```
 
 #### Transform the dataframe
 
 ```rust
 use utah::prelude::*;
-let df: DataFrame<f64, String> = DataFrame::read_csv("test.csv")?;       
-let res : DataFrame<f64, String> = df.remove(&["a", "c"], UtahAxis::Column).as_df()?;
+let df: DataFrame<f64> = DataFrame::read_csv("test.csv")?;       
+let res : DataFrame<f64> = df.remove(&["a", "c"], UtahAxis::Column).as_df()?;
 ```
 
 #### Chain operations
 
 ```rust
 use utah::prelude::*;
-let df: DataFrame<f64, String> = DataFrame::read_csv("test.csv").unwrap();       
-let res : DataFrame<f64, String> = df.df_iter(UtahAxis::Row)
+let df: DataFrame<f64> = DataFrame::read_csv("test.csv").unwrap();       
+let res : DataFrame<f64> = df.df_iter(UtahAxis::Row)
                                      .remove(&["1"])
                                      .select(&["2"])
                                      .append("8", new_data.view())
@@ -62,7 +67,7 @@ let res : DataFrame<f64, String> = df.df_iter(UtahAxis::Row)
 
 ```rust
 use utah::prelude::*;
-let a = DataFrame<InnerType, OuterType> = dataframe!(
+let a = DataFrame<InnerType> = dataframe!(
     {
         "name" =>  column!([InnerType::Str("Alice"),
                             InnerType::Str("Bob"),
@@ -71,6 +76,6 @@ let a = DataFrame<InnerType, OuterType> = dataframe!(
                             InnerType::Empty(),
                             InnerType::Float(3.0)])
     });
-let b: DataFrame<InnerType, OuterType> = DataFrame::read_csv("test.csv")?;
-let res : DataFrame<InnerType, OuterType> = a.left_inner_join(&b).as_df()?;
+let b: DataFrame<InnerType> = DataFrame::read_csv("test.csv")?;
+let res : DataFrame<InnerType> = a.left_inner_join(&b).as_df()?;
 ```
