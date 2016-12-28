@@ -7,7 +7,6 @@ use util::traits::Empty;
 use std::f64::NAN;
 use std::str::FromStr;
 use util::error::ErrorKind;
-use rustc_serialize::Decodable;
 
 #[derive(RustcDecodable, Hash, PartialOrd, PartialEq, Eq , Ord , Clone,  Debug)]
 pub enum OuterType {

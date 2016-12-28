@@ -11,7 +11,6 @@ use ndarray_rand::RandomExt;
 use std::rc::Rc;
 use rand::{thread_rng, Rng};
 use std::collections::{HashMap, BTreeMap};
-use chrono::*;
 use util::types::*;
 use util::error::*;
 use combinators::aggregate::*;
@@ -178,7 +177,7 @@ fn dataframe_mean() {
         let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         let z: DataFrame<f64, String> = df.mean(UtahAxis::Row).as_df().unwrap();
         let b = arr2(&[[4.], [3.5]]);
-        let mut expected = DataFrame::new(b);
+        let expected = DataFrame::new(b);
         assert_eq!(z, expected);
     }
     {
@@ -186,7 +185,7 @@ fn dataframe_mean() {
         let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         let z: DataFrame<f64, String> = df.mean(UtahAxis::Column).as_df().unwrap();
         let b = arr2(&[[2.5, 5.]]);
-        let mut expected = DataFrame::new(b).columns(&["a", "b"]).unwrap();
+        let expected = DataFrame::new(b).columns(&["a", "b"]).unwrap();
         assert_eq!(z, expected);
     }
 }
@@ -198,7 +197,7 @@ fn dataframe_sum() {
         let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         let z: DataFrame<f64, String> = df.sumdf(UtahAxis::Row).as_df().unwrap();
         let b = arr2(&[[8.], [7.]]);
-        let mut expected = DataFrame::new(b);
+        let expected = DataFrame::new(b);
         assert_eq!(z, expected);
     }
     {
@@ -206,7 +205,7 @@ fn dataframe_sum() {
         let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         let z: DataFrame<f64, String> = df.sumdf(UtahAxis::Column).as_df().unwrap();
         let b = arr2(&[[5., 10.]]);
-        let mut expected = DataFrame::new(b).columns(&["a", "b"]).unwrap();
+        let expected = DataFrame::new(b).columns(&["a", "b"]).unwrap();
         assert_eq!(z, expected);
     }
 }
@@ -220,7 +219,7 @@ fn dataframe_max() {
         let mut df: DataFrame<i32, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         let z: DataFrame<i32, String> = df.maxdf(UtahAxis::Row).as_df().unwrap();
         let b = arr2(&[[6], [4]]);
-        let mut expected = DataFrame::new(b);
+        let expected = DataFrame::new(b);
         assert_eq!(z, expected);
     }
     {
@@ -228,7 +227,7 @@ fn dataframe_max() {
         let mut df: DataFrame<i32, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         let z: DataFrame<i32, String> = df.maxdf(UtahAxis::Column).as_df().unwrap();
         let b = arr2(&[[3, 6]]);
-        let mut expected = DataFrame::new(b).columns(&["a", "b"]).unwrap();
+        let expected = DataFrame::new(b).columns(&["a", "b"]).unwrap();
         assert_eq!(z, expected);
     }
 }
@@ -240,7 +239,7 @@ fn dataframe_min() {
         let mut df: DataFrame<i32, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         let z: DataFrame<i32, String> = df.mindf(UtahAxis::Column).as_df().unwrap();
         let b = arr2(&[[2, 4]]);
-        let mut expected = DataFrame::new(b).columns(&["a", "b"]).unwrap();
+        let expected = DataFrame::new(b).columns(&["a", "b"]).unwrap();
         assert_eq!(z, expected);
     }
     {
@@ -248,7 +247,7 @@ fn dataframe_min() {
         let mut df: DataFrame<i32, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
         let z: DataFrame<i32, String> = df.mindf(UtahAxis::Row).as_df().unwrap();
         let b = arr2(&[[2], [3]]);
-        let mut expected = DataFrame::new(b);
+        let expected = DataFrame::new(b);
         assert_eq!(z, expected);
     }
 }
@@ -259,30 +258,31 @@ fn dataframe_impute() {
     {
         let a = arr2(&[[2., NAN], [3., 8.]]);
         let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
-        df.impute(ImputeStrategy::Mean, UtahAxis::Column).as_df();
+        let _ = df.impute(ImputeStrategy::Mean, UtahAxis::Column).as_df();
         let b = arr2(&[[2., 8.], [3., 8.]]);
-        let mut expected: DataFrame<f64, String> = DataFrame::new(b).columns(&["a", "b"]).unwrap();
+        let expected: DataFrame<f64, String> = DataFrame::new(b).columns(&["a", "b"]).unwrap();
         assert_eq!(df, expected);
     }
     {
         let a = arr2(&[[2., NAN], [3., 8.]]);
         let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
-        df.impute(ImputeStrategy::Mean, UtahAxis::Row).as_df();
+        let _ = df.impute(ImputeStrategy::Mean, UtahAxis::Row).as_df();
         let b = arr2(&[[2., 2.], [3., 8.]]);
-        let mut expected: DataFrame<f64, String> = DataFrame::new(b).columns(&["a", "b"]).unwrap();
+        let expected: DataFrame<f64, String> = DataFrame::new(b).columns(&["a", "b"]).unwrap();
         assert_eq!(df, expected);
     }
 }
 
 #[test]
 fn dataframe_macro() {
-    let k: DataFrame<f64, String> = dataframe!(
+    let k: DataFrame<i32, String> = dataframe!(
       {
-      "a" =>  column!([2., 3., 5.]),
-      "b" =>  column!([2., NAN, 6.])
+      "a" =>  column!([2, 3, 5]),
+      "b" =>  column!([2, 0, 6])
       });
-    let a = arr2(&[[2., 2.], [3., NAN], [5., 6.]]);
-    let mut df: DataFrame<f64, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
+    let a = arr2(&[[2, 2], [3, 0], [5, 6]]);
+    let df: DataFrame<i32, String> = DataFrame::new(a).columns(&["a", "b"]).unwrap();
+    assert_eq!(k, df)
 }
 // #[test]
 // fn read_csv() {
@@ -290,7 +290,7 @@ fn dataframe_macro() {
 //         let df: Result<DataFrame<InnerType, OuterType>> = DataFrame::read_csv("./test.csv");
 //         let b =
 //             arr2(&[[InnerType::Float(8.), InnerType::Str("b".to_string()), InnerType::Float(4.)]]);
-//         let mut expected = DataFrame::new(b).columns(&["a", "b", "c"]).unwrap();
+//         let expected = DataFrame::new(b).columns(&["a", "b", "c"]).unwrap();
 //         assert_eq!(df.unwrap(), expected);
 //     }
 //

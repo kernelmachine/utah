@@ -190,7 +190,6 @@ extern crate ndarray_rand;
 extern crate rand;
 extern crate test;
 extern crate num;
-extern crate chrono;
 #[macro_use]
 extern crate error_chain;
 extern crate itertools;

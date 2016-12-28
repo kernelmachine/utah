@@ -7,7 +7,6 @@ use ndarray_rand::RandomExt;
 use std::rc::Rc;
 use rand::{thread_rng, Rng};
 use std::collections::{HashMap, BTreeMap};
-use chrono::*;
 use util::types::*;
 use util::error::*;
 use combinators::aggregate::*;
