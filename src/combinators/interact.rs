@@ -53,7 +53,7 @@ impl<'a, I, T> Iterator for Concat<'a, I, T>
 #[derive(Clone)]
 pub struct InnerJoin<'a, L, T>
     where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num + 'a
+          T: UtahNum + 'a
 {
     pub left: L,
     pub right: HashMap<String, ArrayView1<'a, T>>,
@@ -63,7 +63,7 @@ pub struct InnerJoin<'a, L, T>
 
 impl<'a, L, T> InnerJoin<'a, L, T>
     where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num + 'a
+          T: UtahNum + 'a
 {
     pub fn new<RI>(left: L,
                    right: RI,
@@ -85,7 +85,7 @@ impl<'a, L, T> InnerJoin<'a, L, T>
 
 impl<'a, L, T> Iterator for InnerJoin<'a, L, T>
     where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num + 'a
+          T: UtahNum + 'a
 {
     type Item = (String, ArrayView1<'a, T>, ArrayView1<'a, T>);
 
@@ -112,7 +112,7 @@ impl<'a, L, T> Iterator for InnerJoin<'a, L, T>
 #[derive(Clone)]
 pub struct OuterJoin<'a, L, T>
     where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num + 'a
+          T: UtahNum + 'a
 {
     left: L,
     right: HashMap<String, ArrayView1<'a, T>>,
@@ -123,7 +123,7 @@ pub struct OuterJoin<'a, L, T>
 
 impl<'a, L, T> OuterJoin<'a, L, T>
     where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num + 'a
+          T: UtahNum + 'a
 {
     pub fn new<RI>(left: L,
                    right: RI,
@@ -144,7 +144,7 @@ impl<'a, L, T> OuterJoin<'a, L, T>
 
 impl<'a, L, T> Iterator for OuterJoin<'a, L, T>
     where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num + 'a
+          T: UtahNum + 'a
 {
     type Item = (String, ArrayView1<'a, T>, Option<ArrayView1<'a, T>>);
 
@@ -169,7 +169,7 @@ impl<'a, L, T> Iterator for OuterJoin<'a, L, T>
 impl<'a, L, T> ToDataFrame<'a, (String, ArrayView1<'a, T>, ArrayView1<'a, T>), T>
     for InnerJoin<'a, L, T>
     where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num{
+          T: UtahNum{
     fn as_df(self) -> Result<DataFrame<T>> {
 
         let s = self.clone();
@@ -232,12 +232,10 @@ impl<'a, L, T> ToDataFrame<'a, (String, ArrayView1<'a, T>, ArrayView1<'a, T>), T
 }
 
 
-impl<'a, L,T,S> ToDataFrame<'a, (S, ArrayView1<'a, T>, Option<ArrayView1<'a, T>>), T>
+impl<'a, L,T> ToDataFrame<'a, (String, ArrayView1<'a, T>, Option<ArrayView1<'a, T>>), T>
     for OuterJoin<'a, L, T>
     where L: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num,
-          S: Identifier
-{
+          T: UtahNum{
     fn as_df(self) -> Result<DataFrame<T>> {
 
         let s = self.clone();
@@ -316,7 +314,7 @@ impl<'a, L,T,S> ToDataFrame<'a, (S, ArrayView1<'a, T>, Option<ArrayView1<'a, T>>
 
 impl<'a, I, T> ToDataFrame<'a, (String, ArrayView1<'a, T>), T> for Concat<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num
+          T: UtahNum
 {
     fn as_df(self) -> Result<DataFrame<T>> {
 

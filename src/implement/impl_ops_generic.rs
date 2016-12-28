@@ -10,7 +10,7 @@ use ndarray::ArrayView1;
 
 #[cfg(not(feature = "specialization"))]
 impl<'a, T> Operations<'a, T> for DataFrame<T>
-    where T: 'a + Num
+    where T: 'a + UtahNum
 {
     /// Get the dimensions of the dataframe.
     fn shape(self) -> (usize, usize) {

@@ -8,7 +8,7 @@
 
 use ndarray::Array;
 use dataframe::DataFrame;
-use util::traits::{Num, Identifier};
+use util::traits::UtahNum;
 use util::error::*;
 use util::traits::Constructor;
 use rustc_serialize::Decodable;
@@ -17,16 +17,14 @@ use csv;
 
 
 
-pub trait ReadCSV<T, S>
-    where T: Num + Decodable,
-          S: Identifier
+pub trait ReadCSV<T>
+    where T: UtahNum + Decodable
 {
     fn read_csv(file: &'static str) -> Result<DataFrame<T>>;
 }
 
-impl<T, S> ReadCSV<T, S> for DataFrame<T>
-    where T: Num + Decodable,
-          S: Identifier + From<String>
+impl<T> ReadCSV<T> for DataFrame<T>
+    where T: UtahNum + Decodable
 {
     fn read_csv(file: &'static str) -> Result<DataFrame<T>> {
         let mut rdr = csv::Reader::from_file(file).unwrap();

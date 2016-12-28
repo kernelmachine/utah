@@ -7,7 +7,7 @@ use util::traits::*;
 use dataframe::*;
 
 impl<'a, T> Constructor<'a, T> for DataFrame<T>
-    where T: Num + 'a
+    where T: UtahNum + 'a
 {
     /// Create a new dataframe. The only required argument is data to populate the dataframe.
     /// By default, the columns and index of the dataframe are `["1", "2", "3"..."N"]`, where *N* is

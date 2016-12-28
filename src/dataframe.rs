@@ -11,7 +11,7 @@ use ndarray::{ArrayView1, ArrayViewMut1, Dim, Ix};
 /// A read-only dataframe.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataFrame<T>
-    where T: Num
+    where T: UtahNum
 {
     pub columns: Vec<String>,
     pub data: Matrix<T>,
@@ -21,7 +21,7 @@ pub struct DataFrame<T>
 /// A read-write dataframe
 #[derive(Debug, PartialEq)]
 pub struct MutableDataFrame<'a, T: 'a>
-    where T: Num
+    where T: UtahNum
 {
     pub columns: Vec<String>,
     pub data: MatrixMut<'a, T>,
@@ -32,7 +32,7 @@ pub struct MutableDataFrame<'a, T: 'a>
 /// The read-only dataframe iterator
 #[derive(Clone)]
 pub struct DataFrameIterator<'a, T: 'a>
-    where T: Num
+    where T: UtahNum
 {
     pub names: Iter<'a, String>,
     pub data: AxisIter<'a, T, Dim<[Ix; 1]>>,
@@ -44,7 +44,7 @@ pub struct DataFrameIterator<'a, T: 'a>
 
 
 impl<'a, T> Iterator for DataFrameIterator<'a, T>
-    where T: Num
+    where T: UtahNum
 {
     type Item = (String, ArrayView1<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
@@ -62,7 +62,7 @@ impl<'a, T> Iterator for DataFrameIterator<'a, T>
 
 /// The read-write dataframe iterator
 pub struct MutableDataFrameIterator<'a, T>
-    where T: Num + 'a
+    where T: UtahNum + 'a
 {
     pub names: Iter<'a, String>,
     pub data: AxisIterMut<'a, T, Dim<[Ix; 1]>>,
@@ -72,7 +72,7 @@ pub struct MutableDataFrameIterator<'a, T>
 
 
 impl<'a, T> Iterator for MutableDataFrameIterator<'a, T>
-    where T: Num
+    where T: UtahNum
 {
     type Item = (String, ArrayViewMut1<'a, T>);
 
@@ -92,7 +92,7 @@ impl<'a, T> Iterator for MutableDataFrameIterator<'a, T>
 
 
 impl<'a, T> MutableDataFrame<'a, T>
-    where T: 'a + Num
+    where T: 'a + UtahNum
 {
     /// Dereference a mutable dataframe as an owned dataframe.
     pub fn to_df(self) -> Result<DataFrame<T>> {

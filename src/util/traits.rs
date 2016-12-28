@@ -5,7 +5,6 @@ use combinators::aggregate::*;
 use combinators::transform::*;
 use combinators::process::*;
 use dataframe::{DataFrame, MutableDataFrame, DataFrameIterator, MutableDataFrameIterator};
-use std::hash::Hash;
 use std::fmt::Debug;
 use util::error::*;
 use combinators::interact::*;
@@ -13,7 +12,7 @@ use std::ops::{Add, Sub, Mul, Div};
 use num::traits::{One, Zero};
 use ndarray::{ArrayView1, ArrayViewMut1};
 
-pub trait Num
+pub trait UtahNum
     : Add<Output = Self> +
       Div<Output = Self> +
       Sub<Output = Self> +
@@ -26,14 +25,11 @@ pub trait Num
       PartialEq +
       Default
     {}
-impl<T> Num for T
+
+impl<T> UtahNum for T
     where T: Add<Output = T> + Div<Output = T> + Sub<Output = T> + Mul<Output = T> + Empty<T> + One + Zero + Clone + Debug + PartialEq +  Default
 {
 }
-
-pub trait Identifier: Hash + Eq + Ord + Clone + Debug + Default {}
-
-impl<T> Identifier for T where T: Hash + Eq + Ord + Clone + Debug + Default {}
 
 
 pub trait Empty<T> {
@@ -42,7 +38,7 @@ pub trait Empty<T> {
 }
 
 pub trait Constructor<'a, T>
-    where T: 'a + Num,
+    where T: 'a + UtahNum,
           Self: Sized
 {
     fn new<U: Clone + Debug>(data: Matrix<U>) -> DataFrame<T> where T: From<U>;
@@ -55,7 +51,7 @@ pub trait Constructor<'a, T>
 
 
 pub trait Operations<'a, T>
-    where T: 'a + Num
+    where T: 'a + UtahNum
 {
     fn shape(self) -> (usize, usize);
     fn select<U: ?Sized>(&'a self,
@@ -107,7 +103,7 @@ pub trait Operations<'a, T>
 }
 
 pub trait Aggregate<'a, T>
-    where T: Num
+    where T: UtahNum
 {
     fn sumdf(self) -> Sum<'a, Self, T>
         where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>;
@@ -123,7 +119,7 @@ pub trait Aggregate<'a, T>
 }
 
 pub trait Process<'a, T, F>
-    where T: Num,
+    where T: UtahNum,
           F: Fn(T) -> T
 {
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T>
@@ -135,7 +131,7 @@ pub trait Process<'a, T, F>
 }
 
 pub trait Transform<'a, T>
-    where T: Num + 'a
+    where T: UtahNum + 'a
 {
     fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T>
         where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
@@ -154,7 +150,7 @@ pub trait Transform<'a, T>
 
 
 pub trait ToDataFrame<'a, I, T>
-    where T: Num + 'a
+    where T: UtahNum + 'a
 {
     fn as_df(self) -> Result<DataFrame<T>> where Self: Sized + Iterator<Item = I>;
     fn as_matrix(self) -> Result<Matrix<T>> where Self: Sized + Iterator<Item = I>;

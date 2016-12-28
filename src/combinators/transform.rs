@@ -111,7 +111,7 @@ impl<'a, I, T> Iterator for Remove<'a, I, T>
 #[derive(Clone)]
 pub struct Append<'a, I, T: 'a>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num
+          T: UtahNum
 {
     pub new_data: PutBack<I>,
     pub other: Vec<String>,
@@ -123,7 +123,7 @@ pub struct Append<'a, I, T: 'a>
 
 impl<'a, I, T> Append<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num
+          T: UtahNum
 {
     pub fn new(df: I,
                name: String,
@@ -145,7 +145,7 @@ impl<'a, I, T> Append<'a, I, T>
 
 impl<'a, I, T> Iterator for Append<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num
+          T: UtahNum
 {
     type Item = (String, ArrayView1<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
@@ -159,7 +159,7 @@ impl<'a, I, T> Iterator for Append<'a, I, T>
 
 
 impl<'a, T> Aggregate<'a, T> for DataFrameIterator<'a, T>
-    where T: Num + 'a
+    where T: UtahNum + 'a
 {
     fn sumdf(self) -> Sum<'a, Self, T>
         where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
@@ -196,7 +196,7 @@ impl<'a, T> Aggregate<'a, T> for DataFrameIterator<'a, T>
 
 
 impl<'a, T> Transform<'a, T> for DataFrameIterator<'a, T>
-    where T: Num
+    where T: UtahNum
 {
     fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T>
         where String: From<&'a U>,
@@ -243,7 +243,7 @@ impl<'a, T> Transform<'a, T> for DataFrameIterator<'a, T>
 
 impl<'a, I, T> Aggregate<'a, T> for Select<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num + 'a
+          T: UtahNum + 'a
 {
     fn sumdf(self) -> Sum<'a, Self, T>
         where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)> + Clone
@@ -280,7 +280,7 @@ impl<'a, I, T> Aggregate<'a, T> for Select<'a, I, T>
 
 impl<'a, I, T> Transform<'a, T> for Select<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num + Clone + Debug
+          T: UtahNum + Clone + Debug
 {
     fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T>
         where String: From<&'a U>,
@@ -325,7 +325,7 @@ impl<'a, I, T> Transform<'a, T> for Select<'a, I, T>
 
 impl<'a, I, T> Aggregate<'a, T> for Remove<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num
+          T: UtahNum
 {
     fn sumdf(self) -> Sum<'a, Self, T>
         where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
@@ -362,7 +362,7 @@ impl<'a, I, T> Aggregate<'a, T> for Remove<'a, I, T>
 
 impl<'a, I, T> Transform<'a, T> for Remove<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num
+          T: UtahNum
 {
     fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T>
         where String: From<&'a U>
@@ -403,7 +403,7 @@ impl<'a, I, T> Transform<'a, T> for Remove<'a, I, T>
 
 impl<'a, I, T> Aggregate<'a, T> for Append<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num
+          T: UtahNum
 {
     fn sumdf(self) -> Sum<'a, Self, T>
         where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)>
@@ -439,7 +439,7 @@ impl<'a, I, T> Aggregate<'a, T> for Append<'a, I, T>
 }
 impl<'a, I, T> Transform<'a, T> for Append<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num
+          T: UtahNum
 {
     fn select<U: ?Sized>(self, names: &'a [&'a U]) -> Select<'a, Self, T>
         where Self: Sized + Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
@@ -481,7 +481,7 @@ impl<'a, I, T> Transform<'a, T> for Append<'a, I, T>
 
 impl<'a, I, T> ToDataFrame<'a, (String, ArrayView1<'a, T>), T> for Remove<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num
+          T: UtahNum
 {
     fn as_df(self) -> Result<DataFrame<T>> {
         let s = self.clone();
@@ -545,7 +545,7 @@ impl<'a, I, T> ToDataFrame<'a, (String, ArrayView1<'a, T>), T> for Remove<'a, I,
 
 impl<'a, I, T> ToDataFrame<'a, (String, ArrayView1<'a, T>), T> for Append<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num
+          T: UtahNum
 {
     fn as_df(self) -> Result<DataFrame<T>> {
         let s = self.clone();
@@ -613,7 +613,7 @@ impl<'a, I, T> ToDataFrame<'a, (String, ArrayView1<'a, T>), T> for Append<'a, I,
 
 impl<'a, I, T> ToDataFrame<'a, (String, ArrayView1<'a, T>), T> for Select<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)> + Clone,
-          T: Num
+          T: UtahNum
 {
     fn as_df(self) -> Result<DataFrame<T>> {
         let s = self.clone();
@@ -677,7 +677,7 @@ impl<'a, I, T> ToDataFrame<'a, (String, ArrayView1<'a, T>), T> for Select<'a, I,
 
 
 impl<'a, T> ToDataFrame<'a, (String, ArrayView1<'a, T>), T> for DataFrameIterator<'a, T>
-    where T: Num
+    where T: UtahNum
 {
     fn as_df(self) -> Result<DataFrame<T>> {
         let s = self.clone();

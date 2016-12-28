@@ -10,7 +10,7 @@ use util::error::*;
 #[derive(Clone, Debug)]
 pub struct Sum<'a, I: 'a, T: 'a>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)> + 'a,
-          T: Num
+          T: UtahNum
 {
     data: I,
     other: Vec<String>,
@@ -19,7 +19,7 @@ pub struct Sum<'a, I: 'a, T: 'a>
 
 impl<'a, I, T> Sum<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num
+          T: UtahNum
 {
     pub fn new(df: I, other: Vec<String>, axis: UtahAxis) -> Sum<'a, I, T> {
 
@@ -33,7 +33,7 @@ impl<'a, I, T> Sum<'a, I, T>
 
 impl<'a, I, T> Iterator for Sum<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num
+          T: UtahNum
 {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
@@ -48,7 +48,7 @@ impl<'a, I, T> Iterator for Sum<'a, I, T>
 #[derive(Clone, Debug)]
 pub struct Mean<'a, I: 'a, T: 'a>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num
+          T: UtahNum
 {
     data: I,
     other: Vec<String>,
@@ -57,7 +57,7 @@ pub struct Mean<'a, I: 'a, T: 'a>
 
 impl<'a, I, T> Mean<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num + 'a
+          T: UtahNum + 'a
 {
     pub fn new(df: I, other: Vec<String>, axis: UtahAxis) -> Mean<'a, I, T> {
 
@@ -71,7 +71,7 @@ impl<'a, I, T> Mean<'a, I, T>
 
 impl<'a, I, T> Iterator for Mean<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num + 'a
+          T: UtahNum + 'a
 {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
@@ -91,7 +91,7 @@ impl<'a, I, T> Iterator for Mean<'a, I, T>
 #[derive(Clone)]
 pub struct Max<'a, I: 'a, T: 'a>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num
+          T: UtahNum
 {
     data: I,
     other: Vec<String>,
@@ -100,7 +100,7 @@ pub struct Max<'a, I: 'a, T: 'a>
 
 impl<'a, I, T> Max<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num + 'a
+          T: UtahNum + 'a
 {
     pub fn new(df: I, other: Vec<String>, axis: UtahAxis) -> Max<'a, I, T> {
 
@@ -114,7 +114,7 @@ impl<'a, I, T> Max<'a, I, T>
 
 impl<'a, I, T> Iterator for Max<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num + Ord + 'a
+          T: UtahNum + Ord + 'a
 {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
@@ -132,7 +132,7 @@ impl<'a, I, T> Iterator for Max<'a, I, T>
 #[derive(Clone, Debug)]
 pub struct Min<'a, I: 'a, T: 'a>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num
+          T: UtahNum
 {
     data: I,
     other: Vec<String>,
@@ -141,7 +141,7 @@ pub struct Min<'a, I: 'a, T: 'a>
 
 impl<'a, I, T> Min<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num + 'a
+          T: UtahNum + 'a
 {
     pub fn new(df: I, other: Vec<String>, axis: UtahAxis) -> Min<'a, I, T> {
 
@@ -155,7 +155,7 @@ impl<'a, I, T> Min<'a, I, T>
 
 impl<'a, I, T> Iterator for Min<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num + Ord
+          T: UtahNum + Ord
 {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
@@ -172,7 +172,7 @@ impl<'a, I, T> Iterator for Min<'a, I, T>
 #[derive(Clone)]
 pub struct Stdev<'a, I: 'a, T: 'a>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num
+          T: UtahNum
 {
     data: I,
     other: Vec<String>,
@@ -181,7 +181,7 @@ pub struct Stdev<'a, I: 'a, T: 'a>
 
 impl<'a, I, T> Stdev<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num + 'a
+          T: UtahNum + 'a
 {
     pub fn new(df: I, other: Vec<String>, axis: UtahAxis) -> Stdev<'a, I, T> {
 
@@ -196,7 +196,7 @@ impl<'a, I, T> Stdev<'a, I, T>
 
 impl<'a, I, T> ToDataFrame<'a, T, T> for Mean<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num
+          T: UtahNum
 {
     fn as_df(self) -> Result<DataFrame<T>> {
         let other = self.other.clone();
@@ -248,7 +248,7 @@ impl<'a, I, T> ToDataFrame<'a, T, T> for Mean<'a, I, T>
 
 impl<'a, I, T> ToDataFrame<'a, T, T> for Max<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num + Ord
+          T: UtahNum + Ord
 {
     fn as_df(self) -> Result<DataFrame<T>> {
         let other = self.other.clone();
@@ -299,7 +299,7 @@ impl<'a, I, T> ToDataFrame<'a, T, T> for Max<'a, I, T>
 
 impl<'a, I, T> ToDataFrame<'a, T, T> for Min<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num + Ord
+          T: UtahNum + Ord
 {
     fn as_df(self) -> Result<DataFrame<T>> {
         let other = self.other.clone();
@@ -350,7 +350,7 @@ impl<'a, I, T> ToDataFrame<'a, T, T> for Min<'a, I, T>
 
 impl<'a, I, T> ToDataFrame<'a, T, T> for Sum<'a, I, T>
     where I: Iterator<Item = (String, ArrayView1<'a, T>)>,
-          T: Num
+          T: UtahNum
 {
     fn as_df(self) -> Result<DataFrame<T>> {
         let other = self.other.clone();

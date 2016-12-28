@@ -58,7 +58,7 @@ impl<'a, T, I, F> Iterator for MapDF<'a, T, I, F>
 #[derive(Clone)]
 pub struct Impute<'a, I, T: 'a>
     where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)> + 'a,
-          T: Num
+          T: UtahNum
 {
     pub data: I,
     pub strategy: ImputeStrategy,
@@ -68,7 +68,7 @@ pub struct Impute<'a, I, T: 'a>
 
 impl<'a, I, T> Impute<'a, I, T>
     where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
-          T: Num
+          T: UtahNum
 {
     pub fn new(df: I, s: ImputeStrategy, other: Vec<String>, axis: UtahAxis) -> Impute<'a, I, T>
         where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>
@@ -85,7 +85,7 @@ impl<'a, I, T> Impute<'a, I, T>
 
 impl<'a, I, T> Iterator for Impute<'a, I, T>
     where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
-          T: Num
+          T: UtahNum
 {
     type Item = (String, ArrayViewMut1<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
@@ -124,7 +124,7 @@ impl<'a, I, T> Iterator for Impute<'a, I, T>
 
 impl<'a, I, T, F> Process<'a, T, F> for MapDF<'a, T, I, F>
     where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
-          T: Num,
+          T: UtahNum,
           F: Fn(T) -> T
 {
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T>
@@ -191,7 +191,7 @@ impl<'a, I, T, F> Process<'a, T, F> for MapDF<'a, T, I, F>
 
 impl<'a, I, T, F> Process<'a, T, F> for Impute<'a, I, T>
     where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
-          T: Num,
+          T: UtahNum,
           F: Fn(T) -> T
 {
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T>
@@ -254,7 +254,7 @@ impl<'a, I, T, F> Process<'a, T, F> for Impute<'a, I, T>
 }
 
 impl<'a, T, F> Process<'a, T, F> for MutableDataFrameIterator<'a, T>
-    where T: Num,
+    where T: UtahNum,
           F: Fn(T) -> T
 {
     fn impute(self, strategy: ImputeStrategy) -> Impute<'a, Self, T>
@@ -318,7 +318,7 @@ impl<'a, T, F> Process<'a, T, F> for MutableDataFrameIterator<'a, T>
 }
 
 impl<'a, T> ToDataFrame<'a, (String, ArrayViewMut1<'a, T>), T> for MutableDataFrameIterator<'a, T>
-    where T: Num
+    where T: UtahNum
 {
     fn as_df(self) -> Result<DataFrame<T>> {
         let axis = self.axis.clone();
@@ -389,7 +389,7 @@ impl<'a, T> ToDataFrame<'a, (String, ArrayViewMut1<'a, T>), T> for MutableDataFr
 
 impl<'a, I, T> ToDataFrame<'a, (String, ArrayViewMut1<'a, T>), T> for Impute<'a, I, T>
     where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
-          T: Num
+          T: UtahNum
 {
     fn as_df(self) -> Result<DataFrame<T>> {
         let axis = self.axis.clone();
@@ -461,7 +461,7 @@ impl<'a, I, T> ToDataFrame<'a, (String, ArrayViewMut1<'a, T>), T> for Impute<'a,
 
 impl<'a, I, T, F> ToDataFrame<'a, (String, ArrayViewMut1<'a, T>), T> for MapDF<'a, T, I, F>
     where I: Iterator<Item = (String, ArrayViewMut1<'a, T>)>,
-          T: Num,
+          T: UtahNum,
           F: Fn(T) -> T
 {
     fn as_df(self) -> Result<DataFrame<T>> {

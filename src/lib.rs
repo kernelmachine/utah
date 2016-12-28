@@ -47,23 +47,23 @@
 //!
 //! ### Transform combinators
 //!
-//! These combinators are meant for changing the shape of the data you're working with. Combinators in this class include `select`, `remove`, and `append`.
+//! Transform combinators are meant for changing the shape of the data you're working with. Combinators in this class include `select`, `remove`, and `append`.
 //!
 //! ```ignore
 //! use utah::prelude::*;
-//! let a = arr2(&[[2.0, 7.0], [3.0, 4.0], [2.0, 8.0]]);
-//! let df : DataFrame<f64> = DataFrame::new(a).index(&["1","2", "3"]).unwrap().columns(&["a", "b"]).unwrap();
+//! let a = arr2(&[[2, 7], [3, 4], [2, 8]]);
+//! let df : DataFrame<i32> = DataFrame::new(a).index(&["1","2", "3"]).unwrap().columns(&["a", "b"]).unwrap();
 //! let res = df.select(&["a", "c"], UtahAxis::Row);
 //! ```
 //!
 //!
 //! ### Process combinators
 //!
-//! Process combinators are meant for actually changing the original data you're working with. Combinators in this class include `impute` and `mapdf`. Impute replaces missing values of a dataframe with the mean of the corresponding column. Not that these operations require the use of a `MutableDataFrame`.
+//! Process combinators are meant for changing the original data you're working with. Combinators in this class include `impute` and `mapdf`. Impute replaces missing values of a dataframe with the mean of the corresponding column. Not that these operations require the use of a `MutableDataFrame`.
 //!
 //! ```ignore
 //! use utah::prelude::*;
-//! let mut a: MutableDataFrame<f64, String> = dataframe!(
+//! let mut a: MutableDataFrame<f64> = dataframe!(
 //!     {
 //!         "a" =>  column!([NAN, 3., 2.]),
 //!         "b" =>  column!([2., NAN, 2.])
@@ -77,12 +77,12 @@
 //! Interact combinators are meant for interactions between dataframes. They generally take at least two dataframe arguments. Combinators in this class include `inner_left_join`, `outer_left_join`, `inner_right_join`, `outer_right_join`, and `concat`.
 //!
 //! ```ignore
-//! let a: DataFrame<f64, String> = dataframe!(
+//! let a: DataFrame<f64> = dataframe!(
 //!     {
 //!         "a" =>  column!([NAN, 3., 2.]),
 //!         "b" =>  column!([2., NAN, 2.])
 //!     });
-//! let b: DataFrame<f64, String> = dataframe!(
+//! let b: DataFrame<f64> = dataframe!(
 //!     {
 //!         "b" =>  column!([NAN, 3., 2.]),
 //!         "c" =>  column!([2., NAN, 2.])
@@ -164,7 +164,7 @@
 //!
 //! ```ignore
 //! let file_name = "test.csv";
-//! let df: Result<DataFrame<f64, String>> = DataFrame::read_csv(file_name);
+//! let df: Result<DataFrame<f64>> = DataFrame::read_csv(file_name);
 //! ```
 #![cfg_attr(nightly,test)]
 #![cfg_attr(nightly,custom_derive)]
