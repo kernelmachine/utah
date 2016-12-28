@@ -37,8 +37,8 @@ Check out [docs.rs](http://docs.rs/utah) for latest documentation.
 use utah::prelude::*;
 let df = DataFrame<f64> = dataframe!(
     {
-        "a" =>  column!([2., 3., 2.]),
-        "b" =>  column!([2., NAN, 2.])
+        "a" =>  col!([2., 3., 2.]),
+        "b" =>  col!([2., NAN, 2.])
     });
 
 let a = arr2(&[[2.0, 7.0], [3.0, 4.0]]);
@@ -72,10 +72,10 @@ let res : DataFrame<f64> = df.df_iter(UtahAxis::Row)
 use utah::prelude::*;
 let a = DataFrame<InnerType> = dataframe!(
     {
-        "name" =>  column!([InnerType::Str("Alice"),
+        "name" =>  col!([InnerType::Str("Alice"),
                             InnerType::Str("Bob"),
                             InnerType::Str("Jane")]),
-        "data" =>  column!([InnerType::Float(2.0),
+        "data" =>  col!([InnerType::Float(2.0),
                             InnerType::Empty(),
                             InnerType::Float(3.0)])
     });
