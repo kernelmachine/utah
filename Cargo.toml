@@ -8,14 +8,14 @@ respository = "http://github.com/pegasos1/utah"
 license = "MIT"
 
 [dependencies]
-ndarray = "*"
-ndarray-rand="*"
-rand="*"
-num = "*"
-error-chain="*"
-itertools = "*"
-csv = "*"
-rustc-serialize = "*"
+ndarray = "0.7.2"
+ndarray-rand="0.3.1"
+rand="0.3.15"
+num = "0.1.36"
+error-chain="0.7.2"
+itertools = "0.5.8"
+csv = "0.14.7"
+rustc-serialize = "0.3.22"
 
 [lib]
 path='src/lib.rs'
