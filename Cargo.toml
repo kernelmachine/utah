@@ -1,6 +1,6 @@
 [package]
 name = "utah"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["pegasos1"]
 description = "dataframe structure and operations"
 documentation = "http://docs.rs/utah"
