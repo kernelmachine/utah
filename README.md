@@ -8,7 +8,7 @@
 
 API currently in development and subject to change.
 
-For an in-depth introduction to the mechanics of this crate, as well as future goals, read [this](http://www.suchin.co/2016/12/28/Introducing-Utah/) blog post.
+For an in-depth introduction to the mechanics of this crate, as well as future goals, read [this](http://kernelmachine.github.io/2016/12/28/Introducing-Utah/) blog post.
 
 ## Install
 
